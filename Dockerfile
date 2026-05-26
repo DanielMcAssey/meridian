@@ -1,30 +1,20 @@
-# Uses Node 24 which includes node:sqlite as a stable built-in.
-# No native compilation required — the image stays lean.
+# Pre-built by CI — this image only runs the output.
+# The .output directory is produced by `npm run build` in the workflow
+# and passed in as build context, so no Node toolchain is needed here.
 
-# ── Stage 1: Build ────────────────────────────────────────────────────────────
-FROM node:24-alpine AS builder
-
-WORKDIR /app
-
-COPY package*.json ./
-RUN npm ci
-
-COPY . .
-RUN npm run build
-
-# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
-FROM node:24-alpine AS runner
+FROM node:24-alpine
 
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Override with -e DB_PATH=... or set a Docker volume mount path
+# Override with -e DB_PATH=... or a Docker volume mount path
 ENV DB_PATH=/data/leaderboard.db
 
-# Copy Nuxt server output (JS bundles + public assets)
-COPY --from=builder /app/.output ./.output
+# Copy the pre-built Nuxt server output
+COPY .output ./.output
 
 # SQLite data directory — mount a named volume here in production
+RUN mkdir -p /data
 VOLUME ["/data"]
 
 EXPOSE 3000

@@ -1,12 +1,4 @@
-node_modules/
-.nuxt/
-.output/
-data/
-*.db
-*.db-shm
-*.db-wal
-.git/
-.github/
-.env
-.env.*
-*.log
+# Send only the pre-built output to the Docker daemon.
+# Everything else is source/tooling that the runner image doesn't need.
+*
+!.output
