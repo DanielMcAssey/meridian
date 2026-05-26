@@ -2,9 +2,14 @@
 import { ACCENTS } from '~/composables/useGameSettings'
 
 const settings = useGameSettings()
+const atlas = useAtlasStore()
+const route = useRoute()
 
-// Apply accent hue + theme to <html> element (client-only — document doesn't exist on server)
+// Load geodata once on the client when the app mounts
 onMounted(() => {
+  atlas.load()
+
+  // Apply accent hue + theme to <html> element (client-only — document doesn't exist on server)
   watchEffect(() => {
     const hue = ACCENTS[settings.accent.value]?.hue ?? 30
     document.documentElement.style.setProperty('--accent-h', String(hue))
@@ -20,7 +25,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <NuxtLayout>
-    <NuxtPage />
-  </NuxtLayout>
+  <div class="app">
+    <AppChrome />
+    <!-- Show splash while atlas data is loading (not needed on the leaderboard) -->
+    <GameSplash v-if="!atlas.ready && route.name !== 'leaderboard'" />
+    <NuxtPage v-if="atlas.ready || route.name === 'leaderboard'" />
+  </div>
 </template>

@@ -1,7 +1,7 @@
 {
-  "name": "meridian",
+  "name": "@danielmcassey/meridian",
   "version": "0.0.1",
-  "private": false,
+  "private": true,
   "description": "Meridian — A Geographical Pastime",
   "scripts": {
     "dev": "nuxt dev",
