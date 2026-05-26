@@ -7,8 +7,8 @@ FROM node:24-alpine
 WORKDIR /app
 
 ENV NODE_ENV=production
-# Override with -e DB_PATH=... or a Docker volume mount path
-ENV DB_PATH=/data/leaderboard.db
+# NUXT_DB_PATH overrides runtimeConfig.dbPath — must use NUXT_ prefix for Nuxt to pick it up
+ENV NUXT_DB_PATH=/data/leaderboard.db
 
 # Copy the pre-built Nuxt server output
 COPY .output ./.output
