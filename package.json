@@ -1,0 +1,31 @@
+{
+  "name": "meridian",
+  "version": "0.0.1",
+  "private": false,
+  "description": "Meridian — A Geographical Pastime",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "node .output/server/index.mjs",
+    "generate": "nuxt generate",
+    "typecheck": "nuxt typecheck",
+    "release": "semantic-release"
+  },
+  "dependencies": {
+    "@pinia/nuxt": "^0.9.0",
+    "nuxt": "^3.17.0",
+    "pinia": "^2.3.0",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^10.3.5",
+    "@types/node": "^24",
+    "semantic-release": "^24.2.3",
+    "typescript": "^5.8.0",
+    "vue-tsc": "^2"
+  }
+}
