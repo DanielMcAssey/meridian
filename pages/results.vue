@@ -8,7 +8,7 @@ onMounted(() => {
   if (!session.hasFinished) navigateTo('/menu')
 })
 
-const total = computed(() => session.results.length)
+const total    = computed(() => session.results.length)
 const accuracy = computed(() =>
   total.value > 0 ? Math.round((session.finalCorrect / total.value) * 100) : 0,
 )
@@ -30,70 +30,88 @@ const percentText = computed(() => {
 })
 
 function playAgain() {
-  // Re-use the same mode/difficulty
   const atlas = useAtlasStore()
-  const rounds = buildRounds(
-    atlas.countries,
-    session.mode,
-    session.results.length,
-    session.difficulty,
-  )
+  const rounds = buildRounds(atlas.countries, session.mode, session.results.length, session.difficulty)
   session.start(rounds, session.mode, session.difficulty)
   navigateTo('/play')
 }
 </script>
 
 <template>
-  <main class="screen results">
-    <div class="results-head">
+  <main class="screen">
+    <!-- Header -->
+    <div class="max-w-2xl mb-8">
       <span class="eyebrow">The Verdict</span>
-      <h1 class="results-title">
-        <em>{{ verdict }}.</em>
+      <h1
+        class="font-serif font-normal tracking-[-0.025em] leading-none mt-3 mb-2"
+        style="font-size: clamp(48px, 6vw, 80px)"
+      >
+        <em class="italic" style="color: var(--accent-deep)">{{ verdict }}.</em>
       </h1>
-      <p class="results-sub">{{ playerName }}, your final tally</p>
-      <p v-if="percentText" class="results-percentile">{{ percentText }}</p>
+      <p class="font-serif italic text-[22px] text-ink-2 mt-1.5 mb-0">{{ playerName }}, your final tally</p>
+      <p v-if="percentText" class="font-mono text-[12.5px] tracking-[0.06em] mt-3 uppercase" style="color: var(--accent-deep)">
+        {{ percentText }}
+      </p>
     </div>
 
-    <div class="results-board">
-      <div class="big-stat">
-        <span class="big-stat-label">Final Score</span>
-        <span class="big-stat-value">{{ session.finalScore }}</span>
-      </div>
-      <div class="big-stat">
-        <span class="big-stat-label">Correct</span>
-        <span class="big-stat-value">
-          {{ session.finalCorrect }}<span class="muted">/{{ total }}</span>
+    <!-- Big stats -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-10">
+      <div
+        v-for="stat in [
+          { label: 'Final Score', value: String(session.finalScore), muted: '' },
+          { label: 'Correct',     value: String(session.finalCorrect), muted: `/${total}` },
+          { label: 'Accuracy',    value: `${accuracy}%`, muted: '' },
+        ]"
+        :key="stat.label"
+        class="bg-paper border border-rule rounded-[18px] p-7 flex flex-col gap-2"
+        style="box-shadow: var(--shadow-sm)"
+      >
+        <span class="font-mono text-[11px] tracking-[0.16em] uppercase text-ink-3">{{ stat.label }}</span>
+        <span class="font-mono text-[56px] font-medium tracking-[-0.02em] leading-none tabular-nums">
+          {{ stat.value }}<span v-if="stat.muted" class="text-ink-3 text-[36px]">{{ stat.muted }}</span>
         </span>
       </div>
-      <div class="big-stat">
-        <span class="big-stat-label">Accuracy</span>
-        <span class="big-stat-value">{{ accuracy }}%</span>
-      </div>
     </div>
 
-    <div class="results-rounds">
-      <div class="results-rounds-head">Round by round</div>
-      <ol class="results-list">
+    <!-- Round breakdown -->
+    <div
+      class="bg-paper border border-rule rounded-[18px] p-6 mb-8"
+      style="box-shadow: var(--shadow-sm)"
+    >
+      <div class="font-mono text-[11px] tracking-[0.16em] uppercase text-ink-3 mb-3">Round by round</div>
+      <ol class="list-none m-0 p-0 flex flex-col">
         <li
           v-for="(r, i) in session.results"
           :key="i"
-          :class="['results-row', r.correct ? 'row-ok' : 'row-bad']"
+          class="flex items-center gap-3 py-3 px-1.5 border-t border-rule first:border-t-0 text-[14.5px]"
+          :class="r.correct ? 'text-ok' : 'text-bad'"
         >
-          <span class="row-idx">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="row-type">{{ r.type === 'flag' ? 'Flag' : r.type === 'pin' ? 'Pin' : 'Map' }}</span>
-          <span class="row-answer">{{ r.answer.name }}</span>
-          <span class="row-picked">
-            <template v-if="r.picked">
-              {{ r.correct ? '✓' : `✗ chose ${r.picked.name}` }}
-            </template>
+          <!-- Index -->
+          <span class="font-mono text-ink-3 text-xs w-7 shrink-0">{{ String(i + 1).padStart(2, '0') }}</span>
+          <!-- Type — hidden on xs -->
+          <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.14em] uppercase text-ink-3 w-14 shrink-0">
+            {{ r.type === 'flag' ? 'Flag' : r.type === 'pin' ? 'Pin' : 'Map' }}
+          </span>
+          <!-- Answer -->
+          <span class="font-serif text-[18px] text-ink flex-1 min-w-0 truncate">{{ r.answer.name }}</span>
+          <!-- Picked — hidden on xs -->
+          <span
+            class="hidden sm:block text-[13.5px] flex-1 min-w-0 truncate"
+            :class="r.correct ? 'text-ok' : 'text-bad'"
+          >
+            <template v-if="r.picked">{{ r.correct ? '✓' : `✗ chose ${r.picked.name}` }}</template>
             <template v-else>— no answer</template>
           </span>
-          <span class="row-pts">{{ r.points }} pts</span>
+          <!-- Points -->
+          <span class="font-mono font-medium text-right shrink-0" :class="r.correct ? 'text-ink' : 'text-ink-3'">
+            {{ r.points }} pts
+          </span>
         </li>
       </ol>
     </div>
 
-    <div class="results-cta">
+    <!-- CTA -->
+    <div class="flex gap-3 flex-wrap">
       <button class="btn-primary" @click="playAgain">Play again</button>
       <button class="btn-ghost" @click="navigateTo('/menu')">Change game</button>
       <button class="btn-ghost" @click="navigateTo('/leaderboard')">View leaderboard</button>

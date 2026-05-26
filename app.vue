@@ -25,7 +25,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="app">
+  <div class="min-h-screen flex flex-col">
     <AppChrome />
     <!-- Show splash while atlas data is loading (not needed on the leaderboard) -->
     <GameSplash v-if="!atlas.ready && route.name !== 'leaderboard'" />

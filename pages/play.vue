@@ -40,7 +40,6 @@ function startTick() {
   }, 100)
 }
 
-// Reset everything when a new round begins
 watch(
   () => session.idx,
   () => {
@@ -82,46 +81,28 @@ async function handleLock(opt: Country | null, elapsedSec: number) {
     }
   }
 
-  const result: RoundResult = {
-    type: round.type,
-    answer: round.answer,
-    picked: opt,
-    correct,
-    points: pts,
-    elapsed: elapsedSec,
-  }
+  const result: RoundResult = { type: round.type, answer: round.answer, picked: opt, correct, points: pts, elapsed: elapsedSec }
   session.recordResult(result)
 
   advanceTimeout = setTimeout(async () => {
     advanceTimeout = null
     const next = session.idx + 1
-    if (next >= session.rounds.length) {
-      await finishGame()
-    } else {
-      session.advance()
-    }
+    if (next >= session.rounds.length) await finishGame()
+    else session.advance()
   }, 1500)
 }
 
 async function finishGame() {
-  const score = session.results.reduce((s, r) => s + r.points, 0)
+  const score   = session.results.reduce((s, r) => s + r.points, 0)
   const correct = session.results.filter((r) => r.correct).length
 
   try {
     const { rank, total } = await $fetch<{ rank: number; total: number }>('/api/leaderboard', {
       method: 'POST',
-      body: {
-        name: playerName.value,
-        score,
-        correct,
-        total: session.rounds.length,
-        mode: session.mode,
-        difficulty: session.difficulty,
-      },
+      body: { name: playerName.value, score, correct, total: session.rounds.length, mode: session.mode, difficulty: session.difficulty },
     })
     session.finish({ rank, total })
   } catch {
-    // If the API call fails, still show results without rank data
     session.finish({ rank: 0, total: 0 })
   }
 
@@ -131,62 +112,93 @@ async function finishGame() {
 // ── Display helpers ──────────────────────────────────────────────────────
 
 const total = computed(() => session.rounds.length)
-const runningScore = computed(() => session.results.reduce((s, r) => s + r.points, 0))
-const correctSoFar = computed(() => session.results.filter((r) => r.correct).length)
-const timerPct = computed(() =>
+const runningScore  = computed(() => session.results.reduce((s, r) => s + r.points, 0))
+const correctSoFar  = computed(() => session.results.filter((r) => r.correct).length)
+const timerPct      = computed(() =>
   settings.timer.value && settings.timerSecs.value > 0
-    ? Math.max(0, (timeLeft.value / settings.timerSecs.value) * 100)
-    : 0,
+    ? Math.max(0, (timeLeft.value / settings.timerSecs.value) * 100) : 0,
 )
 const timerLow = computed(() => timeLeft.value < 4 && settings.timer.value)
 
 function pipClass(i: number): string {
-  if (i < session.idx) {
-    return session.results[i]?.correct ? 'pip pip-correct' : 'pip pip-wrong'
-  }
-  if (i === session.idx) return 'pip pip-current'
-  return 'pip pip-future'
+  if (i < session.idx) return session.results[i]?.correct ? 'pip-correct' : 'pip-wrong'
+  if (i === session.idx) return 'pip-current'
+  return 'pip-future'
 }
 </script>
 
 <template>
-  <main v-if="session.currentRound" class="screen play">
-    <!-- Top bar: progress + stats -->
-    <div class="play-top">
-      <div class="play-progress">
-        <span class="play-round-num">
-          Round {{ session.idx + 1 }}<span class="of">/{{ total }}</span>
+  <main
+    v-if="session.currentRound"
+    class="flex flex-col gap-3.5 flex-1 min-h-0
+           px-[clamp(1.25rem,5vw,5rem)] pt-10 pb-6
+           max-w-[1240px] mx-auto w-full"
+  >
+    <!-- Top bar: progress + stats — stacks on mobile -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 flex-wrap py-1.5 px-0.5">
+      <!-- Progress -->
+      <div class="flex items-center gap-4 w-full sm:w-auto sm:flex-1 min-w-0">
+        <span class="font-serif italic text-[22px] leading-none whitespace-nowrap shrink-0">
+          Round {{ session.idx + 1 }}<span class="text-ink-3 text-[15px] ml-0.5">/{{ total }}</span>
         </span>
-        <div class="play-progress-bar">
-          <div v-for="(_, i) in session.rounds" :key="i" :class="pipClass(i)" />
+        <div class="flex gap-[3px] flex-1 min-w-0">
+          <div
+            v-for="(_, i) in session.rounds"
+            :key="i"
+            class="flex-1 h-1 rounded-full transition-[background] duration-300"
+            :class="{
+              'bg-ink':     pipClass(i) === 'pip-current',
+              'bg-ok':      pipClass(i) === 'pip-correct',
+              'bg-bad':     pipClass(i) === 'pip-wrong',
+              'bg-rule':    pipClass(i) === 'pip-future',
+            }"
+          />
         </div>
       </div>
 
-      <div class="play-stats">
-        <div class="stat-mini">
-          <span class="mini-label">Score</span>
-          <span class="mini-val">{{ runningScore }}</span>
+      <!-- Stats -->
+      <div class="flex gap-4 items-center flex-wrap">
+        <div class="inline-flex items-baseline gap-1.5 font-mono leading-none">
+          <span class="text-[10px] tracking-[0.14em] uppercase text-ink-3">Score</span>
+          <span class="text-base font-medium text-ink tabular-nums tracking-[-0.01em]">{{ runningScore }}</span>
         </div>
-        <div class="stat-mini">
-          <span class="mini-label">Correct</span>
-          <span class="mini-val">
-            {{ correctSoFar }}<span class="muted">/{{ session.idx + (locked ? 1 : 0) }}</span>
+        <div class="inline-flex items-baseline gap-1.5 font-mono leading-none">
+          <span class="text-[10px] tracking-[0.14em] uppercase text-ink-3">Correct</span>
+          <span class="text-base font-medium text-ink tabular-nums">
+            {{ correctSoFar }}<span class="text-ink-3 font-normal text-[13px] ml-px">/{{ session.idx + (locked ? 1 : 0) }}</span>
           </span>
         </div>
-        <div v-if="settings.timer.value" :class="['stat-mini timer-mini', { 'timer-low': timerLow }]">
-          <span class="mini-label">Time</span>
-          <span class="mini-val">
-            {{ Math.max(0, timeLeft).toFixed(1) }}<span class="muted">s</span>
+        <div
+          v-if="settings.timer.value"
+          class="inline-flex items-baseline gap-1.5 font-mono leading-none relative min-w-[92px]"
+          :class="timerLow ? 'text-bad' : ''"
+        >
+          <span class="text-[10px] tracking-[0.14em] uppercase" :class="timerLow ? 'text-bad' : 'text-ink-3'">Time</span>
+          <span
+            class="text-base font-medium tabular-nums tracking-[-0.01em]"
+            :class="{ 'text-bad': timerLow, 'text-ink': !timerLow }"
+            :style="timerLow ? 'animation: pulse 0.6s infinite alternate' : ''"
+          >
+            {{ Math.max(0, timeLeft).toFixed(1) }}<span :class="timerLow ? 'text-bad opacity-60' : 'text-ink-3'" class="font-normal text-[13px] ml-px">s</span>
           </span>
-          <div class="timer-mini-bar">
-            <div class="timer-mini-bar-fill" :style="{ width: `${timerPct}%` }" />
+          <!-- Timer bar -->
+          <div class="absolute left-0 right-0 -bottom-1.5 h-0.5 bg-rule rounded-full overflow-hidden">
+            <div
+              class="h-full rounded-full transition-[width] duration-100 ease-linear"
+              :style="{ width: `${timerPct}%`, background: timerLow ? 'var(--color-bad)' : 'var(--accent)' }"
+            />
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Round stage -->
-    <div :key="session.idx" class="play-stage">
+    <!-- Round stage — flex-1 + min-h-0 lets it grow for the Cartographer map -->
+    <div
+      :key="session.idx"
+      class="bg-paper border border-rule rounded-[18px] px-4 sm:px-6 lg:px-9 py-6
+             flex flex-col flex-1 min-h-0"
+      style="box-shadow: var(--shadow-md); animation: stage-in 0.4s cubic-bezier(.2,.7,.2,1)"
+    >
       <RoundsFlagRound
         v-if="session.currentRound.type === 'flag'"
         :round="session.currentRound"
@@ -211,18 +223,19 @@ function pipClass(i: number): string {
     </div>
 
     <!-- Feedback toast -->
-    <div v-if="locked" class="round-toast">
-      <span
-        v-if="picked && picked.code === session.currentRound.answer.code"
-        class="toast-correct"
-      >
-        ✓ Correct — it is indeed <em>{{ session.currentRound.answer.name }}</em>
+    <div
+      v-if="locked"
+      class="text-center font-serif italic text-xl py-3.5"
+      style="animation: toast-in 0.3s"
+    >
+      <span v-if="picked && picked.code === session.currentRound.answer.code" class="text-ok">
+        ✓ Correct — it is indeed <em class="text-ink font-medium">{{ session.currentRound.answer.name }}</em>
       </span>
-      <span v-else-if="picked" class="toast-wrong">
-        ✗ Not quite — the answer was <em>{{ session.currentRound.answer.name }}</em>
+      <span v-else-if="picked" class="text-bad">
+        ✗ Not quite — the answer was <em class="text-ink font-medium">{{ session.currentRound.answer.name }}</em>
       </span>
-      <span v-else class="toast-wrong">
-        Time's up — it was <em>{{ session.currentRound.answer.name }}</em>
+      <span v-else class="text-bad">
+        Time's up — it was <em class="text-ink font-medium">{{ session.currentRound.answer.name }}</em>
       </span>
     </div>
   </main>

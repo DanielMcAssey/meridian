@@ -7,7 +7,6 @@ definePageMeta({ ssr: false })
 const playerName = useLocalStorage('geo.player.name', '')
 const settings = useGameSettings()
 
-// If we already have a name, skip straight to the menu
 onMounted(() => {
   if (playerName.value) navigateTo('/menu')
 })
@@ -30,82 +29,115 @@ function submit() {
 </script>
 
 <template>
-  <main class="screen welcome">
-    <!-- Compass art -->
-    <div class="welcome-art" aria-hidden="true">
-      <svg viewBox="0 0 600 600" class="welcome-compass">
-        <defs>
-          <radialGradient id="cg" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stop-color="rgba(0,0,0,0)" />
-            <stop offset="100%" stop-color="rgba(0,0,0,0.06)" />
-          </radialGradient>
-        </defs>
-        <circle cx="300" cy="300" r="280" fill="url(#cg)" />
-        <circle cx="300" cy="300" r="240" class="rose-ring" />
-        <circle cx="300" cy="300" r="180" class="rose-ring" />
-        <circle cx="300" cy="300" r="120" class="rose-ring" />
-        <line
-          v-for="i in 32"
-          :key="i"
-          :x1="300 + Math.cos(((i - 1) / 32) * Math.PI * 2) * ((i - 1) % 4 === 0 ? 200 : (i - 1) % 2 === 0 ? 230 : 245)"
-          :y1="300 + Math.sin(((i - 1) / 32) * Math.PI * 2) * ((i - 1) % 4 === 0 ? 200 : (i - 1) % 2 === 0 ? 230 : 245)"
-          :x2="300 + Math.cos(((i - 1) / 32) * Math.PI * 2) * 260"
-          :y2="300 + Math.sin(((i - 1) / 32) * Math.PI * 2) * 260"
-          class="rose-tick"
-        />
-        <path d="M300 60 L320 300 L300 540 L280 300 Z" class="rose-needle" />
-        <path d="M60 300 L300 280 L540 300 L300 320 Z" class="rose-needle-h" />
-        <text x="300" y="46" text-anchor="middle" class="rose-letter">N</text>
-        <text x="300" y="568" text-anchor="middle" class="rose-letter">S</text>
-        <text x="556" y="308" text-anchor="middle" class="rose-letter">E</text>
-        <text x="44" y="308" text-anchor="middle" class="rose-letter">W</text>
-      </svg>
-    </div>
-
-    <!-- Card -->
-    <div class="welcome-card">
-      <span class="eyebrow">Volume I · The Atlas</span>
-      <h1 class="welcome-title">A wager with the <em>world</em>.</h1>
-      <p class="welcome-lede">
-        A round of flags, a pin dropped on a far shore, a country to find on the map — your wits
-        against every land we know.
-      </p>
-
-      <form class="welcome-form" @submit.prevent="submit">
-        <label class="field">
-          <span class="field-label">Inscribe your name in the manifest</span>
-          <input
-            ref="inputRef"
-            v-model="name"
-            class="field-input"
-            type="text"
-            placeholder="e.g. Captain Aurelia Vance"
-            maxlength="28"
+  <main class="screen">
+    <div class="grid grid-cols-1 md:grid-cols-[1.1fr_1fr] gap-14 items-center min-h-[calc(100vh-5rem)]">
+      <!-- Compass art — top on mobile, right on md+ -->
+      <div
+        class="relative aspect-square max-w-xs mx-auto w-full md:order-last md:max-w-none"
+        aria-hidden="true"
+      >
+        <svg viewBox="0 0 600 600" class="w-full h-full" style="animation: gentle-spin 220s linear infinite">
+          <defs>
+            <radialGradient id="cg" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="rgba(0,0,0,0)" />
+              <stop offset="100%" stop-color="rgba(0,0,0,0.06)" />
+            </radialGradient>
+          </defs>
+          <circle cx="300" cy="300" r="280" fill="url(#cg)" />
+          <circle cx="300" cy="300" r="240" class="rose-ring" />
+          <circle cx="300" cy="300" r="180" class="rose-ring" />
+          <circle cx="300" cy="300" r="120" class="rose-ring" />
+          <line
+            v-for="i in 32"
+            :key="i"
+            :x1="300 + Math.cos(((i - 1) / 32) * Math.PI * 2) * ((i - 1) % 4 === 0 ? 200 : (i - 1) % 2 === 0 ? 230 : 245)"
+            :y1="300 + Math.sin(((i - 1) / 32) * Math.PI * 2) * ((i - 1) % 4 === 0 ? 200 : (i - 1) % 2 === 0 ? 230 : 245)"
+            :x2="300 + Math.cos(((i - 1) / 32) * Math.PI * 2) * 260"
+            :y2="300 + Math.sin(((i - 1) / 32) * Math.PI * 2) * 260"
+            class="rose-tick"
           />
-        </label>
+          <path d="M300 60 L320 300 L300 540 L280 300 Z" class="rose-needle" />
+          <path d="M60 300 L300 280 L540 300 L300 320 Z" class="rose-needle-h" />
+          <text x="300" y="46"  text-anchor="middle" class="rose-letter">N</text>
+          <text x="300" y="568" text-anchor="middle" class="rose-letter">S</text>
+          <text x="556" y="308" text-anchor="middle" class="rose-letter">E</text>
+          <text x="44"  y="308" text-anchor="middle" class="rose-letter">W</text>
+        </svg>
+      </div>
 
-        <div class="field">
-          <span class="field-label">Pick your peril · the wider the world, the harder</span>
-          <div class="diff-grid">
-            <button
-              v-for="d in DIFFICULTIES"
-              :key="d.id"
-              type="button"
-              :class="['diff-card', { 'diff-card-on': difficulty === d.id }]"
-              @click="difficulty = d.id"
-            >
-              <span class="diff-card-label">{{ d.label }}</span>
-              <span class="diff-card-note">{{ d.note }}</span>
-              <span class="diff-card-count">{{ d.est }} countries</span>
-            </button>
+      <!-- Card -->
+      <div class="max-w-lg">
+        <span class="eyebrow">Volume I · The Atlas</span>
+        <h1
+          class="font-serif font-normal tracking-[-0.025em] leading-[0.98] mt-3.5 mb-4"
+          style="font-size: clamp(48px, 6vw, 80px)"
+        >
+          A wager with the <em class="italic" style="color: var(--accent-deep)">world</em>.
+        </h1>
+        <p class="text-[17px] text-ink-2 mb-9 max-w-[460px]">
+          A round of flags, a pin dropped on a far shore, a country to find on the map — your wits
+          against every land we know.
+        </p>
+
+        <form class="flex flex-col gap-5" @submit.prevent="submit">
+          <!-- Name field -->
+          <label class="flex flex-col gap-2.5">
+            <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
+              Inscribe your name in the manifest
+            </span>
+            <input
+              ref="inputRef"
+              v-model="name"
+              class="font-serif italic text-[28px] py-3 bg-transparent border-0
+                     border-b-[1.5px] border-ink-2 text-ink outline-none transition-[0.2s]
+                     placeholder:text-ink-3 placeholder:opacity-55
+                     focus:border-[var(--accent)]"
+              type="text"
+              placeholder="e.g. Captain Aurelia Vance"
+              maxlength="28"
+            />
+          </label>
+
+          <!-- Difficulty -->
+          <div class="flex flex-col gap-2.5">
+            <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
+              Pick your peril · the wider the world, the harder
+            </span>
+            <div class="grid grid-cols-2 gap-2">
+              <button
+                v-for="d in DIFFICULTIES"
+                :key="d.id"
+                type="button"
+                :class="[
+                  'text-left bg-paper border-[1.5px] border-rule rounded-xl px-4 py-3.5',
+                  'flex flex-col gap-0.5 transition-[0.14s] cursor-pointer',
+                  'hover:border-ink-2 hover:-translate-y-px',
+                  difficulty === d.id
+                    ? 'border-[var(--accent)]! bg-[var(--accent-soft)]!'
+                    : '',
+                ]"
+                @click="difficulty = d.id"
+              >
+                <span
+                  :class="[
+                    'font-serif text-xl font-medium tracking-[-0.01em]',
+                    difficulty === d.id ? 'text-[var(--accent-deep)]' : 'text-ink',
+                  ]"
+                >{{ d.label }}</span>
+                <span class="text-[13px] text-ink-2">{{ d.note }}</span>
+                <span class="font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-3 mt-1">
+                  {{ d.est }} countries
+                </span>
+              </button>
+            </div>
           </div>
-        </div>
 
-        <button type="submit" class="btn-primary" :disabled="!name.trim()">Set sail →</button>
-      </form>
+          <button type="submit" class="btn-primary" :disabled="!name.trim()">Set sail →</button>
+        </form>
 
-      <div class="welcome-meta">
-        <span>Your name &amp; preferences are kept on this device only.</span>
+        <p class="mt-7 text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">
+          Your name &amp; preferences are kept on this device only.
+        </p>
       </div>
     </div>
   </main>

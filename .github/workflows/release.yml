@@ -10,13 +10,12 @@ concurrency:
   cancel-in-progress: false  # never cancel an in-flight release
 
 permissions:
-  contents: write       # semantic-release pushes tag + CHANGELOG commit
+  contents: write       # semantic-release pushes tag
   packages: write       # push to GHCR
   issues: write         # semantic-release can close issues
   pull-requests: write  # semantic-release can comment on PRs
 
 jobs:
-  # ── 1. Semantic Release ──────────────────────────────────────────────────
   release:
     name: Semantic Release
     runs-on: ubuntu-latest
@@ -31,7 +30,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 24
           cache: npm
 
       - name: Install dependencies
@@ -43,11 +42,9 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # ── 2. Build & Push Docker image ────────────────────────────────────────
   docker:
     name: Build & Push Docker Image
     needs: release
-    if: needs.release.outputs.published == 'true'
     runs-on: ubuntu-latest
 
     steps:
@@ -71,7 +68,6 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: ghcr.io/${{ github.repository }}
-          # Lowercase is enforced by metadata-action automatically
           tags: |
             type=semver,pattern={{version}},value=v${{ needs.release.outputs.version }}
             type=semver,pattern={{major}}.{{minor}},value=v${{ needs.release.outputs.version }}

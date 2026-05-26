@@ -11,16 +11,29 @@ const emit = defineEmits<{ pick: [country: Country] }>()
 </script>
 
 <template>
-  <div class="round-flag">
-    <div class="flag-stage">
-      <div class="flag-card">
-        <FlagImage :code="round.answer.code" class="flag-img" />
+  <div class="flex flex-col gap-6 items-center">
+    <!-- Flag display -->
+    <div
+      class="w-full flex justify-center p-4 rounded-xl border border-dashed border-rule-2"
+      style="background: repeating-linear-gradient(45deg, var(--color-bg-tint) 0 12px, var(--color-paper) 12px 24px)"
+    >
+      <div
+        class="w-full max-w-[min(520px,100%)] aspect-[3/2]
+               bg-paper rounded-md overflow-hidden flex items-center justify-center"
+        style="box-shadow: 0 16px 40px -16px rgba(20,15,10,0.35), 0 1px 0 rgba(20,15,10,0.06)"
+      >
+        <FlagImage :code="round.answer.code" class="w-full h-full block object-cover select-none" />
       </div>
     </div>
-    <div class="prompt">
-      <span class="prompt-eyebrow">Plate I · Vexillology</span>
-      <h2 class="prompt-text">Whose <em>banner</em> is this?</h2>
+
+    <!-- Prompt -->
+    <div class="text-center">
+      <span class="font-mono text-[10.5px] tracking-[0.18em] uppercase text-ink-3">Plate I · Vexillology</span>
+      <h2 class="font-serif font-normal text-[clamp(28px,3.5vw,40px)] tracking-[-0.015em] mt-1.5 mb-0">
+        Whose <em class="italic" style="color: var(--accent-deep)">banner</em> is this?
+      </h2>
     </div>
+
     <RoundsAnswerOptions
       :options="round.options"
       :answer="round.answer"

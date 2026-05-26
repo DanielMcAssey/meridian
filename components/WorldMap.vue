@@ -8,12 +8,17 @@ const props = withDefaults(
     pinCode?: string | null
     revealCode?: string | null
     selectedCode?: string | null
+    heightClass?: string
+    /** When true the wrapper grows via flex-1 and the SVG fills it 100% (for Cartographer) */
+    fillParent?: boolean
   }>(),
   {
     mode: 'static',
     pinCode: null,
     revealCode: null,
     selectedCode: null,
+    heightClass: 'max-h-[55vh] sm:max-h-[72vh]',
+    fillParent: false,
   },
 )
 
@@ -40,14 +45,12 @@ const vb0 = computed<VbState>(() => {
 
 const vb = reactive<VbState>({ x: 30.767, y: 241.591, w: 784.077, h: 458.627 })
 
-// Sync when atlas loads (viewBox is read once)
 watch(
   () => atlas.viewBox,
   () => Object.assign(vb, vb0.value),
   { immediate: true },
 )
 
-// Reset zoom when the target country changes
 watch([() => props.pinCode, () => props.revealCode], () => {
   Object.assign(vb, vb0.value)
 })
@@ -97,13 +100,9 @@ function zoomAtClient(clientX: number, clientY: number, factor: number) {
 }
 
 // ── native event listeners (wheel + drag) ────────────────────────────────
-// We attach these natively (not via Vue bindings) so:
-//   - wheel can call preventDefault (passive: false)
-//   - pointermove is on window, not the element
 
 let drag: { startX: number; startY: number; vb: VbState } | null = null
 let moved = false
-
 let cleanupListeners: (() => void) | null = null
 
 onMounted(() => {
@@ -145,10 +144,7 @@ onMounted(() => {
       window.removeEventListener('pointermove', onPointerMove)
       window.removeEventListener('pointerup', onPointerUp)
       window.removeEventListener('pointercancel', onPointerUp)
-      // Let the click handler read `moved` before we clear it
-      setTimeout(() => {
-        moved = false
-      }, 0)
+      setTimeout(() => { moved = false }, 0)
     }
 
     window.addEventListener('pointermove', onPointerMove)
@@ -188,7 +184,7 @@ function classFor(code: string): string {
 // ── zoom level display ──────────────────────────────────────────────────
 
 const zoomLevel = computed(() => vb0.value.w / vb.w)
-const canZoomIn = computed(() => zoomLevel.value < 12)
+const canZoomIn  = computed(() => zoomLevel.value < 12)
 const canZoomOut = computed(() => zoomLevel.value > 1.01)
 
 function zoomCenter(factor: number) {
@@ -202,13 +198,20 @@ function zoomCenter(factor: number) {
 <template>
   <div
     ref="wrapRef"
-    class="worldmap-wrap"
+    class="worldmap-wrap relative w-full rounded-2xl overflow-hidden
+           border border-rule-2 bg-ocean user-select-none
+           cursor-grab active:cursor-grabbing"
+    :class="[
+      { 'cursor-crosshair! active:cursor-crosshair!': mode === 'click' },
+      props.fillParent ? 'flex-1 min-h-0' : '',
+    ]"
     :data-mode="mode"
-    style="touch-action: none"
+    style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02), var(--shadow-sm); touch-action: none"
   >
     <svg
       :viewBox="`${vb.x} ${vb.y} ${vb.w} ${vb.h}`"
-      class="worldmap-svg"
+      :class="props.fillParent ? 'worldmap-svg' : ['worldmap-svg', props.heightClass]"
+      :style="props.fillParent ? { width: '100%', height: '100%' } : undefined"
       preserveAspectRatio="xMidYMid meet"
     >
       <rect x="-1000" y="-1000" width="4000" height="4000" class="ocean" />
@@ -229,7 +232,7 @@ function zoomCenter(factor: number) {
         :transform="`translate(${reveal.svgCx},${reveal.svgCy})`"
       >
         <circle r="14" class="reveal-halo-outer" />
-        <circle r="6" class="reveal-halo-inner" />
+        <circle r="6"  class="reveal-halo-inner" />
       </g>
 
       <!-- Pin -->
@@ -238,7 +241,7 @@ function zoomCenter(factor: number) {
         class="pin"
         :transform="`translate(${pin.svgCx},${pin.svgCy})`"
       >
-        <circle r="9" class="pin-ring" />
+        <circle r="9"   class="pin-ring" />
         <line x1="0" y1="0" x2="0" y2="-22" class="pin-stem" />
         <circle cx="0" cy="-22" r="4.5" class="pin-head" />
         <circle cx="0" cy="-22" r="1.5" class="pin-dot" />
@@ -247,26 +250,42 @@ function zoomCenter(factor: number) {
     </svg>
 
     <!-- HUD controls -->
-    <div class="map-hud">
+    <div
+      class="map-hud absolute top-2.5 right-2.5
+             flex flex-col gap-1.5 items-center
+             rounded-xl p-1.5 backdrop-blur-md"
+      style="background: var(--hud); border: 1px solid var(--hud-border); box-shadow: var(--shadow-sm)"
+    >
       <button
-        class="hud-btn"
+        class="w-10 h-10 flex items-center justify-center
+               font-mono text-base text-ink rounded-lg border-none bg-transparent
+               transition-[0.12s] hover:not-disabled:bg-bg-tint
+               disabled:opacity-30 disabled:cursor-default"
         :disabled="!canZoomIn"
         title="Zoom in"
         @click="zoomCenter(1.4)"
       >+</button>
       <button
-        class="hud-btn"
+        class="w-10 h-10 flex items-center justify-center
+               font-mono text-base text-ink rounded-lg border-none bg-transparent
+               transition-[0.12s] hover:not-disabled:bg-bg-tint
+               disabled:opacity-30 disabled:cursor-default"
         :disabled="!canZoomOut"
         title="Zoom out"
         @click="zoomCenter(1 / 1.4)"
       >−</button>
       <button
-        class="hud-btn hud-btn-reset"
+        class="w-10 h-10 flex items-center justify-center
+               font-mono text-[18px] text-ink rounded-lg border-none bg-transparent
+               transition-[0.12s] hover:not-disabled:bg-bg-tint
+               disabled:opacity-30 disabled:cursor-default"
         :disabled="!canZoomOut"
         title="Reset"
         @click="Object.assign(vb, vb0)"
       >↺</button>
-      <span class="hud-zoom">{{ zoomLevel.toFixed(1) }}×</span>
+      <span class="font-mono text-[10.5px] text-ink-3 tracking-[0.04em] pt-0.5">
+        {{ zoomLevel.toFixed(1) }}×
+      </span>
     </div>
   </div>
 </template>

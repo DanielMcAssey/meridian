@@ -30,5 +30,5 @@ export default defineEventHandler((event): LeaderboardEntry[] => {
   `
   params.push(limit)
 
-  return db.prepare(sql).all(...params) as LeaderboardEntry[]
+  return db.prepare(sql).all(...params) as unknown as LeaderboardEntry[]
 })

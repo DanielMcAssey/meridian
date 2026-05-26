@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import type { LeaderboardEntry } from '~/types/game'
 
-// SSR enabled — data is fetched on the server for a fast first paint
 const playerName = useLocalStorage('geo.player.name', '')
 
 const { data: board, refresh } = await useFetch<LeaderboardEntry[]>('/api/leaderboard', {
@@ -17,13 +16,7 @@ function trophyFor(rank: number): TrophyKind | null {
 }
 
 function modeName(mode: string) {
-  return mode === 'flag'
-    ? 'Banners'
-    : mode === 'pin'
-      ? 'Pin Drop'
-      : mode === 'cart'
-        ? 'Cartographer'
-        : 'Grand Tour'
+  return mode === 'flag' ? 'Banners' : mode === 'pin' ? 'Pin Drop' : mode === 'cart' ? 'Cartographer' : 'Grand Tour'
 }
 
 // Migrate any scores still sitting in localStorage (one-time migration)
@@ -33,85 +26,118 @@ onMounted(async () => {
     const raw = localStorage.getItem(LS_BOARD)
     if (!raw) return
     const entries = JSON.parse(raw) as Array<{
-      name: string
-      score: number
-      correct: number
-      total: number
-      mode: string
-      difficulty: string
+      name: string; score: number; correct: number; total: number; mode: string; difficulty: string
     }>
     if (!Array.isArray(entries) || entries.length === 0) return
-
     await Promise.allSettled(
-      entries.map((e) =>
-        $fetch('/api/leaderboard', {
-          method: 'POST',
-          body: {
-            name: e.name,
-            score: e.score,
-            correct: e.correct,
-            total: e.total,
-            mode: e.mode,
-            difficulty: e.difficulty,
-          },
-        }),
-      ),
+      entries.map((e) => $fetch('/api/leaderboard', { method: 'POST', body: e })),
     )
     localStorage.removeItem(LS_BOARD)
     await refresh()
-  } catch {
-    // Non-critical — ignore migration errors
-  }
+  } catch { /* Non-critical */ }
 })
+
+// Trophy row background gradient maps
+const trophyBg: Record<TrophyKind, string> = {
+  gold:   'linear-gradient(90deg, color-mix(in oklab, oklch(0.84 0.13 90) 35%, var(--color-paper)), var(--color-paper))',
+  silver: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.85 0.02 250) 35%, var(--color-paper)), var(--color-paper))',
+  bronze: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.65 0.10 45) 30%, var(--color-paper)), var(--color-paper))',
+}
+const trophyColor: Record<TrophyKind, string> = {
+  gold:   'oklch(0.72 0.16 90)',
+  silver: 'oklch(0.78 0.015 250)',
+  bronze: 'oklch(0.55 0.11 45)',
+}
 </script>
 
 <template>
-  <main class="screen leaderboard">
-    <div class="lb-head">
+  <main class="screen">
+    <!-- Header -->
+    <div class="max-w-lg mb-8">
       <span class="eyebrow">The Hall of Travellers</span>
-      <h1 class="lb-title">Leaderboard.</h1>
-      <p class="lb-sub">The fifty finest scores on record.</p>
+      <h1
+        class="font-serif font-normal tracking-[-0.02em] leading-none mt-3 mb-1.5"
+        style="font-size: clamp(40px, 5vw, 64px)"
+      >Leaderboard.</h1>
+      <p class="text-ink-2 m-0">The fifty finest scores on record.</p>
     </div>
 
-    <div v-if="!board || board.length === 0" class="lb-empty">
+    <!-- Empty state -->
+    <div
+      v-if="!board || board.length === 0"
+      class="text-center py-20 px-5 font-serif italic text-2xl text-ink-3"
+    >
       No scores yet. Set sail to inscribe your name.
     </div>
 
-    <ol v-else class="lb-list">
-      <li class="lb-row lb-row-head">
-        <span class="lb-rank">#</span>
-        <span class="lb-name">Name</span>
-        <span class="lb-mode">Game</span>
-        <span class="lb-diff">Difficulty</span>
-        <span class="lb-acc">Correct</span>
-        <span class="lb-score">Score</span>
+    <!-- Table -->
+    <ol
+      v-else
+      class="list-none m-0 mb-7 p-0 bg-paper border border-rule rounded-[18px] overflow-hidden"
+      style="box-shadow: var(--shadow-sm)"
+    >
+      <!-- Header row -->
+      <li
+        class="grid gap-3 px-4 sm:px-5 py-3 bg-bg-tint border-b border-rule
+               grid-cols-[3rem_1fr_auto] sm:grid-cols-[5rem_1.4fr_1fr_1fr_0.8fr_0.8fr]"
+      >
+        <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">#</span>
+        <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Name</span>
+        <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Game</span>
+        <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Difficulty</span>
+        <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Correct</span>
+        <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3 text-right">Score</span>
       </li>
+
+      <!-- Data rows -->
       <li
         v-for="(entry, i) in board"
         :key="entry.id ?? i"
-        :class="[
-          'lb-row',
-          trophyFor(i) ? `lb-trophy lb-trophy-${trophyFor(i)}` : '',
-          entry.name === playerName ? 'lb-row-you' : '',
-        ]"
+        class="grid gap-3 px-4 sm:px-5 py-3 border-t border-rule items-center text-[14.5px] text-ink
+               grid-cols-[3rem_1fr_auto] sm:grid-cols-[5rem_1.4fr_1fr_1fr_0.8fr_0.8fr]"
+        :style="{
+          background: entry.name === playerName
+            ? 'color-mix(in oklab, var(--accent) 22%, var(--color-paper))'
+            : trophyFor(i) ? trophyBg[trophyFor(i)!] : undefined,
+          boxShadow: entry.name === playerName && trophyFor(i) ? 'inset 4px 0 0 var(--accent)' : undefined,
+        }"
       >
-        <span class="lb-rank">
-          <span v-if="trophyFor(i)" class="trophy-medal" aria-hidden="true">
-            <TrophySvg :kind="trophyFor(i)!" />
+        <!-- Rank -->
+        <span class="font-mono text-ink-3 inline-flex items-center gap-2">
+          <span
+            v-if="trophyFor(i)"
+            class="inline-flex items-center justify-center w-7 h-7 rounded-full shrink-0"
+            :style="{ color: trophyColor[trophyFor(i)!], background: `color-mix(in oklab, ${trophyColor[trophyFor(i)!]} 25%, transparent)` }"
+            aria-hidden="true"
+          >
+            <TrophySvg :kind="trophyFor(i)!" class="trophy-svg w-[18px] h-[18px]" />
           </span>
-          <span class="lb-rank-num">{{ String(i + 1).padStart(2, '0') }}</span>
+          <span class="tabular-nums">{{ String(i + 1).padStart(2, '0') }}</span>
         </span>
-        <span class="lb-name">
-          {{ entry.name }}<em v-if="entry.name === playerName"> (you)</em>
+
+        <!-- Name -->
+        <span class="font-serif text-[19px] text-ink truncate">
+          {{ entry.name }}
+          <em
+            v-if="entry.name === playerName"
+            class="font-mono not-italic text-[13px] ml-2 tracking-[0.08em]"
+            :style="{ color: entry.name === playerName ? 'var(--accent)' : 'var(--accent-deep)' }"
+          >(you)</em>
         </span>
-        <span class="lb-mode">{{ modeName(entry.mode) }}</span>
-        <span class="lb-diff">{{ entry.difficulty }}</span>
-        <span class="lb-acc">{{ entry.correct }}/{{ entry.total }}</span>
-        <span class="lb-score">{{ entry.score }}</span>
+
+        <!-- Game + Difficulty — hidden on mobile -->
+        <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2 capitalize">{{ modeName(entry.mode) }}</span>
+        <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2 capitalize">{{ entry.difficulty }}</span>
+
+        <!-- Correct — hidden on mobile -->
+        <span class="hidden sm:block font-mono text-ink-2">{{ entry.correct }}/{{ entry.total }}</span>
+
+        <!-- Score -->
+        <span class="font-mono font-semibold text-right text-ink">{{ entry.score }}</span>
       </li>
     </ol>
 
-    <div class="lb-cta">
+    <div>
       <button class="btn-primary" @click="navigateTo('/menu')">Back to the atlas</button>
     </div>
   </main>
