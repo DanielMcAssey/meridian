@@ -10,7 +10,6 @@ export function useGameSettings() {
   const difficulty = useLocalStorage<Difficulty>('geo.difficulty', 'medium')
   const rounds     = useLocalStorage<number>('geo.rounds', 8)
   const timer      = useLocalStorage<boolean>('geo.timer', true)
-  const timerSecs  = useLocalStorage<number>('geo.timerSecs', 20)
 
-  return { difficulty, rounds, timer, timerSecs }
+  return { difficulty, rounds, timer }
 }

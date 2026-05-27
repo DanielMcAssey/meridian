@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Difficulty, GameMode } from '~/types/game'
-import { DIFFICULTIES, MIXED_ROUND_TYPES, MODES, ROUND_COUNTS, TIMER_OPTIONS, type ModeConfig, type TimerOption } from '~/config/game'
+import { DIFFICULTIES, DIFFICULTY_TIMER_SECS, MIXED_ROUND_TYPES, MODES, ROUND_COUNTS, type ModeConfig } from '~/config/game'
 
 const atlas      = useAtlasStore()
 const session    = useSessionStore()
@@ -14,15 +14,6 @@ const regularModes = MODES.slice(1)
 onMounted(() => {
   if (!playerName.value) navigateTo('/')
 })
-
-function isTimerActive(opt: TimerOption) {
-  return settings.timer.value === opt.on && (!opt.on || settings.timerSecs.value === opt.secs)
-}
-
-function setTimer(opt: TimerOption) {
-  settings.timer.value     = opt.on
-  settings.timerSecs.value = opt.secs
-}
 
 function startGame(mode: GameMode) {
   const rounds = buildRounds(atlas.countries, mode, settings.rounds.value, settings.difficulty.value)
@@ -106,21 +97,19 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
 
         <!-- Timer -->
         <div class="flex flex-col gap-2">
-          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Timer</span>
+          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
+            Timer<span v-if="settings.timer.value" class="text-ink-3 ml-1">({{ DIFFICULTY_TIMER_SECS[settings.difficulty.value] }}s)</span>
+          </span>
           <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
-            <button
-              v-for="opt in TIMER_OPTIONS"
-              :key="opt.label"
-              :class="isTimerActive(opt) ? 'diff-pill-on' : 'diff-pill'"
-              @click="setTimer(opt)"
-            >{{ opt.label }}</button>
+            <button :class="!settings.timer.value ? 'diff-pill-on' : 'diff-pill'" @click="settings.timer.value = false">Off</button>
+            <button :class="settings.timer.value  ? 'diff-pill-on' : 'diff-pill'" @click="settings.timer.value = true">On</button>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Mode cards -->
-    <div class="flex flex-col gap-4">
+    <div class="flex flex-col gap-4 max-w-2xl">
 
       <!-- ── The Grand Tour — featured, full-width card ───────────────────── -->
       <button
@@ -161,7 +150,7 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
           >{{ grandTour.title }}</h2>
           <p class="text-[15px] text-ink-2 m-0 max-w-md">{{ grandTour.sub }}</p>
           <!-- Sub-tags: dynamically shows which round types are included at current difficulty -->
-          <div class="flex flex-wrap gap-2 mt-1">
+          <div class="flex flex-wrap gap-2 mt-1 min-h-[54px] content-start">
             <span
               v-for="tag in grandTourTags"
               :key="tag"

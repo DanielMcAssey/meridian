@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Country, RoundResult } from '~/types/game'
+import { DIFFICULTY_TIMER_SECS } from '~/config/game'
 
 const session = useSessionStore()
 const settings = useGameSettings()
@@ -44,7 +45,7 @@ watch(
     picked.value = null
     locked.value = false
     startTime = Date.now()
-    timeLeft.value = settings.timer.value ? settings.timerSecs.value : 0
+    timeLeft.value = settings.timer.value ? DIFFICULTY_TIMER_SECS[session.difficulty] : 0
     startTick()
   },
   { immediate: true },
@@ -77,8 +78,8 @@ async function handleLock(opt: Country | null, elapsedSec: number) {
   const pts = correct
     ? calcPoints(
         settings.timer.value,
-        Math.max(0, settings.timerSecs.value - elapsedSec),
-        settings.timerSecs.value,
+        Math.max(0, DIFFICULTY_TIMER_SECS[session.difficulty] - elapsedSec),
+        DIFFICULTY_TIMER_SECS[session.difficulty],
         session.difficulty,
       )
     : 0
@@ -131,8 +132,8 @@ const isCorrect     = computed(() => {
 })
 const lastResult    = computed(() => locked.value && session.results.length > 0 ? session.results[session.results.length - 1] : null)
 const timerPct      = computed(() =>
-  settings.timer.value && settings.timerSecs.value > 0
-    ? Math.max(0, (timeLeft.value / settings.timerSecs.value) * 100) : 0,
+  settings.timer.value
+    ? Math.max(0, (timeLeft.value / DIFFICULTY_TIMER_SECS[session.difficulty]) * 100) : 0,
 )
 const timerLow = computed(() => timeLeft.value < 4 && settings.timer.value)
 

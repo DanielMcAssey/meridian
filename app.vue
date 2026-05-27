@@ -11,6 +11,12 @@ const mounted = ref(false)
 onMounted(() => {
   mounted.value = true
   atlas.load()
+
+  // When autoUpdate activates a new SW (skipWaiting → controllerchange),
+  // reload so the new bundles are served instead of the old cached ones.
+  navigator.serviceWorker?.addEventListener('controllerchange', () => {
+    window.location.reload()
+  })
 })
 </script>
 

@@ -76,21 +76,15 @@ export function modeName(mode: GameMode | string): string {
 export const ROUND_COUNTS = [5, 8, 12, 20] as const
 export type  RoundCount   = typeof ROUND_COUNTS[number]
 
-// ── Timer presets ─────────────────────────────────────────────────────────────
+// ── Timer duration per difficulty ─────────────────────────────────────────────
+// Timer is on/off only; duration is set automatically by difficulty.
 
-export interface TimerOption {
-  label: string
-  on:    boolean
-  secs:  number
+export const DIFFICULTY_TIMER_SECS: Record<Difficulty, number> = {
+  easy:   60,
+  medium: 30,
+  hard:   20,
+  expert: 10,
 }
-
-export const TIMER_OPTIONS: TimerOption[] = [
-  { label: 'Off', on: false, secs: 20 },
-  { label: '10s', on: true,  secs: 10 },
-  { label: '20s', on: true,  secs: 20 },
-  { label: '30s', on: true,  secs: 30 },
-  { label: '60s', on: true,  secs: 60 },
-]
 
 // ── Server-side validation sets ───────────────────────────────────────────────
 // Derived from the arrays above so they never drift.

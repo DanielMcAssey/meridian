@@ -109,18 +109,20 @@ export default defineNuxtConfig({
 
       // ── Runtime caching strategies ───────────────────────────────────────
       runtimeCaching: [
-        // Atlas data — CacheFirst because the file only changes on a new
-        // deploy.  Kept separate from the precache glob because @vite-pwa/nuxt
-        // sometimes scopes globPatterns to the Vite bundle directory and misses
-        // static public/ files entirely.
+        // Atlas data — NetworkFirst so a new deploy always serves fresh data
+        // once the SW updates and the page reloads.  Falls back to cache only
+        // when the device is genuinely offline.  Kept as a runtime rule because
+        // @vite-pwa/nuxt sometimes scopes globPatterns to the Vite bundle
+        // directory and misses static public/ files entirely.
         {
           urlPattern: /\/data\.json$/,
-          handler: 'CacheFirst' as const,
+          handler: 'NetworkFirst' as const,
           options: {
             cacheName: 'atlas-data',
+            networkTimeoutSeconds: 5,
             expiration: {
               maxEntries: 1,
-              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year — invalidated by SW update on new deploy
+              maxAgeSeconds: 60 * 60 * 24 * 7, // 7 days offline fallback
             },
             cacheableResponse: { statuses: [200] },
           },
