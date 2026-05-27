@@ -2,8 +2,14 @@
 const atlas = useAtlasStore()
 const route = useRoute()
 
-// Load geodata once on the client when the app mounts
+// Nuxt's navigateFallback always serves the '/' shell, so the server
+// renders with route.name === 'index' regardless of the real URL.
+// Any branch on route.name must be deferred until after mount so the
+// initial render matches the server output.
+const mounted = ref(false)
+
 onMounted(() => {
+  mounted.value = true
   atlas.load()
 })
 </script>
@@ -11,8 +17,14 @@ onMounted(() => {
 <template>
   <div class="min-h-screen flex flex-col">
     <AppChrome />
-    <!-- Show splash while atlas data is loading (not needed on the leaderboard) -->
-    <GameSplash v-if="!atlas.ready && route.name !== 'leaderboard'" />
-    <NuxtPage v-if="atlas.ready || route.name === 'leaderboard'" />
+    <div class="relative flex flex-col flex-1 min-h-0">
+      <NuxtPage />
+      <Transition leave-active-class="transition-opacity duration-500 ease-in" leave-to-class="opacity-0">
+        <GameSplash
+          v-if="mounted && !atlas.ready && route.name !== 'leaderboard'"
+          class="absolute! inset-0! z-10 bg-bg!"
+        />
+      </Transition>
+    </div>
   </div>
 </template>

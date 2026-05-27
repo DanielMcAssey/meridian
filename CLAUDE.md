@@ -80,6 +80,16 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 Tailwind CSS v4 (via `@tailwindcss/vite`). Custom CSS variables in `assets/styles/main.css` drive the accent colour system (`--accent`, `--color-ok`, `--color-bad`, etc.) and the `ink`/`paper`/`rule` design tokens used throughout templates.
 
+### Mobile compatibility
+
+The app must work well on mobile devices. All UI changes should be tested at mobile viewport sizes (≤ 640 px). Key considerations:
+
+- Use responsive Tailwind classes (`sm:`, `md:`) — design mobile-first
+- Touch targets must be large enough (min 44×44 px)
+- The SVG world map (`pin` and `cart` rounds) must be usable on small screens — avoid layouts that make the map too small to interact with
+- Avoid hover-only interactions; any hover state should have an equivalent tap/focus state
+- The 4-option flag grid and answer buttons should stack or resize gracefully on narrow screens
+
 ### PWA
 
 Configured in `nuxt.config.ts` via `@vite-pwa/nuxt`. All SVGs (179 country flags), JS/CSS bundles, and `data.json` are precached so the game works fully offline. The leaderboard API uses a `NetworkFirst` runtime strategy with a 4-second timeout.

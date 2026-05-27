@@ -1,6 +1,14 @@
 <script setup lang="ts">
 const route = useRoute()
 const playerName = useLocalStorage('geo.player.name', '')
+
+// Route-dependent styles must not be computed during SSR because Nuxt's
+// navigateFallback always serves the "/" shell, so the server sees
+// route.name === 'index' regardless of the real URL.  Deferring to after
+// mount makes the initial render match the server output (cursor:default)
+// and then silently corrects itself in the same tick.
+const mounted = ref(false)
+onMounted(() => { mounted.value = true })
 </script>
 
 <template>
@@ -15,7 +23,7 @@ const playerName = useLocalStorage('geo.player.name', '')
     <!-- Brand -->
     <div
       class="flex items-center gap-3 select-none"
-      :style="route.name !== 'index' ? 'cursor:pointer' : 'cursor:default'"
+      :style="mounted && route.name !== 'index' ? 'cursor:pointer' : 'cursor:default'"
       @click="route.name !== 'index' ? navigateTo('/menu') : undefined"
     >
       <span class="brand-mark shrink-0" aria-hidden="true">
@@ -34,8 +42,9 @@ const playerName = useLocalStorage('geo.player.name', '')
       </span>
     </div>
 
-    <!-- Right side — nav + player -->
-    <div v-if="route.name !== 'index' && playerName" class="flex items-center gap-4">
+    <!-- Right side — nav + player; gated on mounted so the initial render
+         matches the server (which always sees route "/" due to navigateFallback) -->
+    <div v-if="mounted && route.name !== 'index' && playerName" class="flex items-center gap-4">
       <button
         class="hidden sm:inline-flex items-center
                bg-transparent border border-rule-2 px-4 py-2

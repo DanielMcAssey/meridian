@@ -84,7 +84,7 @@ export default defineNuxtConfig({
       // JS/CSS bundles, data.json, HTML, fonts, AND all SVGs (flag images +
       // the app icon).  The 179 flag SVGs are small individually and must be
       // available offline so every quiz question can display its flag.
-      globPatterns: ['**/*.{js,css,html,json,ico,svg,woff,woff2,ttf}'],
+      globPatterns: ['**/*.{js,css,html,json,ico,png,svg,woff,woff2,ttf}'],
       cleanupOutdatedCaches: true,
 
       // Precache the app shell at "/" so navigateFallback can serve it for
@@ -104,6 +104,23 @@ export default defineNuxtConfig({
 
       // ── Runtime caching strategies ───────────────────────────────────────
       runtimeCaching: [
+        // Atlas data — CacheFirst because the file only changes on a new
+        // deploy.  Kept separate from the precache glob because @vite-pwa/nuxt
+        // sometimes scopes globPatterns to the Vite bundle directory and misses
+        // static public/ files entirely.
+        {
+          urlPattern: /\/data\.json$/,
+          handler: 'CacheFirst' as const,
+          options: {
+            cacheName: 'atlas-data',
+            expiration: {
+              maxEntries: 1,
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year — invalidated by SW update on new deploy
+            },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+
         // Google Fonts — stylesheet (small, changes rarely)
         {
           urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -150,10 +167,14 @@ export default defineNuxtConfig({
       ],
     },
 
-    // Keep the SW active during development so you can test offline behaviour
-    // with devtools → Application → Service Workers.
+    // SW is disabled in dev so the browser always fetches fresh HTML from the
+    // dev server.  With enabled:true the SW caches the first shell it sees and
+    // serves that stale HTML on every reload, causing SSR hydration mismatches
+    // as the JS changes but the cached HTML does not.
+    // To test offline/PWA behaviour locally, flip this to true temporarily and
+    // use DevTools → Application → Service Workers → Update / Unregister when done.
     devOptions: {
-      enabled: true,
+      enabled: false,
       suppressWarnings: true,
       navigateFallbackAllowlist: [/^(?!\/_nuxt\/|\/api\/|\/icons\/|\/favicon).*/],
       type: 'module',

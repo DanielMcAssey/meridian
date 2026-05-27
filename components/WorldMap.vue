@@ -106,6 +106,7 @@ const activePointers = new Map<number, { x: number; y: number }>()
 let lastPinchDist = 0
 let drag: { startX: number; startY: number; vb: VbState } | null = null
 let moved = false
+let pointerDownTarget: Element | null = null
 let cleanupListeners: (() => void) | null = null
 
 function pinchDist() {
@@ -143,6 +144,7 @@ onMounted(() => {
 
     // First finger / mouse button down — prepare drag.
     if (e.button !== 0 && e.pointerType === 'mouse') return
+    pointerDownTarget = e.target as Element  // record before capture remaps events
     moved = false
     drag = { startX: e.clientX, startY: e.clientY, vb: { ...vb } }
   }
@@ -183,6 +185,16 @@ onMounted(() => {
     activePointers.delete(e.pointerId)
     if (activePointers.size < 2) lastPinchDist = 0
     if (activePointers.size === 0) {
+      // Handle tap-to-pick here instead of via @click on <path> elements.
+      // setPointerCapture re-routes the synthetic click event to the wrapper,
+      // so @click on child paths never fires. Using the pointerdown target
+      // (recorded before capture takes effect) avoids that entirely.
+      if (!moved && pointerDownTarget) {
+        const path = pointerDownTarget.closest('[data-code]')
+        const code = path?.getAttribute('data-code') ?? null
+        if (code) handlePathClick(code)
+      }
+      pointerDownTarget = null
       drag = null
       setTimeout(() => { moved = false }, 0)
     }
@@ -261,8 +273,8 @@ function zoomCenter(factor: number) {
           v-for="code in codes"
           :key="code"
           :d="atlas.countryPaths[code]"
+          :data-code="code"
           :class="classFor(code)"
-          @click="handlePathClick(code)"
         />
       </g>
 

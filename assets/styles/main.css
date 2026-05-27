@@ -260,6 +260,12 @@ button { font: inherit; color: inherit; cursor: pointer; }
   0%   { transform: scale(1);   opacity: 0.25; }
   100% { transform: scale(2.2); opacity: 0;    }
 }
-@keyframes card-in    { to   { opacity: 1; transform: none; } }
-@keyframes stage-in   { from { opacity: 0; transform: translateY(8px); } }
-@keyframes toast-in   { from { opacity: 0; transform: translateY(6px); } }
+@keyframes card-in       { to   { opacity: 1; transform: none; } }
+@keyframes stage-in      { from { opacity: 0; transform: translateY(8px); } }
+@keyframes toast-in      { from { opacity: 0; transform: translateY(6px); } }
+@keyframes fb-backdrop   { from { opacity: 0; } }
+@keyframes feedback-pop  {
+  0%   { opacity: 0; transform: scale(0.72) translateY(12px); }
+  60%  { opacity: 1; transform: scale(1.05) translateY(-3px); }
+  100% { transform: scale(1)    translateY(0);    }
+}
