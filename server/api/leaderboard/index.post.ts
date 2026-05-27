@@ -1,6 +1,9 @@
 import { z } from 'zod'
 import { count, gt } from 'drizzle-orm'
 import { scores } from '~/server/db/schema'
+import { maxPointsPerRound } from '~/utils/scoring'
+
+const VALID_TOTALS = new Set([5, 8, 12, 20])
 
 const bodySchema = z.object({
   name:       z.string().min(1).max(28).trim(),
@@ -9,7 +12,16 @@ const bodySchema = z.object({
   total:      z.number().int().min(1),
   mode:       z.enum(['flag', 'pin', 'cart', 'mixed']),
   difficulty: z.enum(['easy', 'medium', 'hard', 'expert']),
-})
+}).refine(
+  (b) => VALID_TOTALS.has(b.total),
+  { message: 'total must be a valid round count (5, 8, 12, or 20)', path: ['total'] },
+).refine(
+  (b) => b.correct <= b.total,
+  { message: 'correct cannot exceed total rounds', path: ['correct'] },
+).refine(
+  (b) => b.score <= b.correct * maxPointsPerRound(b.difficulty),
+  { message: 'score exceeds the maximum achievable for these settings', path: ['score'] },
+)
 
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, bodySchema.parse)

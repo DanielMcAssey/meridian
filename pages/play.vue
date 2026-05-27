@@ -72,14 +72,14 @@ async function handleLock(opt: Country | null, elapsedSec: number) {
   const round = session.currentRound!
   const correct = !!opt && opt.code === round.answer.code
 
-  let pts = 0
-  if (correct) {
-    pts = 100
-    if (settings.timer.value) {
-      const remaining = Math.max(0, settings.timerSecs.value - elapsedSec)
-      pts += Math.round((remaining / settings.timerSecs.value) * 50)
-    }
-  }
+  const pts = correct
+    ? calcPoints(
+        settings.timer.value,
+        Math.max(0, settings.timerSecs.value - elapsedSec),
+        settings.timerSecs.value,
+        session.difficulty,
+      )
+    : 0
 
   const result: RoundResult = { type: round.type, answer: round.answer, picked: opt, correct, points: pts, elapsed: elapsedSec }
   session.recordResult(result)
