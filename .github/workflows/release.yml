@@ -27,7 +27,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # full history required by semantic-release
+          fetch-depth: 0    # full history required by semantic-release
+          fetch-tags: true  # ensure existing tags are fetched so semantic-release doesn't recalculate from scratch
 
       - uses: actions/setup-node@v4
         with:

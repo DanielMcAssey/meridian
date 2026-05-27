@@ -1,33 +1,24 @@
 import { z } from 'zod'
+import { count, gt } from 'drizzle-orm'
+import { scores } from '~/server/db/schema'
 
-const schema = z.object({
-  name: z.string().min(1).max(28).trim(),
-  score: z.number().int().min(0),
-  correct: z.number().int().min(0),
-  total: z.number().int().min(1),
-  mode: z.enum(['flag', 'pin', 'cart', 'mixed']),
+const bodySchema = z.object({
+  name:       z.string().min(1).max(28).trim(),
+  score:      z.number().int().min(0),
+  correct:    z.number().int().min(0),
+  total:      z.number().int().min(1),
+  mode:       z.enum(['flag', 'pin', 'cart', 'mixed']),
   difficulty: z.enum(['easy', 'medium', 'hard', 'expert']),
 })
 
 export default defineEventHandler(async (event) => {
-  const body = await readValidatedBody(event, schema.parse)
-  const db = getDb()
+  const body = await readValidatedBody(event, bodySchema.parse)
+  const db   = getDb()
 
-  const insert = db.prepare(`
-    INSERT INTO scores (name, score, correct, total, mode, difficulty)
-    VALUES (?, ?, ?, ?, ?, ?)
-  `)
+  db.insert(scores).values(body).run()
 
-  insert.run(body.name, body.score, body.correct, body.total, body.mode, body.difficulty)
-
-  // Rank = number of scores strictly higher than this one, + 1
-  const { rank } = db
-    .prepare('SELECT COUNT(*) AS rank FROM scores WHERE score > ?')
-    .get(body.score) as { rank: number }
-
-  const { total } = db
-    .prepare('SELECT COUNT(*) AS total FROM scores')
-    .get() as { total: number }
+  const [{ rank  }] = db.select({ rank:  count() }).from(scores).where(gt(scores.score, body.score)).all()
+  const [{ total }] = db.select({ total: count() }).from(scores).all()
 
   return { rank: rank + 1, total }
 })

@@ -1,13 +1,13 @@
 import { DatabaseSync } from 'node:sqlite'
 import { mkdirSync } from 'node:fs'
 import { dirname, resolve } from 'node:path'
+import { drizzle } from 'drizzle-orm/node-sqlite'
+import * as schema from '../db/schema'
 
-declare global {
-  // eslint-disable-next-line no-var
-  var __meridianDb: DatabaseSync | undefined
-}
-
-const SCHEMA = `
+// Keeps the table and index in sync with the Drizzle schema definition.
+// Drizzle Kit (drizzle-kit generate / migrate) can take over this if the
+// schema ever grows to multiple tables or needs alter-column migrations.
+const BOOTSTRAP_SQL = `
   CREATE TABLE IF NOT EXISTS scores (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT    NOT NULL,
@@ -22,17 +22,17 @@ const SCHEMA = `
 `
 
 export default defineNitroPlugin(() => {
-  const config = useRuntimeConfig()
-  const dbPath = resolve(config.dbPath as string)
+  const config  = useRuntimeConfig()
+  const dbPath  = resolve(config.dbPath as string)
 
   mkdirSync(dirname(dbPath), { recursive: true })
 
-  const db = new DatabaseSync(dbPath)
-  db.exec('PRAGMA journal_mode = WAL')
-  db.exec('PRAGMA foreign_keys = ON')
-  db.exec(SCHEMA)
+  const sqlite = new DatabaseSync(dbPath)
+  sqlite.exec('PRAGMA journal_mode = WAL')
+  sqlite.exec('PRAGMA foreign_keys = ON')
+  sqlite.exec(BOOTSTRAP_SQL)
 
-  globalThis.__meridianDb = db
+  globalThis.__meridianDb = drizzle({ client: sqlite, schema })
 
   console.log(`[db] SQLite ready at ${dbPath}`)
 })
