@@ -11,9 +11,25 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import { ref } from 'vue'
 import type { LeaderboardEntry } from '~/types/game'
 
 export function useLeaderboardMutation() {
+  // TanStack Query is registered only by the client plugin; calling
+  // useQueryClient() during SSR throws "No queryClient found".
+  // All pages that call this composable have ssr:false, but we guard
+  // here too so any accidental SSR render never reaches the Query context.
+  if (import.meta.server) {
+    return {
+      submitScore: (_v: LeaderboardEntry) => {},
+      isPending:   ref(false),
+      isPaused:    ref(false),
+      isError:     ref(false),
+      isSuccess:   ref(false),
+      status:      ref('idle' as const),
+    }
+  }
+
   const queryClient = useQueryClient()
   const session     = useSessionStore()
 

@@ -2,8 +2,6 @@
 import { DIFFICULTIES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
-definePageMeta({ ssr: false })
-
 const playerName = useLocalStorage('geo.player.name', '')
 const settings = useGameSettings()
 

@@ -9,7 +9,7 @@ const bodySchema = z.object({
   score:      z.number().int().min(0),
   correct:    z.number().int().min(0),
   total:      z.number().int().min(1),
-  mode:       z.enum(['flag', 'pin', 'cart', 'mixed']),
+  mode:       z.enum(['flag', 'pin', 'cart', 'shape', 'mixed']),
   difficulty: z.enum(['easy', 'medium', 'hard', 'expert']),
 }).refine(
   (b) => VALID_ROUND_COUNTS.has(b.total),
@@ -28,8 +28,8 @@ export default defineEventHandler(async (event) => {
 
   db.insert(scores).values(body).run()
 
-  const [{ rank  }] = db.select({ rank:  count() }).from(scores).where(gt(scores.score, body.score)).all()
-  const [{ total }] = db.select({ total: count() }).from(scores).all()
+  const rank  = db.select({ rank:  count() }).from(scores).where(gt(scores.score, body.score)).all()[0]?.rank  ?? 0
+  const total = db.select({ total: count() }).from(scores).all()[0]?.total ?? 0
 
   return { rank: rank + 1, total }
 })

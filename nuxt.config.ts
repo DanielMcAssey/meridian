@@ -5,7 +5,12 @@ export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
   },
-  compatibilityDate: '2025-01-01',
+  compatibilityDate: '2025-07-01',
+
+  // All pages are client-side only — the server only handles /api/* routes.
+  routeRules: {
+    '/**': { ssr: false },
+  },
   devtools: { enabled: false },
 
   modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
@@ -149,17 +154,28 @@ export default defineNuxtConfig({
           },
         },
 
-        // Leaderboard GET — NetworkFirst so scores are always fresh online,
-        // but the last-seen board is still readable when offline.
+        // Leaderboard GET — offline fallback only.
+        //
+        // NetworkFirst with NO timeout: Workbox always waits for a real network
+        // response and only falls back to the SW cache when the request actually
+        // fails (i.e. the device is genuinely offline).  This is the critical
+        // difference from the previous setup which used networkTimeoutSeconds:4
+        // — that caused any slow API response to silently serve a stale cached
+        // body to TanStack Query, which then treated it as fresh data.
+        //
+        // TanStack Query (staleTime:30s, refetchOnWindowFocus) owns all online
+        // freshness decisions.  The SW cache is purely a last-resort fallback so
+        // the leaderboard stays readable after a page reload while offline.
         {
           urlPattern: /\/api\/leaderboard(\?.*)?$/,
           handler: 'NetworkFirst' as const,
           options: {
             cacheName: 'leaderboard-api',
-            networkTimeoutSeconds: 4,
+            // No networkTimeoutSeconds — never fall back to cache just because
+            // the API is slow; only fall back on actual network failure.
             expiration: {
-              maxEntries: 1,
-              maxAgeSeconds: 60 * 60, // 1 hour
+              maxEntries: 20,       // covers realistic filter combinations
+              maxAgeSeconds: 60 * 5, // 5 min — just enough for a brief offline spell
             },
             cacheableResponse: { statuses: [200] },
           },

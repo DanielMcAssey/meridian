@@ -1,17 +1,21 @@
-import { defineStore } from 'pinia'
+import { defineStore, skipHydrate } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Difficulty, GameMode, Round, RoundResult } from '~/types/game'
 
 export const useSessionStore = defineStore('session', () => {
-  const rounds = ref<Round[]>([])
-  const idx = ref(0)
-  const results = ref<RoundResult[]>([])
-  const mode = ref<GameMode>('mixed')
-  const difficulty = ref<Difficulty>('medium')
-  const finalScore = ref(0)
-  const finalCorrect = ref(0)
-  const rank = ref<number | null>(null)
-  const lbTotal = ref<number | null>(null)
+  // skipHydrate: session state is created entirely client-side.
+  // Prevents Pinia from attempting to SSR-serialise these values,
+  // sidestepping the shouldHydrate() crash on null-prototype objects
+  // introduced by Vue Router / @pinia/nuxt internals during devalue traversal.
+  const rounds       = skipHydrate(ref<Round[]>([]))
+  const idx          = skipHydrate(ref(0))
+  const results      = skipHydrate(ref<RoundResult[]>([]))
+  const mode         = skipHydrate(ref<GameMode>('mixed'))
+  const difficulty   = skipHydrate(ref<Difficulty>('medium'))
+  const finalScore   = skipHydrate(ref(0))
+  const finalCorrect = skipHydrate(ref(0))
+  const rank         = skipHydrate(ref<number | null>(null))
+  const lbTotal      = skipHydrate(ref<number | null>(null))
 
   /**
    * True while the score has been submitted but the server hasn't responded

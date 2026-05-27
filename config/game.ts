@@ -51,14 +51,15 @@ export interface ModeConfig {
   sub:   string
   /** Category tag on menu card. */
   note:  string
-  icon:  'flag' | 'map' | 'cart' | 'compass'
+  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape'
 }
 
 export const MODES: ModeConfig[] = [
-  { id: 'flag',  title: 'The Banner Game',  label: 'Banners',      sub: 'Identify the flag.',                   note: 'Vexillology',     icon: 'flag'    },
-  { id: 'pin',   title: 'The Pin Drop',     label: 'Pin Drop',     sub: "Find a pin's country on the map.",     note: 'Cartography',     icon: 'map'     },
-  { id: 'cart',  title: 'The Cartographer', label: 'Cartographer', sub: 'Pinpoint a country on the world map.', note: 'Charting',        icon: 'cart'    },
-  { id: 'mixed', title: 'The Grand Tour',   label: 'Grand Tour',   sub: 'A little of everything.',              note: 'Mixed itinerary', icon: 'compass' },
+  { id: 'mixed', title: 'The Grand Tour',   label: 'Grand Tour',   sub: 'A little of everything — flags, pins, maps, and outlines.',  note: 'Mixed itinerary', icon: 'compass' },
+  { id: 'flag',  title: 'The Banner Game',  label: 'Banners',      sub: 'Identify the flag.',                                         note: 'Vexillology',     icon: 'flag'    },
+  { id: 'pin',   title: 'The Pin Drop',     label: 'Pin Drop',     sub: "Find a pin's country on the map.",                           note: 'Cartography',     icon: 'map'     },
+  { id: 'cart',  title: 'The Cartographer', label: 'Cartographer', sub: 'Pinpoint a country on the world map.',                       note: 'Charting',        icon: 'cart'    },
+  { id: 'shape', title: 'The Silhouette',   label: 'Silhouette',   sub: 'Name the country from its outline.',                         note: 'Topography',      icon: 'shape'   },
 ]
 
 /** Returns the short display name for a mode id (falls back to the raw string). */

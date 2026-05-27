@@ -39,8 +39,13 @@ interface VbState {
 
 const vb0 = computed<VbState>(() => {
   if (!atlas.viewBox) return { x: 30.767, y: 241.591, w: 784.077, h: 458.627 }
-  const [x, y, w, h] = atlas.viewBox.split(/\s+/).map(parseFloat)
-  return { x, y, w, h }
+  const parts = atlas.viewBox.split(/\s+/).map(parseFloat)
+  return {
+    x: parts[0] ?? 30.767,
+    y: parts[1] ?? 241.591,
+    w: parts[2] ?? 784.077,
+    h: parts[3] ?? 458.627,
+  }
 })
 
 const vb = reactive<VbState>({ x: 30.767, y: 241.591, w: 784.077, h: 458.627 })
@@ -110,11 +115,13 @@ let pointerDownTarget: Element | null = null
 let cleanupListeners: (() => void) | null = null
 
 function pinchDist() {
-  const [a, b] = activePointers.values()
+  const pts = [...activePointers.values()]
+  const a = pts[0]!, b = pts[1]!
   return Math.hypot(b.x - a.x, b.y - a.y)
 }
 function pinchMid() {
-  const [a, b] = activePointers.values()
+  const pts = [...activePointers.values()]
+  const a = pts[0]!, b = pts[1]!
   return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
 }
 

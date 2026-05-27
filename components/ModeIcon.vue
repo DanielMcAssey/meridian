@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' }>()
+defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' }>()
 </script>
 
 <template>
@@ -39,10 +39,22 @@ defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' }>()
   </svg>
 
   <!-- Compass / mixed -->
-  <svg v-else viewBox="0 0 120 120" class="mode-icon">
+  <svg v-else-if="kind === 'compass'" viewBox="0 0 120 120" class="mode-icon">
     <circle cx="60" cy="60" r="44" class="mi-stroke" />
     <path d="M60 22 L66 60 L60 98 L54 60 Z" class="mi-fill" />
     <path d="M22 60 L60 54 L98 60 L60 66 Z" class="mi-fill" />
     <circle cx="60" cy="60" r="3" class="mi-stroke" />
+  </svg>
+
+  <!-- Silhouette / shape — irregular country outline -->
+  <svg v-else viewBox="0 0 120 120" class="mode-icon">
+    <path
+      d="M40 26 L57 18 L76 22 L90 34 L96 52 L92 70 L82 82 L66 90 L48 88 L32 78 L22 62 L24 44 Z"
+      class="mi-fill"
+    />
+    <path
+      d="M40 26 L57 18 L76 22 L90 34 L96 52 L92 70 L82 82 L66 90 L48 88 L32 78 L22 62 L24 44 Z"
+      class="mi-stroke"
+    />
   </svg>
 </template>

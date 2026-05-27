@@ -1,10 +1,7 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import { computed, ref } from 'vue'
 import type { Difficulty, GameMode, LeaderboardRow } from '~/types/game'
 import { DIFFICULTIES, MODES, ROUND_COUNTS, modeName } from '~/config/game'
-
-definePageMeta({ ssr: false })
 
 const playerName = useLocalStorage('geo.player.name', '')
 const settings   = useGameSettings()
@@ -30,15 +27,15 @@ const ROUND_OPTIONS = [
 ]
 
 // ── Query ─────────────────────────────────────────────────────────────────────
-const queryKey = computed(() => [
-  'leaderboard',
-  filterMode.value,
-  filterDifficulty.value,
-  filterRounds.value,
-])
-
+// Refs embedded directly in the key array — TanStack Vue Query v5 deep-unrefs
+// them when hashing and tracks each .value as a reactive dependency.
+//
+// placeholderData (not initialData) — shows an empty list while fetching without
+// writing into the query cache.  initialData participates in stale-time checks so
+// a recently-persisted 'any' key could be served from localStorage without a
+// network request.  placeholderData is purely visual and never blocks a fetch.
 const { data: board, isFetching } = useQuery<LeaderboardRow[]>({
-  queryKey,
+  queryKey: ['leaderboard', filterMode, filterDifficulty, filterRounds],
   queryFn: () => {
     const params = new URLSearchParams({ limit: '50' })
     if (filterMode.value !== 'any')       params.set('mode',       filterMode.value)
@@ -46,9 +43,13 @@ const { data: board, isFetching } = useQuery<LeaderboardRow[]>({
     if (filterRounds.value > 0)           params.set('total',      String(filterRounds.value))
     return $fetch<LeaderboardRow[]>(`/api/leaderboard?${params}`)
   },
-  initialData: () => [],
+  placeholderData: () => [],
   staleTime: 1000 * 30,
   refetchOnWindowFocus: true,
+  // 'offlineFirst': TanStack always fires the fetch regardless of navigator.onLine,
+  // which lets the Workbox service worker intercept it and serve the SW cache when
+  // the network is genuinely down.  Without this, TanStack would pause the query
+  // while offline and Workbox's fallback cache would never be reached.
   networkMode: 'offlineFirst',
 })
 

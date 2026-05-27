@@ -2,12 +2,14 @@
 import type { GameMode } from '~/types/game'
 import { DIFFICULTIES, MODES, ROUND_COUNTS, TIMER_OPTIONS, type TimerOption } from '~/config/game'
 
-definePageMeta({ ssr: false })
-
 const atlas      = useAtlasStore()
 const session    = useSessionStore()
 const settings   = useGameSettings()
 const playerName = useLocalStorage('geo.player.name', '')
+
+// MODES[0] is always the Grand Tour (mixed); the rest are individual modes.
+const grandTour    = MODES[0]!
+const regularModes = MODES.slice(1)
 
 onMounted(() => {
   if (!playerName.value) navigateTo('/')
@@ -18,7 +20,7 @@ function isTimerActive(opt: TimerOption) {
 }
 
 function setTimer(opt: TimerOption) {
-  settings.timer.value    = opt.on
+  settings.timer.value     = opt.on
   settings.timerSecs.value = opt.secs
 }
 
@@ -38,7 +40,7 @@ function startGame(mode: GameMode) {
         class="font-serif font-normal tracking-[-0.02em] leading-none mt-3 mb-3.5"
         style="font-size: clamp(40px, 5vw, 64px)"
       >
-        A book of <em class="italic" style="color: var(--accent-deep)">four</em> games.
+        A book of <em class="italic" style="color: var(--accent-deep)">five</em> games.
       </h1>
 
       <!-- Pill controls -->
@@ -86,9 +88,72 @@ function startGame(mode: GameMode) {
     </div>
 
     <!-- Mode cards -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+    <div class="flex flex-col gap-4">
+
+      <!-- ── The Grand Tour — featured, full-width card ───────────────────── -->
       <button
-        v-for="(m, i) in MODES"
+        class="text-left flex flex-col sm:flex-row sm:items-center gap-6
+               cursor-pointer relative overflow-hidden
+               rounded-[18px] px-6 py-7 sm:px-8 sm:py-8
+               border-2 border-[var(--accent)]
+               opacity-0 translate-y-2
+               transition-[transform,box-shadow] duration-[220ms] ease-[cubic-bezier(.2,.7,.2,1)]
+               hover:-translate-y-1 active:translate-y-0"
+        :style="{
+          background: 'linear-gradient(135deg, var(--accent-soft) 0%, var(--color-paper) 55%)',
+          animationName: 'card-in',
+          animationDuration: '0.5s',
+          animationFillMode: 'forwards',
+          animationTimingFunction: 'cubic-bezier(.2,.7,.2,1)',
+          animationDelay: '0ms',
+          boxShadow: 'var(--shadow-md)',
+        }"
+        @click="startGame(grandTour.id)"
+        @mouseenter="($event.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-lg)'"
+        @mouseleave="($event.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-md)'"
+      >
+        <!-- Content side -->
+        <div class="flex flex-col gap-3 flex-1 min-w-0">
+          <div class="flex items-center gap-2.5 flex-wrap">
+            <span
+              class="font-mono text-[10px] tracking-[0.18em] uppercase px-3 py-1 rounded-full font-medium"
+              style="background: var(--accent); color: var(--color-bg)"
+            >Recommended</span>
+            <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase" style="color: var(--accent-deep)">
+              {{ grandTour.note }}
+            </span>
+          </div>
+          <h2
+            class="font-serif font-normal tracking-[-0.02em] leading-none m-0"
+            style="font-size: clamp(32px, 4vw, 48px)"
+          >{{ grandTour.title }}</h2>
+          <p class="text-[15px] text-ink-2 m-0 max-w-md">{{ grandTour.sub }}</p>
+          <!-- Sub-tags showing what's included -->
+          <div class="flex flex-wrap gap-2 mt-1">
+            <span
+              v-for="tag in ['Vexillology', 'Pin Drops', 'Charting']"
+              :key="tag"
+              class="font-mono text-[10px] tracking-[0.14em] uppercase
+                     px-2.5 py-1 rounded-full border border-rule-2 text-ink-3"
+            >{{ tag }}</span>
+          </div>
+        </div>
+
+        <!-- Art panel -->
+        <div
+          class="h-36 sm:h-48 sm:w-48 flex-shrink-0
+                 flex items-center justify-center
+                 rounded-2xl border border-[var(--accent)]"
+          style="background: linear-gradient(160deg, var(--accent-soft), var(--color-paper))"
+        >
+          <ModeIcon :kind="grandTour.icon" />
+        </div>
+      </button>
+
+      <!-- ── Individual mode cards — 2-col on desktop, 1-col on mobile ─────── -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <button
+        v-for="(m, i) in regularModes"
         :key="m.id"
         class="bg-paper border border-rule rounded-[18px] px-6 py-[26px] pb-[22px]
                text-left flex flex-col gap-3.5 cursor-pointer relative overflow-hidden
@@ -100,7 +165,7 @@ function startGame(mode: GameMode) {
           animationDuration: '0.5s',
           animationFillMode: 'forwards',
           animationTimingFunction: 'cubic-bezier(.2,.7,.2,1)',
-          animationDelay: `${i * 70}ms`,
+          animationDelay: `${(i + 1) * 70}ms`,
           boxShadow: 'var(--shadow-sm)',
         }"
         @click="startGame(m.id)"
@@ -117,14 +182,22 @@ function startGame(mode: GameMode) {
         </div>
 
         <div class="flex flex-col gap-1.5">
-          <div class="font-mono text-[10.5px] tracking-[0.16em] uppercase" style="color: var(--accent-deep)">
-            {{ m.note }}
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="font-mono text-[10.5px] tracking-[0.16em] uppercase" style="color: var(--accent-deep)">
+              {{ m.note }}
+            </div>
+            <span
+              v-if="m.id === 'shape'"
+              class="font-mono text-[9.5px] tracking-[0.18em] uppercase px-2.5 py-0.5 rounded-full font-medium"
+              style="background: oklch(0.92 0.08 80); color: oklch(0.45 0.12 60)"
+            >Beta</span>
           </div>
           <h2 class="font-serif font-normal text-[28px] tracking-[-0.015em] m-0">{{ m.title }}</h2>
           <p class="text-[14.5px] text-ink-2 m-0">{{ m.sub }}</p>
         </div>
-
       </button>
+      </div>
+
     </div>
   </main>
 </template>

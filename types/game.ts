@@ -1,5 +1,5 @@
-export type GameMode  = 'flag' | 'pin' | 'cart' | 'mixed'
-export type RoundType = 'flag' | 'pin' | 'cart'
+export type GameMode  = 'flag' | 'pin' | 'cart' | 'shape' | 'mixed'
+export type RoundType = 'flag' | 'pin' | 'cart' | 'shape'
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
 export interface Country {

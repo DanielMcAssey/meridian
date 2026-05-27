@@ -45,17 +45,26 @@ export default defineNuxtPlugin((nuxtApp) => {
     retryDelay: (attempt) => Math.min(1_000 * 2 ** attempt, 30_000),
   })
 
-  const persister = createSyncStoragePersister({
-    storage: window.localStorage,
-    key: 'geo.tq-cache',
-  })
-
-  persistQueryClient({
-    queryClient,
-    persister,
-    maxAge: 1_000 * 60 * 60 * 24 * 7,
-    buster: CACHE_BUSTER,
-  })
-
+  // Register the plugin first — this must always succeed regardless of what follows.
   nuxtApp.vueApp.use(VueQueryPlugin, { queryClient })
+
+  // Offline mutation persistence — non-critical; skip gracefully if localStorage
+  // is unavailable (Safari private mode, restrictive browser settings, etc.).
+  // Without persistence, offline-queued mutations won't survive a reload, but
+  // the rest of the app (queries, live mutations, leaderboard) works normally.
+  try {
+    const persister = createSyncStoragePersister({
+      storage: window.localStorage,
+      key: 'geo.tq-cache',
+    })
+
+    persistQueryClient({
+      queryClient,
+      persister,
+      maxAge: 1_000 * 60 * 60 * 24 * 7,
+      buster: CACHE_BUSTER,
+    })
+  } catch {
+    // localStorage unavailable — persistence silently disabled
+  }
 })

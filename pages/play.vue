@@ -1,8 +1,6 @@
 <script setup lang="ts">
 import type { Country, RoundResult } from '~/types/game'
 
-definePageMeta({ ssr: false })
-
 const session = useSessionStore()
 const settings = useGameSettings()
 const playerName = useLocalStorage('geo.player.name', '')
@@ -225,6 +223,13 @@ function pipClass(i: number): string {
       />
       <RoundsCartographerRound
         v-else-if="session.currentRound.type === 'cart'"
+        :round="session.currentRound"
+        :picked="picked"
+        :locked="locked"
+        @pick="handlePick"
+      />
+      <RoundsSilhouetteRound
+        v-else-if="session.currentRound.type === 'shape'"
         :round="session.currentRound"
         :picked="picked"
         :locked="locked"

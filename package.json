@@ -12,26 +12,26 @@
     "release": "semantic-release"
   },
   "dependencies": {
-    "@pinia/nuxt": "^0.9.0",
+    "@pinia/nuxt": "^0.11.3",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/query-persist-client-core": "^5.100.14",
     "@tanstack/query-sync-storage-persister": "^5.100.14",
     "@tanstack/vue-query": "^5.100.14",
     "drizzle-orm": "^1.0.0-rc.3",
-    "nuxt": "^3.17.0",
-    "pinia": "^2.3.0",
+    "nuxt": "^4.4.6",
+    "pinia": "^3.0.4",
     "tailwindcss": "^4.3.0",
-    "zod": "^3.25.0"
+    "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@commitlint/cli": "^19.8.1",
-    "@commitlint/config-conventional": "^19.8.1",
-    "@semantic-release/github": "^10.3.5",
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
+    "@semantic-release/github": "^12.0.8",
     "@types/node": "^24",
     "@vite-pwa/nuxt": "^1.1.1",
-    "semantic-release": "^24.2.3",
+    "semantic-release": "^25.0.3",
     "semantic-release-gha-output": "^1.1.2",
-    "typescript": "^5.8.0",
-    "vue-tsc": "^2"
+    "typescript": "^6.0.3",
+    "vue-tsc": "^3.0.0"
   }
 }

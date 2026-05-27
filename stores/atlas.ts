@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+import { defineStore, skipHydrate } from 'pinia'
 import { ref } from 'vue'
 import type { Country } from '~/types/game'
 
@@ -13,12 +13,16 @@ interface AtlasData {
 }
 
 export const useAtlasStore = defineStore('atlas', () => {
-  const countries = ref<Country[]>([])
-  const countryPaths = ref<Record<string, string>>({})
-  const flagPaths = ref<Record<string, string>>({})
-  const viewBox = ref('')
-  const ready = ref(false)
-  const error = ref<string | null>(null)
+  // skipHydrate: all atlas data is loaded client-side via atlas.load() in onMounted.
+  // Marking these refs skips Pinia's SSR serialisation entirely, which avoids a
+  // crash in Pinia's shouldHydrate() when Vue Router or @pinia/nuxt intern objects
+  // with null-prototype (Object.create(null)) appear in the devalue traversal.
+  const countries    = skipHydrate(ref<Country[]>([]))
+  const countryPaths = skipHydrate(ref<Record<string, string>>({}))
+  const flagPaths    = skipHydrate(ref<Record<string, string>>({}))
+  const viewBox      = skipHydrate(ref(''))
+  const ready        = skipHydrate(ref(false))
+  const error        = skipHydrate(ref<string | null>(null))
 
   async function load() {
     if (ready.value) return

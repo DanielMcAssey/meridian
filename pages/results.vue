@@ -1,6 +1,4 @@
 <script setup lang="ts">
-definePageMeta({ ssr: false })
-
 const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
 const { isPending, isPaused } = useLeaderboardMutation()
@@ -107,7 +105,7 @@ function playAgain() {
           <span class="font-mono text-ink-3 text-xs w-7 shrink-0">{{ String(i + 1).padStart(2, '0') }}</span>
           <!-- Type — hidden on xs -->
           <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.14em] uppercase text-ink-3 w-14 shrink-0">
-            {{ r.type === 'flag' ? 'Flag' : r.type === 'pin' ? 'Pin' : 'Map' }}
+            {{ r.type === 'flag' ? 'Flag' : r.type === 'pin' ? 'Pin' : r.type === 'cart' ? 'Map' : 'Shape' }}
           </span>
           <!-- Answer -->
           <span class="font-serif text-[18px] text-ink flex-1 min-w-0 truncate">{{ r.answer.name }}</span>

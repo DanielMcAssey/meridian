@@ -7,7 +7,7 @@ export const scores = sqliteTable('scores', {
   score:      integer('score').notNull(),
   correct:    integer('correct').notNull(),
   total:      integer('total').notNull(),
-  mode:       text('mode',       { enum: ['flag', 'pin', 'cart', 'mixed']     }).notNull(),
+  mode:       text('mode',       { enum: ['flag', 'pin', 'cart', 'shape', 'mixed'] }).notNull(),
   difficulty: text('difficulty', { enum: ['easy', 'medium', 'hard', 'expert'] }).notNull(),
   createdAt:  integer('created_at').notNull().default(sql`(unixepoch())`),
 })
