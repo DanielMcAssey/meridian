@@ -71,15 +71,6 @@ export const useSessionStore = defineStore('session', () => {
     lbPending.value = false
   }
 
-  /** @deprecated Use markFinished() + setRank() instead. */
-  function finish(rankData: { rank: number; total: number }) {
-    finalScore.value = results.value.reduce((s, r) => s + r.points, 0)
-    finalCorrect.value = results.value.filter((r) => r.correct).length
-    rank.value = rankData.rank
-    lbTotal.value = rankData.total
-    lbPending.value = false
-  }
-
   return {
     rounds,
     idx,
@@ -99,6 +90,5 @@ export const useSessionStore = defineStore('session', () => {
     advance,
     markFinished,
     setRank,
-    finish,
   }
 })

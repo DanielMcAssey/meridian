@@ -30,10 +30,10 @@
   --shadow-lg: 0 22px 60px -22px rgba(40,30,20,0.30), 0 2px 8px rgba(40,30,20,0.08);
 }
 
-/* ── Dark-mode variant — driven by data-theme attribute set by JS ──────── */
-@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+/* ── Dark-mode variant — follows the OS preference automatically ────────── */
+@custom-variant dark (@media (prefers-color-scheme: dark));
 
-/* ── Dynamic CSS variables (accent hue changed at runtime) ─────────────── */
+/* ── Dynamic CSS variables ──────────────────────────────────────────────── */
 :root {
   --accent-h:     30;
   --accent:       oklch(0.62 0.18 var(--accent-h));
@@ -43,11 +43,12 @@
   --hud-border:   oklch(0.78 0.02 80);
   --bg-glow:      oklch(0.94 0.04 var(--accent-h) / 0.6);
   --bg-glow-2:    oklch(0.94 0.03 var(--accent-h) / 0.5);
-  color-scheme: light;
+  color-scheme: light dark;
 }
 
+/* ── Dark-mode overrides ────────────────────────────────────────────────── */
 @media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
+  :root {
     --accent:      oklch(0.72 0.16 var(--accent-h));
     --accent-soft: oklch(0.32 0.08 var(--accent-h));
     --accent-deep: oklch(0.82 0.16 var(--accent-h));
@@ -55,23 +56,7 @@
     --hud-border:  oklch(0.38 0.012 250);
     --bg-glow:     oklch(0.30 0.06 var(--accent-h) / 0.35);
     --bg-glow-2:   oklch(0.28 0.05 var(--accent-h) / 0.28);
-    color-scheme: dark;
-  }
-}
-[data-theme="dark"] {
-  --accent:      oklch(0.72 0.16 var(--accent-h));
-  --accent-soft: oklch(0.32 0.08 var(--accent-h));
-  --accent-deep: oklch(0.82 0.16 var(--accent-h));
-  --hud:         oklch(0.24 0.014 250 / 0.85);
-  --hud-border:  oklch(0.38 0.012 250);
-  --bg-glow:     oklch(0.30 0.06 var(--accent-h) / 0.35);
-  --bg-glow-2:   oklch(0.28 0.05 var(--accent-h) / 0.28);
-  color-scheme: dark;
-}
 
-/* ── Dark-mode token overrides ─────────────────────────────────────────── */
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
     --color-bg:           oklch(0.16 0.012 250);
     --color-bg-tint:      oklch(0.20 0.014 250);
     --color-paper:        oklch(0.22 0.014 250);
@@ -90,25 +75,6 @@
     --shadow-md:  0 4px 18px -6px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.20);
     --shadow-lg:  0 22px 60px -22px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.20);
   }
-}
-[data-theme="dark"] {
-  --color-bg:           oklch(0.16 0.012 250);
-  --color-bg-tint:      oklch(0.20 0.014 250);
-  --color-paper:        oklch(0.22 0.014 250);
-  --color-ink:          oklch(0.94 0.012 80);
-  --color-ink-2:        oklch(0.78 0.012 80);
-  --color-ink-3:        oklch(0.58 0.012 80);
-  --color-rule:         oklch(0.30 0.012 250);
-  --color-rule-2:       oklch(0.38 0.012 250);
-  --color-ok:           oklch(0.72 0.14 150);
-  --color-ok-soft:      oklch(0.30 0.08 150);
-  --color-bad:          oklch(0.72 0.18 25);
-  --color-bad-soft:     oklch(0.30 0.08 25);
-  --color-ocean:        oklch(0.20 0.018 220);
-  --color-land:         oklch(0.32 0.014 80);
-  --color-land-stroke:  oklch(0.62 0.020 80);
-  --shadow-md:  0 4px 18px -6px rgba(0,0,0,0.45), 0 1px 2px rgba(0,0,0,0.20);
-  --shadow-lg:  0 22px 60px -22px rgba(0,0,0,0.65), 0 2px 8px rgba(0,0,0,0.20);
 }
 
 /* ── Base ──────────────────────────────────────────────────────────────── */

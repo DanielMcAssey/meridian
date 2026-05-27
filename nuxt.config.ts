@@ -28,8 +28,15 @@ export default defineNuxtConfig({
       meta: [
         { name: 'description', content: 'A geographical guessing game of flags, pins, and maps.' },
         { name: 'theme-color', content: '#1e1c1a' },
+        { name: 'apple-mobile-web-app-title', content: 'Meridian' },
       ],
       link: [
+        // ── Favicons ──────────────────────────────────────────────────────
+        { rel: 'icon', type: 'image/png', href: '/icons/favicon-96x96.png', sizes: '96x96' },
+        { rel: 'icon', type: 'image/svg+xml', href: '/icons/favicon.svg' },
+        { rel: 'shortcut icon', href: '/icons/favicon.ico' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/icons/apple-touch-icon.png' },
+        // ── Fonts ─────────────────────────────────────────────────────────
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
         { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' },
         {
@@ -80,13 +87,20 @@ export default defineNuxtConfig({
       globPatterns: ['**/*.{js,css,html,json,ico,svg,woff,woff2,ttf}'],
       cleanupOutdatedCaches: true,
 
-      // For navigation requests that aren't in the precache, fall back to
-      // the cached index so the Vue Router can handle the route client-side.
-      navigateFallback: '/',
-      navigateFallbackAllowlist: [
-        // Any path that isn't an API call or a Nuxt internal
-        /^(?!\/_nuxt\/|\/api\/).*/,
+      // Precache the app shell at "/" so navigateFallback can serve it for
+      // any route the user has never visited.  All pages are ssr:false, so
+      // the server always returns the same HTML shell regardless of URL.
+      // The revision is the build timestamp, ensuring the SW re-fetches it
+      // on every deploy.
+      additionalManifestEntries: [
+        { url: '/', revision: String(Date.now()) },
       ],
+
+      // For any navigation request that isn't an API call or a Nuxt asset,
+      // fall back to the precached "/" shell so offline navigation always
+      // works — even for pages the user has never loaded before.
+      navigateFallback: '/',
+      navigateFallbackAllowlist: [/^(?!\/_nuxt\/|\/api\/|\/icons\/|\/favicon).*/],
 
       // ── Runtime caching strategies ───────────────────────────────────────
       runtimeCaching: [
@@ -141,7 +155,7 @@ export default defineNuxtConfig({
     devOptions: {
       enabled: true,
       suppressWarnings: true,
-      navigateFallbackAllowlist: [/^\/$/],
+      navigateFallbackAllowlist: [/^(?!\/_nuxt\/|\/api\/|\/icons\/|\/favicon).*/],
       type: 'module',
     },
   },

@@ -1,45 +1,24 @@
 <script setup lang="ts">
-import { DIFFICULTIES } from '~/composables/useGameSettings'
 import type { GameMode } from '~/types/game'
+import { DIFFICULTIES, MODES, ROUND_COUNTS, TIMER_OPTIONS, type TimerOption } from '~/config/game'
 
 definePageMeta({ ssr: false })
 
-const atlas = useAtlasStore()
-const session = useSessionStore()
-const settings = useGameSettings()
+const atlas      = useAtlasStore()
+const session    = useSessionStore()
+const settings   = useGameSettings()
 const playerName = useLocalStorage('geo.player.name', '')
 
 onMounted(() => {
   if (!playerName.value) navigateTo('/')
 })
 
-const MODES: {
-  id: GameMode
-  title: string
-  sub: string
-  note: string
-  icon: 'flag' | 'map' | 'cart' | 'compass'
-}[] = [
-  { id: 'flag',  title: 'The Banner Game',   sub: 'Identify the flag.',                note: 'Vexillology',    icon: 'flag'    },
-  { id: 'pin',   title: 'The Pin Drop',       sub: "Find a pin's country on the map.", note: 'Cartography',    icon: 'map'     },
-  { id: 'cart',  title: 'The Cartographer',   sub: 'Pinpoint a country on the world map.', note: 'Charting',   icon: 'cart'    },
-  { id: 'mixed', title: 'The Grand Tour',     sub: 'A little of everything.',          note: 'Mixed itinerary', icon: 'compass' },
-]
-
-const TIMER_OPTIONS = [
-  { label: 'Off', on: false, secs: 20 },
-  { label: '10s', on: true,  secs: 10 },
-  { label: '20s', on: true,  secs: 20 },
-  { label: '30s', on: true,  secs: 30 },
-  { label: '60s', on: true,  secs: 60 },
-]
-
-function isTimerActive(opt: typeof TIMER_OPTIONS[number]) {
+function isTimerActive(opt: TimerOption) {
   return settings.timer.value === opt.on && (!opt.on || settings.timerSecs.value === opt.secs)
 }
 
-function setTimer(opt: typeof TIMER_OPTIONS[number]) {
-  settings.timer.value = opt.on
+function setTimer(opt: TimerOption) {
+  settings.timer.value    = opt.on
   settings.timerSecs.value = opt.secs
 }
 
@@ -83,7 +62,7 @@ function startGame(mode: GameMode) {
           <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Rounds</span>
           <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
             <button
-              v-for="n in [5, 8, 12, 20]"
+              v-for="n in ROUND_COUNTS"
               :key="n"
               :class="settings.rounds.value === n ? 'diff-pill-on' : 'diff-pill'"
               @click="settings.rounds.value = n"
@@ -145,9 +124,6 @@ function startGame(mode: GameMode) {
           <p class="text-[14.5px] text-ink-2 m-0">{{ m.sub }}</p>
         </div>
 
-        <div class="font-mono text-[12px] tracking-[0.08em] text-ink-3 mt-auto pt-2.5 border-t border-dashed border-rule">
-          Begin →
-        </div>
       </button>
     </div>
   </main>

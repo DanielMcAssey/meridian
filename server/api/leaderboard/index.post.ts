@@ -1,9 +1,8 @@
 import { z } from 'zod'
 import { count, gt } from 'drizzle-orm'
-import { scores } from '~/server/db/schema'
+import { VALID_ROUND_COUNTS } from '~/config/game'
 import { maxPointsPerRound } from '~/utils/scoring'
-
-const VALID_TOTALS = new Set([5, 8, 12, 20])
+import { scores } from '~/server/db/schema'
 
 const bodySchema = z.object({
   name:       z.string().min(1).max(28).trim(),
@@ -13,8 +12,8 @@ const bodySchema = z.object({
   mode:       z.enum(['flag', 'pin', 'cart', 'mixed']),
   difficulty: z.enum(['easy', 'medium', 'hard', 'expert']),
 }).refine(
-  (b) => VALID_TOTALS.has(b.total),
-  { message: 'total must be a valid round count (5, 8, 12, or 20)', path: ['total'] },
+  (b) => VALID_ROUND_COUNTS.has(b.total),
+  { message: 'total must be a valid round count', path: ['total'] },
 ).refine(
   (b) => b.correct <= b.total,
   { message: 'correct cannot exceed total rounds', path: ['correct'] },

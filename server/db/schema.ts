@@ -7,8 +7,7 @@ export const scores = sqliteTable('scores', {
   score:      integer('score').notNull(),
   correct:    integer('correct').notNull(),
   total:      integer('total').notNull(),
-  mode:       text('mode',       { enum: ['flag', 'pin', 'cart', 'mixed']          }).notNull(),
-  difficulty: text('difficulty', { enum: ['easy', 'medium', 'hard', 'expert']      }).notNull(),
-  // eslint-disable-next-line camelcase
-  created_at: integer('created_at').notNull().default(sql`(unixepoch())`),
+  mode:       text('mode',       { enum: ['flag', 'pin', 'cart', 'mixed']     }).notNull(),
+  difficulty: text('difficulty', { enum: ['easy', 'medium', 'hard', 'expert'] }).notNull(),
+  createdAt:  integer('created_at').notNull().default(sql`(unixepoch())`),
 })

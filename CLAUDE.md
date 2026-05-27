@@ -54,11 +54,22 @@ Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers from 
 
 ### Scoring
 
-Base 100 pts for a correct answer. If the timer is enabled, up to 50 bonus points are added proportionally to remaining time: `round((remaining / timerSecs) * 50)`. Wrong answers or timeouts score 0.
+All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; imported explicitly in server routes). A difficulty multiplier is applied on top of the base calculation:
+
+| Difficulty | Multiplier | Base pts | Max pts (with timer) |
+|---|---|---|---|
+| Easy | ×1.0 | 100 | 150 |
+| Medium | ×1.5 | 150 | 225 |
+| Hard | ×2.0 | 200 | 300 |
+| Expert | ×3.0 | 300 | 450 |
+
+`calcPoints(timerEnabled, remaining, timerSecs, difficulty)` — used in `pages/play.vue`.  
+`maxPointsPerRound(difficulty)` — used server-side for score plausibility checks.
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses Node 24's built-in `node:sqlite` (no ORM, no external SQLite package). The DB is initialised by `server/plugins/database.ts` and stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access it via `getDb()` from `server/utils/db.ts`.
+- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts`. The DB is initialised by `server/plugins/database.ts` (raw `CREATE TABLE IF NOT EXISTS` bootstrap, then Drizzle wraps it) and stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access it via `getDb()` from `server/utils/db.ts`, which returns a typed `NodeSQLiteDatabase<typeof schema>`.
+- The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
 - **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` and automatically retried on reconnect.
 
 ### Settings persistence

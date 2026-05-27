@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import { computed, ref } from 'vue'
-import type { Difficulty, GameMode, LeaderboardEntry } from '~/types/game'
-import { DIFFICULTIES } from '~/composables/useGameSettings'
+import type { Difficulty, GameMode, LeaderboardRow } from '~/types/game'
+import { DIFFICULTIES, MODES, ROUND_COUNTS, modeName } from '~/config/game'
 
 definePageMeta({ ssr: false })
 
@@ -18,26 +18,18 @@ const filterMode       = ref<GameMode | 'any'>(session.hasSession ? session.mode
 const filterDifficulty = ref<Difficulty | 'any'>(session.hasSession ? session.difficulty : settings.difficulty.value)
 const filterRounds     = ref<number>(session.hasSession ? session.rounds.length         : settings.rounds.value)
 
-const MODES: { id: GameMode | 'any'; label: string }[] = [
-  { id: 'any',   label: 'All modes'     },
-  { id: 'mixed', label: 'Grand Tour'    },
-  { id: 'flag',  label: 'Banners'       },
-  { id: 'pin',   label: 'Pin Drop'      },
-  { id: 'cart',  label: 'Cartographer'  },
+// Prepend the 'All modes' option to the config MODES list for the filter UI
+const FILTER_MODES = [
+  { id: 'any' as const, label: 'All modes' },
+  ...MODES.map((m) => ({ id: m.id, label: m.label })),
 ]
 
-const ROUND_OPTIONS: { val: number; label: string }[] = [
-  { val: 0,  label: 'Any' },
-  { val: 5,  label: '5'   },
-  { val: 8,  label: '8'   },
-  { val: 12, label: '12'  },
-  { val: 20, label: '20'  },
+const ROUND_OPTIONS = [
+  { val: 0, label: 'Any' },
+  ...ROUND_COUNTS.map((n) => ({ val: n, label: String(n) })),
 ]
 
 // ── Query ─────────────────────────────────────────────────────────────────────
-// The reactive queryKey means TanStack re-fetches automatically whenever a
-// filter changes.  The existing mutation invalidation (`['leaderboard']` prefix)
-// also re-fetches the active filtered query after a score is posted.
 const queryKey = computed(() => [
   'leaderboard',
   filterMode.value,
@@ -45,14 +37,14 @@ const queryKey = computed(() => [
   filterRounds.value,
 ])
 
-const { data: board, isFetching, refetch } = useQuery<LeaderboardEntry[]>({
+const { data: board, isFetching } = useQuery<LeaderboardRow[]>({
   queryKey,
   queryFn: () => {
     const params = new URLSearchParams({ limit: '50' })
     if (filterMode.value !== 'any')       params.set('mode',       filterMode.value)
     if (filterDifficulty.value !== 'any') params.set('difficulty', filterDifficulty.value)
     if (filterRounds.value > 0)           params.set('total',      String(filterRounds.value))
-    return $fetch<LeaderboardEntry[]>(`/api/leaderboard?${params}`)
+    return $fetch<LeaderboardRow[]>(`/api/leaderboard?${params}`)
   },
   initialData: () => [],
   staleTime: 1000 * 30,
@@ -63,15 +55,14 @@ const { data: board, isFetching, refetch } = useQuery<LeaderboardEntry[]>({
 // ── Filter summary text ───────────────────────────────────────────────────────
 const filterLabel = computed(() => {
   const parts: string[] = []
-  const m = MODES.find((x) => x.id === filterMode.value)
-  if (m && m.id !== 'any') parts.push(m.label)
+  if (filterMode.value !== 'any') parts.push(modeName(filterMode.value))
   const d = DIFFICULTIES.find((x) => x.id === filterDifficulty.value)
   if (d) parts.push(d.label)
   if (filterRounds.value > 0) parts.push(`${filterRounds.value} rounds`)
   return parts.length ? parts.join(' · ') : 'all games'
 })
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Trophy helpers ────────────────────────────────────────────────────────────
 type TrophyKind = 'gold' | 'silver' | 'bronze'
 function trophyFor(rank: number): TrophyKind | null {
   if (rank === 0) return 'gold'
@@ -80,29 +71,6 @@ function trophyFor(rank: number): TrophyKind | null {
   return null
 }
 
-function modeName(mode: string) {
-  return mode === 'flag' ? 'Banners' : mode === 'pin' ? 'Pin Drop' : mode === 'cart' ? 'Cartographer' : 'Grand Tour'
-}
-
-// ── localStorage migration (one-time) ────────────────────────────────────────
-onMounted(async () => {
-  const LS_BOARD = 'geo.leaderboard.v1'
-  try {
-    const raw = localStorage.getItem(LS_BOARD)
-    if (!raw) return
-    const entries = JSON.parse(raw) as Array<{
-      name: string; score: number; correct: number; total: number; mode: string; difficulty: string
-    }>
-    if (!Array.isArray(entries) || entries.length === 0) return
-    await Promise.allSettled(
-      entries.map((e) => $fetch('/api/leaderboard', { method: 'POST', body: e })),
-    )
-    localStorage.removeItem(LS_BOARD)
-    await refetch()
-  } catch { /* Non-critical */ }
-})
-
-// ── Trophy styles ─────────────────────────────────────────────────────────────
 const trophyBg: Record<TrophyKind, string> = {
   gold:   'linear-gradient(90deg, color-mix(in oklab, oklch(0.84 0.13 90) 35%, var(--color-paper)), var(--color-paper))',
   silver: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.85 0.02 250) 35%, var(--color-paper)), var(--color-paper))',
@@ -141,7 +109,7 @@ const trophyColor: Record<TrophyKind, string> = {
         <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Game</span>
         <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full flex-wrap">
           <button
-            v-for="m in MODES"
+            v-for="m in FILTER_MODES"
             :key="m.id"
             :class="filterMode === m.id ? 'diff-pill-on' : 'diff-pill'"
             @click="filterMode = m.id"
@@ -210,7 +178,7 @@ const trophyColor: Record<TrophyKind, string> = {
       <!-- Data rows -->
       <li
         v-for="(entry, i) in board"
-        :key="entry.id ?? i"
+        :key="entry.id"
         class="grid gap-3 px-4 sm:px-5 py-3 border-t border-rule items-center text-[14.5px] text-ink
                grid-cols-[3rem_1fr_auto] sm:grid-cols-[5rem_1.4fr_1fr_1fr_0.8fr_0.8fr]"
         :style="{
@@ -244,7 +212,7 @@ const trophyColor: Record<TrophyKind, string> = {
         </span>
 
         <!-- Game + Difficulty — hidden on mobile -->
-        <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2 capitalize">{{ modeName(entry.mode) }}</span>
+        <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2">{{ modeName(entry.mode) }}</span>
         <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2 capitalize">{{ entry.difficulty }}</span>
 
         <!-- Correct — hidden on mobile -->

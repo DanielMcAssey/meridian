@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DIFFICULTIES } from '~/composables/useGameSettings'
+import { DIFFICULTIES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
 definePageMeta({ ssr: false })

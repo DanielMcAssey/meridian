@@ -1,42 +1,47 @@
-export type GameMode = 'flag' | 'pin' | 'cart' | 'mixed'
+export type GameMode  = 'flag' | 'pin' | 'cart' | 'mixed'
 export type RoundType = 'flag' | 'pin' | 'cart'
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
-export type Accent = 'terracotta' | 'teal' | 'olive' | 'plum'
-export type Theme = 'auto' | 'light' | 'dark'
 
 export interface Country {
-  code: string
-  name: string
-  lat: number
-  lng: number
-  svgCx: number
-  svgCy: number
+  code:   string
+  name:   string
+  lat:    number
+  lng:    number
+  svgCx:  number
+  svgCy:  number
   region: string
-  tier: number
+  tier:   number
 }
 
 export interface Round {
-  type: RoundType
-  answer: Country
+  type:    RoundType
+  answer:  Country
   options: Country[]
 }
 
 export interface RoundResult {
-  type: RoundType
-  answer: Country
-  picked: Country | null
+  type:    RoundType
+  answer:  Country
+  picked:  Country | null
   correct: boolean
-  points: number
+  points:  number
   elapsed: number
 }
 
+// ── Leaderboard ───────────────────────────────────────────────────────────────
+
+/** Payload sent to POST /api/leaderboard after a game ends. */
 export interface LeaderboardEntry {
-  id?: number
-  name: string
-  score: number
-  correct: number
-  total: number
-  mode: GameMode
+  name:       string
+  score:      number
+  correct:    number
+  total:      number
+  mode:       GameMode
   difficulty: Difficulty
-  created_at?: number
+}
+
+/** Full row returned by GET /api/leaderboard (server-persisted fields added). */
+export interface LeaderboardRow extends LeaderboardEntry {
+  id:        number
+  createdAt: number
 }
