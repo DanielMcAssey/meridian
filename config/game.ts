@@ -5,7 +5,7 @@
  * so there is a single source of truth.
  */
 
-import type { Difficulty, GameMode } from '~/types/game'
+import type { Difficulty, GameMode, RoundType } from '~/types/game'
 
 // ── Scoring ───────────────────────────────────────────────────────────────────
 
@@ -51,15 +51,19 @@ export interface ModeConfig {
   sub:   string
   /** Category tag on menu card. */
   note:  string
-  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape'
+  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region'
+  /** Intrinsic difficulty of this mode — undefined for Grand Tour (mixed). */
+  modeDiff?: Difficulty
 }
 
 export const MODES: ModeConfig[] = [
-  { id: 'mixed', title: 'The Grand Tour',   label: 'Grand Tour',   sub: 'A little of everything — flags, pins, maps, and outlines.',  note: 'Mixed itinerary', icon: 'compass' },
-  { id: 'flag',  title: 'The Banner Game',  label: 'Banners',      sub: 'Identify the flag.',                                         note: 'Vexillology',     icon: 'flag'    },
-  { id: 'pin',   title: 'The Pin Drop',     label: 'Pin Drop',     sub: "Find a pin's country on the map.",                           note: 'Cartography',     icon: 'map'     },
-  { id: 'cart',  title: 'The Cartographer', label: 'Cartographer', sub: 'Pinpoint a country on the world map.',                       note: 'Charting',        icon: 'cart'    },
-  { id: 'shape', title: 'The Silhouette',   label: 'Silhouette',   sub: 'Name the country from its outline.',                         note: 'Topography',      icon: 'shape'   },
+  { id: 'mixed',   title: 'The Grand Tour',     label: 'Grand Tour',   sub: 'A curated mix — round types matched to your chosen difficulty.',  note: 'Mixed itinerary', icon: 'compass'                  },
+  { id: 'flag',    title: 'The Banner Game',    label: 'Banners',      sub: 'Identify the flag.',                                              note: 'Vexillology',     icon: 'flag',    modeDiff: 'medium' },
+  { id: 'pin',     title: 'The Pin Drop',       label: 'Pin Drop',     sub: "Find a pin's country on the map.",                                note: 'Cartography',     icon: 'map',     modeDiff: 'medium' },
+  { id: 'cart',    title: 'The Cartographer',   label: 'Cartographer', sub: 'Pinpoint a country on the world map.',                            note: 'Charting',        icon: 'cart',    modeDiff: 'hard'   },
+  { id: 'shape',   title: 'The Silhouette',     label: 'Silhouette',   sub: 'Name the country from its outline.',                              note: 'Topography',      icon: 'shape',   modeDiff: 'expert' },
+  { id: 'capital', title: 'The Capital Cities', label: 'Capitals',     sub: 'Name the capital city of each country.',                          note: 'Civics',          icon: 'capital', modeDiff: 'expert' },
+  { id: 'region',  title: 'The Continental',    label: 'Continental',  sub: 'Pick which continent each country belongs to.',                   note: 'Geography',       icon: 'region',  modeDiff: 'easy'   },
 ]
 
 /** Returns the short display name for a mode id (falls back to the raw string). */
@@ -94,3 +98,13 @@ export const TIMER_OPTIONS: TimerOption[] = [
 export const VALID_MODES        = new Set<string>(MODES.map((m) => m.id))
 export const VALID_DIFFICULTIES = new Set<string>(DIFFICULTIES.map((d) => d.id))
 export const VALID_ROUND_COUNTS = new Set<number>(ROUND_COUNTS)
+
+// ── Grand Tour round-type gates ───────────────────────────────────────────────
+// Defines which round types are included in 'mixed' mode at each difficulty.
+// Higher difficulties include all lower-tier types plus their own.
+export const MIXED_ROUND_TYPES: Record<Difficulty, RoundType[]> = {
+  easy:   ['region'],
+  medium: ['region', 'flag', 'pin'],
+  hard:   ['region', 'flag', 'pin', 'cart'],
+  expert: ['region', 'flag', 'pin', 'cart', 'shape', 'capital'],
+}

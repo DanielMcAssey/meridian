@@ -2,12 +2,18 @@
 import type { Country, Round } from '~/types/game'
 
 const props = defineProps<{
-  round: Round
-  picked: Country | null
-  locked: boolean
+  round:   Round
+  picked:  Country | null
+  locked:  boolean
+  correct: boolean | null
+  points:  number | null
 }>()
 
 const emit = defineEmits<{ pick: [country: Country] }>()
+
+const label = computed(() =>
+  props.correct ? `It is indeed ${props.round.answer.name}` : `The answer was ${props.round.answer.name}`,
+)
 </script>
 
 <template>
@@ -20,11 +26,21 @@ const emit = defineEmits<{ pick: [country: Country] }>()
       </h2>
     </div>
 
-    <WorldMap
-      mode="static"
-      :pin-code="props.round.answer.code"
-      :reveal-code="props.locked ? props.round.answer.code : null"
-    />
+    <!-- Map with feedback overlay scoped to this section -->
+    <div class="relative w-full">
+      <WorldMap
+        mode="static"
+        :pin-code="props.round.answer.code"
+        :reveal-code="props.locked ? props.round.answer.code : null"
+      />
+      <RoundsFeedbackOverlay
+        v-if="correct !== null"
+        :correct="correct"
+        :timed-out="!picked"
+        :label="label"
+        :points="points"
+      />
+    </div>
 
     <RoundsAnswerOptions
       :options="props.round.options"

@@ -32,14 +32,15 @@ export const useAtlasStore = defineStore('atlas', () => {
       viewBox.value = data.viewBox
 
       countries.value = data.countries.map((c) => ({
-        code: c.code,
-        name: c.name,
-        lat: c.lat,
-        lng: c.lng,
-        svgCx: c.svgCx,
-        svgCy: c.svgCy,
-        region: c.region,
-        tier: c.tier,
+        code:    c.code,
+        name:    c.name,
+        capital: c.capital,
+        lat:     c.lat,
+        lng:     c.lng,
+        svgCx:   c.svgCx,
+        svgCy:   c.svgCy,
+        region:  c.region,
+        tier:    c.tier,
       }))
 
       const paths: Record<string, string> = {}

@@ -1,20 +1,26 @@
 <script setup lang="ts">
 import type { Country, Round } from '~/types/game'
 
-defineProps<{
-  round: Round
-  picked: Country | null
-  locked: boolean
+const props = defineProps<{
+  round:   Round
+  picked:  Country | null
+  locked:  boolean
+  correct: boolean | null
+  points:  number | null
 }>()
 
 const emit = defineEmits<{ pick: [country: Country] }>()
+
+const label = computed(() =>
+  props.correct ? `It is indeed ${props.round.answer.name}` : `The answer was ${props.round.answer.name}`,
+)
 </script>
 
 <template>
   <div class="flex flex-col gap-6 items-center">
     <!-- Flag display -->
     <div
-      class="w-full flex justify-center p-4 rounded-xl border border-dashed border-rule-2"
+      class="relative w-full flex justify-center p-4 rounded-xl border border-dashed border-rule-2"
       style="background: repeating-linear-gradient(45deg, var(--color-bg-tint) 0 12px, var(--color-paper) 12px 24px)"
     >
       <div
@@ -24,6 +30,13 @@ const emit = defineEmits<{ pick: [country: Country] }>()
       >
         <FlagImage :code="round.answer.code" class="w-full h-full block object-cover select-none" />
       </div>
+      <RoundsFeedbackOverlay
+        v-if="correct !== null"
+        :correct="correct"
+        :timed-out="!picked"
+        :label="label"
+        :points="points"
+      />
     </div>
 
     <!-- Prompt -->

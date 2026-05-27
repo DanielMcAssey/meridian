@@ -41,16 +41,50 @@ Two Pinia stores:
 
 ### Game data (`public/data.json`)
 
-Single static file containing every country with: ISO code, display name, lat/lng, SVG centroid (`svgCx`/`svgCy`), world-map SVG path, flag path, region, and `tier` (1–4). Tier controls the difficulty pool — easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=all.
+Single static file containing every country with: ISO code, display name, capital city, lat/lng, SVG centroid (`svgCx`/`svgCy`), world-map SVG path, flag path, region, and `tier` (1–4). Tier controls the difficulty pool — easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=all.
 
-Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers from the filtered pool, generates same-region distractors, and cycles round types for `mixed` mode.
+Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers from the filtered pool, generates distractors, and cycles round types for `mixed` mode. For `region` rounds, `pickRegionOptions()` ensures each of the 4 options represents a distinct continent.
 
 ### Round types
 
-- **`flag`** (`FlagRound`) — identify country from its flag (4-option grid)
-- **`pin`** (`PinDropRound`) — identify country highlighted on the SVG world map
-- **`cart`** (`CartographerRound`) — identify country from its outline/shape
-- **`mixed`** — cycles `flag → pin → cart` by round index
+| Type | Component | Question | Options |
+|---|---|---|---|
+| `flag` | `FlagRound` | Identify country from its flag | 4 country names |
+| `pin` | `PinDropRound` | Identify country shown on world map with pin | 4 country names |
+| `cart` | `CartographerRound` | Click the named country on the world map | Click on SVG map |
+| `shape` | `SilhouetteRound` | Identify country from its outline | 4 country names |
+| `capital` | `CapitalRound` | Name the capital city of a country | 4 capital city names |
+| `region` | `RegionRound` | Name the continent a country belongs to | 4 continent names (one per continent) |
+
+The `mixed` / **Grand Tour** mode cycles through a difficulty-gated subset of the above types (see `MIXED_ROUND_TYPES` in `config/game.ts`). The continent check for `region` rounds uses `opt.region === answer.region` instead of `opt.code === answer.code` — this is handled in `pages/play.vue`'s `isCorrect` computed and `handleLock`.
+
+### Mode difficulties and Grand Tour gating
+
+Each standalone mode has an intrinsic difficulty (`modeDiff` in `ModeConfig`):
+
+| Mode | `modeDiff` |
+|---|---|
+| Continental (`region`) | easy |
+| Banner Game (`flag`) | medium |
+| Pin Drop (`pin`) | medium |
+| Cartographer (`cart`) | hard |
+| Silhouette (`shape`) | expert |
+| Capital Cities (`capital`) | expert |
+
+Grand Tour (`mixed`) only includes round types up to the player's selected difficulty, defined in `MIXED_ROUND_TYPES` (`config/game.ts`):
+
+| Difficulty | Round types included |
+|---|---|
+| Easy | `region` |
+| Medium | `region`, `flag`, `pin` |
+| Hard | `region`, `flag`, `pin`, `cart` |
+| Expert | `region`, `flag`, `pin`, `cart`, `shape`, `capital` |
+
+The menu card for Grand Tour shows dynamic sub-tags that update as the player changes difficulty.
+
+### Feedback overlay
+
+When a round is locked (answer picked or timer expired), a `RoundsFeedbackOverlay` component appears scoped to the **media section only** (flag image, world map, silhouette, or country name card). The answer buttons remain visible with their green/red state. Each round component receives `correct: boolean | null` and `points: number | null` props from `play.vue`; `null` means the round is not yet locked.
 
 ### Scoring
 
@@ -70,6 +104,7 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 - **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts`. The DB is initialised by `server/plugins/database.ts` (raw `CREATE TABLE IF NOT EXISTS` bootstrap, then Drizzle wraps it) and stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access it via `getDb()` from `server/utils/db.ts`, which returns a typed `NodeSQLiteDatabase<typeof schema>`.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
+- Valid modes: `flag | pin | cart | shape | capital | region | mixed`.
 - **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` and automatically retried on reconnect.
 
 ### Settings persistence
@@ -88,7 +123,7 @@ The app must work well on mobile devices. All UI changes should be tested at mob
 - Touch targets must be large enough (min 44×44 px)
 - The SVG world map (`pin` and `cart` rounds) must be usable on small screens — avoid layouts that make the map too small to interact with
 - Avoid hover-only interactions; any hover state should have an equivalent tap/focus state
-- The 4-option flag grid and answer buttons should stack or resize gracefully on narrow screens
+- The 4-option answer buttons should stack or resize gracefully on narrow screens
 
 ### PWA
 

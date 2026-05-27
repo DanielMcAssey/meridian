@@ -1,16 +1,17 @@
-export type GameMode  = 'flag' | 'pin' | 'cart' | 'shape' | 'mixed'
-export type RoundType = 'flag' | 'pin' | 'cart' | 'shape'
+export type GameMode  = 'flag' | 'pin' | 'cart' | 'shape' | 'capital' | 'region' | 'mixed'
+export type RoundType = 'flag' | 'pin' | 'cart' | 'shape' | 'capital' | 'region'
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
 export interface Country {
-  code:   string
-  name:   string
-  lat:    number
-  lng:    number
-  svgCx:  number
-  svgCy:  number
-  region: string
-  tier:   number
+  code:    string
+  name:    string
+  capital: string
+  lat:     number
+  lng:     number
+  svgCx:   number
+  svgCy:   number
+  region:  string
+  tier:    number
 }
 
 export interface Round {

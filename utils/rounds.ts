@@ -1,4 +1,5 @@
 import type { Country, Difficulty, GameMode, Round, RoundType } from '~/types/game'
+import { MIXED_ROUND_TYPES } from '~/config/game'
 
 export function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
@@ -26,6 +27,18 @@ function pickDistractors(answer: Country, pool: Country[], n: number): Country[]
   return picked
 }
 
+// For region rounds: pick one representative country from each of 3 other regions.
+// Returns the 4 options (answer + 3 region reps) already shuffled.
+function pickRegionOptions(answer: Country, allCountries: Country[]): Country[] {
+  const otherRegions = [...new Set(allCountries.map((c) => c.region))].filter(
+    (r) => r !== answer.region,
+  )
+  const reps = shuffle(otherRegions)
+    .slice(0, 3)
+    .map((region) => shuffle(allCountries.filter((c) => c.region === region))[0]!)
+  return shuffle([answer, ...reps])
+}
+
 export function buildRounds(
   countries: Country[],
   mode: GameMode,
@@ -38,12 +51,15 @@ export function buildRounds(
   const answers = shuffle(pool).slice(0, count)
 
   return answers.map((answer, i) => {
-    const distractors = pickDistractors(answer, widerPool, 3)
-    const options = shuffle([answer, ...distractors])
     let roundType: RoundType = mode as RoundType
     if (mode === 'mixed') {
-      roundType = (['flag', 'pin', 'cart'] as const)[i % 3]!
+      const types = MIXED_ROUND_TYPES[difficulty]
+      roundType = types[i % types.length]!
     }
+    const options =
+      roundType === 'region'
+        ? pickRegionOptions(answer, countries)
+        : shuffle([answer, ...pickDistractors(answer, widerPool, 3)])
     return { type: roundType, answer, options }
   })
 }

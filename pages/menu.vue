@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { GameMode } from '~/types/game'
-import { DIFFICULTIES, MODES, ROUND_COUNTS, TIMER_OPTIONS, type TimerOption } from '~/config/game'
+import type { Difficulty, GameMode } from '~/types/game'
+import { DIFFICULTIES, MIXED_ROUND_TYPES, MODES, ROUND_COUNTS, TIMER_OPTIONS, type ModeConfig, type TimerOption } from '~/config/game'
 
 const atlas      = useAtlasStore()
 const session    = useSessionStore()
@@ -29,6 +29,38 @@ function startGame(mode: GameMode) {
   session.start(rounds, mode, settings.difficulty.value)
   navigateTo('/play')
 }
+
+// ── Difficulty meter helpers ──────────────────────────────────────────────────
+
+const DIFF_LEVEL: Record<Difficulty, number> = { easy: 1, medium: 2, hard: 3, expert: 4 }
+const DIFF_COLOR: Record<Difficulty, string> = {
+  easy:   'oklch(0.62 0.19 145)',
+  medium: 'oklch(0.68 0.17 90)',
+  hard:   'oklch(0.66 0.19 50)',
+  expert: 'oklch(0.60 0.22 25)',
+}
+
+function diffLevel(m: ModeConfig): number {
+  return m.modeDiff ? DIFF_LEVEL[m.modeDiff] : 0
+}
+function diffColor(m: ModeConfig): string {
+  return m.modeDiff ? DIFF_COLOR[m.modeDiff] : ''
+}
+function diffLabel(m: ModeConfig): string {
+  return m.modeDiff ?? ''
+}
+
+// ── Grand Tour dynamic tags ───────────────────────────────────────────────────
+
+const GRAND_TOUR_TAGS: Record<Difficulty, string[]> = {
+  easy:   ['Continental'],
+  medium: ['Continental', 'Vexillology', 'Pin Drops'],
+  hard:   ['Continental', 'Vexillology', 'Pin Drops', 'Charting'],
+  expert: ['Continental', 'Vexillology', 'Pin Drops', 'Charting', 'Silhouette', 'Civics'],
+}
+
+const grandTourTags = computed(() => GRAND_TOUR_TAGS[settings.difficulty.value])
+const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.value].length)
 </script>
 
 <template>
@@ -128,10 +160,10 @@ function startGame(mode: GameMode) {
             style="font-size: clamp(32px, 4vw, 48px)"
           >{{ grandTour.title }}</h2>
           <p class="text-[15px] text-ink-2 m-0 max-w-md">{{ grandTour.sub }}</p>
-          <!-- Sub-tags showing what's included -->
+          <!-- Sub-tags: dynamically shows which round types are included at current difficulty -->
           <div class="flex flex-wrap gap-2 mt-1">
             <span
-              v-for="tag in ['Vexillology', 'Pin Drops', 'Charting']"
+              v-for="tag in grandTourTags"
               :key="tag"
               class="font-mono text-[10px] tracking-[0.14em] uppercase
                      px-2.5 py-1 rounded-full border border-rule-2 text-ink-3"
@@ -194,6 +226,21 @@ function startGame(mode: GameMode) {
           </div>
           <h2 class="font-serif font-normal text-[28px] tracking-[-0.015em] m-0">{{ m.title }}</h2>
           <p class="text-[14.5px] text-ink-2 m-0">{{ m.sub }}</p>
+
+          <!-- Difficulty meter -->
+          <div class="flex items-center gap-2 pt-1">
+            <div class="flex gap-[3px]">
+              <div
+                v-for="n in 4"
+                :key="n"
+                class="w-5 h-[5px] rounded-full transition-colors duration-200"
+                :style="n <= diffLevel(m) ? { background: diffColor(m) } : { background: 'var(--color-rule)' }"
+              />
+            </div>
+            <span class="font-mono text-[9.5px] tracking-[0.16em] uppercase" :style="{ color: diffColor(m) }">
+              {{ diffLabel(m) }}
+            </span>
+          </div>
         </div>
       </button>
       </div>

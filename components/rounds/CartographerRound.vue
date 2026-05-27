@@ -2,9 +2,11 @@
 import type { Country, Round } from '~/types/game'
 
 const props = defineProps<{
-  round: Round
-  picked: Country | null
-  locked: boolean
+  round:   Round
+  picked:  Country | null
+  locked:  boolean
+  correct: boolean | null
+  points:  number | null
 }>()
 
 const emit = defineEmits<{ pick: [country: Country] }>()
@@ -13,11 +15,15 @@ function handleClick(country: Country) {
   if (props.locked) return
   emit('pick', country)
 }
+
+const label = computed(() =>
+  props.correct ? `It is indeed ${props.round.answer.name}` : `The answer was ${props.round.answer.name}`,
+)
 </script>
 
 <template>
   <div class="flex flex-col gap-5 flex-1 min-h-0">
-    <!-- Prompt bar — stacks vertically on mobile, row on sm+ -->
+    <!-- Prompt bar -->
     <div
       class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4
              p-4 bg-bg-tint border border-rule rounded-xl shrink-0"
@@ -36,12 +42,22 @@ function handleClick(country: Country) {
       </div>
     </div>
 
-    <WorldMap
-      mode="click"
-      fill-parent
-      :reveal-code="props.locked ? props.round.answer.code : null"
-      :selected-code="props.picked?.code ?? null"
-      @pick="handleClick"
-    />
+    <!-- Map with feedback scoped here (no separate answer buttons) -->
+    <div class="relative flex-1 min-h-0">
+      <WorldMap
+        mode="click"
+        fill-parent
+        :reveal-code="props.locked ? props.round.answer.code : null"
+        :selected-code="props.picked?.code ?? null"
+        @pick="handleClick"
+      />
+      <RoundsFeedbackOverlay
+        v-if="correct !== null"
+        :correct="correct"
+        :timed-out="!picked"
+        :label="label"
+        :points="points"
+      />
+    </div>
   </div>
 </template>

@@ -9,7 +9,7 @@ const bodySchema = z.object({
   score:      z.number().int().min(0),
   correct:    z.number().int().min(0),
   total:      z.number().int().min(1),
-  mode:       z.enum(['flag', 'pin', 'cart', 'shape', 'mixed']),
+  mode:       z.enum(['flag', 'pin', 'cart', 'shape', 'capital', 'region', 'mixed']),
   difficulty: z.enum(['easy', 'medium', 'hard', 'expert']),
 }).refine(
   (b) => VALID_ROUND_COUNTS.has(b.total),

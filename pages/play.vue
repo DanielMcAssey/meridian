@@ -68,7 +68,11 @@ async function handleLock(opt: Country | null, elapsedSec: number) {
   clearTick()
 
   const round = session.currentRound!
-  const correct = !!opt && opt.code === round.answer.code
+  const correct = !!opt && (
+    round.type === 'region'
+      ? opt.region === round.answer.region
+      : opt.code === round.answer.code
+  )
 
   const pts = correct
     ? calcPoints(
@@ -120,7 +124,11 @@ async function finishGame() {
 const total = computed(() => session.rounds.length)
 const runningScore  = computed(() => session.results.reduce((s, r) => s + r.points, 0))
 const correctSoFar  = computed(() => session.results.filter((r) => r.correct).length)
-const isCorrect     = computed(() => !!picked.value && picked.value.code === session.currentRound?.answer.code)
+const isCorrect     = computed(() => {
+  if (!picked.value || !session.currentRound) return false
+  if (session.currentRound.type === 'region') return picked.value.region === session.currentRound.answer.region
+  return picked.value.code === session.currentRound.answer.code
+})
 const lastResult    = computed(() => locked.value && session.results.length > 0 ? session.results[session.results.length - 1] : null)
 const timerPct      = computed(() =>
   settings.timer.value && settings.timerSecs.value > 0
@@ -204,7 +212,7 @@ function pipClass(i: number): string {
     <div
       :key="session.idx"
       class="bg-paper border border-rule rounded-[18px] px-4 sm:px-6 lg:px-9 py-6
-             flex flex-col flex-1 min-h-0 relative overflow-hidden"
+             flex flex-col flex-1 min-h-0"
       style="box-shadow: var(--shadow-md); animation: stage-in 0.4s cubic-bezier(.2,.7,.2,1)"
     >
       <RoundsFlagRound
@@ -212,6 +220,8 @@ function pipClass(i: number): string {
         :round="session.currentRound"
         :picked="picked"
         :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
         @pick="handlePick"
       />
       <RoundsPinDropRound
@@ -219,6 +229,8 @@ function pipClass(i: number): string {
         :round="session.currentRound"
         :picked="picked"
         :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
         @pick="handlePick"
       />
       <RoundsCartographerRound
@@ -226,6 +238,8 @@ function pipClass(i: number): string {
         :round="session.currentRound"
         :picked="picked"
         :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
         @pick="handlePick"
       />
       <RoundsSilhouetteRound
@@ -233,53 +247,28 @@ function pipClass(i: number): string {
         :round="session.currentRound"
         :picked="picked"
         :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
         @pick="handlePick"
       />
-
-      <!-- Feedback overlay — pops up over the question when the round is locked -->
-      <div
-        v-if="locked"
-        class="absolute inset-0 z-20 flex items-center justify-center rounded-[18px]"
-        style="background: color-mix(in srgb, var(--paper) 80%, transparent); backdrop-filter: blur(8px); animation: fb-backdrop 0.22s ease both"
-      >
-        <div
-          class="flex flex-col items-center gap-3 px-8 sm:px-14 py-7 rounded-2xl border text-center"
-          :class="isCorrect ? 'bg-ok-soft border-ok/50' : 'bg-bad-soft border-bad/50'"
-          style="box-shadow: var(--shadow-lg); animation: feedback-pop 0.42s cubic-bezier(.2,.85,.3,1.25) both"
-        >
-          <!-- Icon badge -->
-          <div
-            class="w-14 h-14 rounded-full flex items-center justify-center text-[26px] shrink-0"
-            :class="isCorrect ? 'bg-ok text-white' : 'bg-bad text-white'"
-          >
-            {{ isCorrect ? '✓' : (picked ? '✗' : '⏱') }}
-          </div>
-
-          <!-- Verdict + country name -->
-          <div class="flex flex-col gap-1.5">
-            <span
-              class="font-serif italic leading-none"
-              style="font-size: clamp(22px, 3vw, 30px)"
-              :class="isCorrect ? 'text-ok' : 'text-bad'"
-            >
-              {{ isCorrect ? 'Correct!' : (picked ? 'Not quite' : "Time's up") }}
-            </span>
-            <p class="m-0 text-ink-2 text-[14px] sm:text-[15px]">
-              {{ isCorrect ? 'It is indeed' : 'The answer was' }}
-              <em class="not-italic font-medium text-ink">{{ session.currentRound.answer.name }}</em>
-            </p>
-          </div>
-
-          <!-- Points pill -->
-          <div
-            v-if="lastResult"
-            class="font-mono text-[12px] tracking-[0.1em] uppercase px-3.5 py-1 rounded-full mt-1"
-            :class="isCorrect ? 'bg-ok/15 text-ok' : 'bg-ink/8 text-ink-3'"
-          >
-            {{ isCorrect ? `+${lastResult.points} pts` : 'No points' }}
-          </div>
-        </div>
-      </div>
+      <RoundsCapitalRound
+        v-else-if="session.currentRound.type === 'capital'"
+        :round="session.currentRound"
+        :picked="picked"
+        :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
+        @pick="handlePick"
+      />
+      <RoundsRegionRound
+        v-else-if="session.currentRound.type === 'region'"
+        :round="session.currentRound"
+        :picked="picked"
+        :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
+        @pick="handlePick"
+      />
     </div>
   </main>
 </template>

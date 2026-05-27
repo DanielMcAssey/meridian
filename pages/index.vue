@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DIFFICULTIES } from '~/config/game'
+import { DIFFICULTIES, MIXED_ROUND_TYPES, MODES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
@@ -23,6 +23,16 @@ function submit() {
   playerName.value = n
   settings.difficulty.value = difficulty.value
   navigateTo('/menu')
+}
+
+// Map round type id → short display label
+const roundTypeLabel = Object.fromEntries(
+  MODES.filter((m) => m.id !== 'mixed').map((m) => [m.id, m.label]),
+)
+
+// Game type chips shown inside each difficulty card
+function gamesFor(diff: Difficulty): string[] {
+  return MIXED_ROUND_TYPES[diff].map((t) => roundTypeLabel[t] ?? t)
 }
 </script>
 
@@ -73,8 +83,8 @@ function submit() {
           A wager with the <em class="italic" style="color: var(--accent-deep)">world</em>.
         </h1>
         <p class="text-[17px] text-ink-2 mb-9 max-w-[460px]">
-          A round of flags, a pin dropped on a far shore, a country to find on the map — your wits
-          against every land we know.
+          Six games of geography — flags, capitals, a pin dropped on a far shore, a continent to
+          name. Your wits against every land we know.
         </p>
 
         <form class="flex flex-col gap-5" @submit.prevent="submit">
@@ -126,6 +136,17 @@ function submit() {
                 <span class="font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-3 mt-1">
                   {{ d.est }} countries
                 </span>
+                <!-- Game types unlocked at this difficulty -->
+                <div class="flex flex-wrap gap-1 mt-2.5">
+                  <span
+                    v-for="label in gamesFor(d.id)"
+                    :key="label"
+                    class="font-mono text-[9px] tracking-[0.1em] uppercase px-1.5 py-[3px] rounded border transition-colors duration-150"
+                    :class="difficulty === d.id
+                      ? 'border-[var(--accent)]/50 text-[var(--accent-deep)]'
+                      : 'border-rule-2 text-ink-3'"
+                  >{{ label }}</span>
+                </div>
               </button>
             </div>
           </div>
