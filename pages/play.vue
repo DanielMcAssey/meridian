@@ -92,19 +92,27 @@ async function handleLock(opt: Country | null, elapsedSec: number) {
   }, 1500)
 }
 
+const { submitScore } = useLeaderboardMutation()
+
 async function finishGame() {
   const score   = session.results.reduce((s, r) => s + r.points, 0)
   const correct = session.results.filter((r) => r.correct).length
 
-  try {
-    const { rank, total } = await $fetch<{ rank: number; total: number }>('/api/leaderboard', {
-      method: 'POST',
-      body: { name: playerName.value, score, correct, total: session.rounds.length, mode: session.mode, difficulty: session.difficulty },
-    })
-    session.finish({ rank, total })
-  } catch {
-    session.finish({ rank: 0, total: 0 })
-  }
+  // Tally scores and mark session as finished immediately so we can navigate
+  // to the results page without blocking on the network.
+  session.markFinished()
+
+  // Fire the mutation.  If online, it resolves straight away and onSuccess
+  // calls session.setRank().  If offline, it's queued in localStorage and
+  // retried automatically when connectivity returns.
+  submitScore({
+    name: playerName.value,
+    score,
+    correct,
+    total: session.rounds.length,
+    mode: session.mode,
+    difficulty: session.difficulty,
+  })
 
   navigateTo('/results')
 }

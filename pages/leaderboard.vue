@@ -1,10 +1,19 @@
 <script setup lang="ts">
+import { useQuery } from '@tanstack/vue-query'
 import type { LeaderboardEntry } from '~/types/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
 
-const { data: board, refresh } = await useFetch<LeaderboardEntry[]>('/api/leaderboard', {
-  default: (): LeaderboardEntry[] => [],
+// Use TanStack Query so this list automatically re-fetches after a queued
+// offline score is finally posted (useLeaderboardMutation invalidates this key
+// in its onSuccess callback).
+const { data: board, isFetching, refetch } = useQuery<LeaderboardEntry[]>({
+  queryKey: ['leaderboard'],
+  queryFn: () => $fetch<LeaderboardEntry[]>('/api/leaderboard'),
+  initialData: () => [],
+  staleTime: 1000 * 30,       // re-fetch after 30 s of inactivity
+  refetchOnWindowFocus: true,  // pick up scores posted in another tab/window
+  networkMode: 'offlineFirst', // serve stale cache when offline
 })
 
 type TrophyKind = 'gold' | 'silver' | 'bronze'
@@ -33,7 +42,7 @@ onMounted(async () => {
       entries.map((e) => $fetch('/api/leaderboard', { method: 'POST', body: e })),
     )
     localStorage.removeItem(LS_BOARD)
-    await refresh()
+    await refetch()
   } catch { /* Non-critical */ }
 })
 
@@ -59,7 +68,15 @@ const trophyColor: Record<TrophyKind, string> = {
         class="font-serif font-normal tracking-[-0.02em] leading-none mt-3 mb-1.5"
         style="font-size: clamp(40px, 5vw, 64px)"
       >Leaderboard.</h1>
-      <p class="text-ink-2 m-0">The fifty finest scores on record.</p>
+      <p class="text-ink-2 m-0 flex items-center gap-2">
+        The fifty finest scores on record.
+        <!-- Subtle spinner while re-fetching in the background -->
+        <span
+          v-if="isFetching"
+          class="inline-block w-3 h-3 rounded-full border-2 border-rule border-t-ink-3 animate-spin"
+          aria-hidden="true"
+        />
+      </p>
     </div>
 
     <!-- Empty state -->

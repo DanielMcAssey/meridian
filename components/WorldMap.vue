@@ -99,11 +99,23 @@ function zoomAtClient(clientX: number, clientY: number, factor: number) {
   Object.assign(vb, next)
 }
 
-// ── native event listeners (wheel + drag) ────────────────────────────────
+// ── native event listeners (wheel + drag + pinch-to-zoom) ────────────────
 
+// All currently active pointers keyed by pointerId.
+const activePointers = new Map<number, { x: number; y: number }>()
+let lastPinchDist = 0
 let drag: { startX: number; startY: number; vb: VbState } | null = null
 let moved = false
 let cleanupListeners: (() => void) | null = null
+
+function pinchDist() {
+  const [a, b] = activePointers.values()
+  return Math.hypot(b.x - a.x, b.y - a.y)
+}
+function pinchMid() {
+  const [a, b] = activePointers.values()
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }
+}
 
 onMounted(() => {
   const el = wrapRef.value
@@ -116,48 +128,78 @@ onMounted(() => {
   }
 
   const onPointerDown = (e: PointerEvent) => {
-    if (e.button !== 0) return
     if ((e.target as Element).closest('.map-hud')) return
+    // Capture so move/up events keep firing even when the finger leaves the element.
+    el.setPointerCapture(e.pointerId)
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (activePointers.size === 2) {
+      // Second finger down — switch to pinch mode, cancel any drag.
+      lastPinchDist = pinchDist()
+      drag = null
+      moved = true   // prevents a spurious click when fingers lift
+      return
+    }
+
+    // First finger / mouse button down — prepare drag.
+    if (e.button !== 0 && e.pointerType === 'mouse') return
     moved = false
     drag = { startX: e.clientX, startY: e.clientY, vb: { ...vb } }
+  }
 
-    const onPointerMove = (ev: PointerEvent) => {
-      if (!drag) return
-      const dx = ev.clientX - drag.startX
-      const dy = ev.clientY - drag.startY
-      if (!moved && Math.abs(dx) + Math.abs(dy) > 5) moved = true
-      if (!moved) return
-      const rect = el.getBoundingClientRect()
-      const scaleX = drag.vb.w / rect.width
-      const scaleY = drag.vb.h / rect.height
-      const next = clamp({
-        x: drag.vb.x - dx * scaleX,
-        y: drag.vb.y - dy * scaleY,
-        w: drag.vb.w,
-        h: drag.vb.h,
-      })
-      Object.assign(vb, next)
+  const onPointerMove = (e: PointerEvent) => {
+    activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
+
+    if (activePointers.size >= 2) {
+      // ── Pinch zoom ──────────────────────────────────────────────────────
+      const dist = pinchDist()
+      if (lastPinchDist > 0) {
+        const factor = dist / lastPinchDist
+        const mid = pinchMid()
+        zoomAtClient(mid.x, mid.y, factor)
+      }
+      lastPinchDist = dist
+      return
     }
 
-    const onPointerUp = () => {
+    // ── Single-pointer drag ─────────────────────────────────────────────
+    if (!drag) return
+    const dx = e.clientX - drag.startX
+    const dy = e.clientY - drag.startY
+    if (!moved && Math.abs(dx) + Math.abs(dy) > 5) moved = true
+    if (!moved) return
+    const rect = el.getBoundingClientRect()
+    const scaleX = drag.vb.w / rect.width
+    const scaleY = drag.vb.h / rect.height
+    Object.assign(vb, clamp({
+      x: drag.vb.x - dx * scaleX,
+      y: drag.vb.y - dy * scaleY,
+      w: drag.vb.w,
+      h: drag.vb.h,
+    }))
+  }
+
+  const onPointerUp = (e: PointerEvent) => {
+    activePointers.delete(e.pointerId)
+    if (activePointers.size < 2) lastPinchDist = 0
+    if (activePointers.size === 0) {
       drag = null
-      window.removeEventListener('pointermove', onPointerMove)
-      window.removeEventListener('pointerup', onPointerUp)
-      window.removeEventListener('pointercancel', onPointerUp)
       setTimeout(() => { moved = false }, 0)
     }
-
-    window.addEventListener('pointermove', onPointerMove)
-    window.addEventListener('pointerup', onPointerUp)
-    window.addEventListener('pointercancel', onPointerUp)
   }
 
   el.addEventListener('wheel', onWheel, { passive: false })
   el.addEventListener('pointerdown', onPointerDown)
+  el.addEventListener('pointermove', onPointerMove)
+  el.addEventListener('pointerup', onPointerUp)
+  el.addEventListener('pointercancel', onPointerUp)
 
   cleanupListeners = () => {
     el.removeEventListener('wheel', onWheel)
     el.removeEventListener('pointerdown', onPointerDown)
+    el.removeEventListener('pointermove', onPointerMove)
+    el.removeEventListener('pointerup', onPointerUp)
+    el.removeEventListener('pointercancel', onPointerUp)
   }
 })
 
@@ -181,7 +223,7 @@ function classFor(code: string): string {
   return 'country'
 }
 
-// ── zoom level display ──────────────────────────────────────────────────
+// ── zoom bounds (used to enable/disable +/- buttons) ─────────────────────
 
 const zoomLevel = computed(() => vb0.value.w / vb.w)
 const canZoomIn  = computed(() => zoomLevel.value < 12)
@@ -203,7 +245,7 @@ function zoomCenter(factor: number) {
            cursor-grab active:cursor-grabbing"
     :class="[
       { 'cursor-crosshair! active:cursor-crosshair!': mode === 'click' },
-      props.fillParent ? 'flex-1 min-h-0' : '',
+      props.fillParent ? 'worldmap-fill sm:flex-1 sm:min-h-0' : '',
     ]"
     :data-mode="mode"
     style="box-shadow: inset 0 0 0 1px rgba(0,0,0,0.02), var(--shadow-sm); touch-action: none"
@@ -211,7 +253,6 @@ function zoomCenter(factor: number) {
     <svg
       :viewBox="`${vb.x} ${vb.y} ${vb.w} ${vb.h}`"
       :class="props.fillParent ? 'worldmap-svg' : ['worldmap-svg', props.heightClass]"
-      :style="props.fillParent ? { width: '100%', height: '100%' } : undefined"
       preserveAspectRatio="xMidYMid meet"
     >
       <rect x="-1000" y="-1000" width="4000" height="4000" class="ocean" />
@@ -274,18 +315,6 @@ function zoomCenter(factor: number) {
         title="Zoom out"
         @click="zoomCenter(1 / 1.4)"
       >−</button>
-      <button
-        class="w-10 h-10 flex items-center justify-center
-               font-mono text-[18px] text-ink rounded-lg border-none bg-transparent
-               transition-[0.12s] hover:not-disabled:bg-bg-tint
-               disabled:opacity-30 disabled:cursor-default"
-        :disabled="!canZoomOut"
-        title="Reset"
-        @click="Object.assign(vb, vb0)"
-      >↺</button>
-      <span class="font-mono text-[10.5px] text-ink-3 tracking-[0.04em] pt-0.5">
-        {{ zoomLevel.toFixed(1) }}×
-      </span>
     </div>
   </div>
 </template>

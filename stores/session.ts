@@ -13,8 +13,18 @@ export const useSessionStore = defineStore('session', () => {
   const rank = ref<number | null>(null)
   const lbTotal = ref<number | null>(null)
 
+  /**
+   * True while the score has been submitted but the server hasn't responded
+   * yet (e.g. the player is offline and the mutation is queued).
+   */
+  const lbPending = ref(false)
+
   const hasSession = computed(() => rounds.value.length > 0)
-  const hasFinished = computed(() => hasSession.value && rank.value !== null)
+  /**
+   * The game is "finished" (results page is reachable) as soon as scores are
+   * tallied – regardless of whether the leaderboard POST has returned.
+   */
+  const hasFinished = computed(() => hasSession.value && (rank.value !== null || lbPending.value))
   const currentRound = computed(() => rounds.value[idx.value] ?? null)
 
   function start(newRounds: Round[], gameMode: GameMode, gameDifficulty: Difficulty) {
@@ -27,6 +37,7 @@ export const useSessionStore = defineStore('session', () => {
     finalCorrect.value = 0
     rank.value = null
     lbTotal.value = null
+    lbPending.value = false
   }
 
   function recordResult(result: RoundResult) {
@@ -37,11 +48,36 @@ export const useSessionStore = defineStore('session', () => {
     idx.value++
   }
 
+  /**
+   * Tally scores and mark the session as finished.
+   * Call this *before* firing the leaderboard mutation so we can navigate to
+   * the results page immediately without blocking on the network.
+   */
+  function markFinished() {
+    finalScore.value = results.value.reduce((s, r) => s + r.points, 0)
+    finalCorrect.value = results.value.filter((r) => r.correct).length
+    rank.value = null
+    lbTotal.value = null
+    lbPending.value = true
+  }
+
+  /**
+   * Called by useLeaderboardMutation's onSuccess handler once the server
+   * responds (immediately if online; later if the mutation was queued offline).
+   */
+  function setRank(rankData: { rank: number; total: number }) {
+    rank.value = rankData.rank
+    lbTotal.value = rankData.total
+    lbPending.value = false
+  }
+
+  /** @deprecated Use markFinished() + setRank() instead. */
   function finish(rankData: { rank: number; total: number }) {
     finalScore.value = results.value.reduce((s, r) => s + r.points, 0)
     finalCorrect.value = results.value.filter((r) => r.correct).length
     rank.value = rankData.rank
     lbTotal.value = rankData.total
+    lbPending.value = false
   }
 
   return {
@@ -54,12 +90,15 @@ export const useSessionStore = defineStore('session', () => {
     finalCorrect,
     rank,
     lbTotal,
+    lbPending,
     hasSession,
     hasFinished,
     currentRound,
     start,
     recordResult,
     advance,
+    markFinished,
+    setRank,
     finish,
   }
 })

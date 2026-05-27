@@ -3,6 +3,7 @@ definePageMeta({ ssr: false })
 
 const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
+const { isPending, isPaused } = useLeaderboardMutation()
 
 onMounted(() => {
   if (!session.hasFinished) navigateTo('/menu')
@@ -52,6 +53,22 @@ function playAgain() {
       <p v-if="percentText" class="font-mono text-[12.5px] tracking-[0.06em] mt-3 uppercase" style="color: var(--accent-deep)">
         {{ percentText }}
       </p>
+
+      <!-- Offline / queued leaderboard submission banner -->
+      <div
+        v-if="isPaused || (session.lbPending && !isPending)"
+        class="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full border border-rule bg-paper text-ink-3 font-mono text-[11px] tracking-[0.08em] uppercase"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-3 opacity-60 animate-pulse shrink-0" aria-hidden="true" />
+        Score queued — will post to leaderboard when back online
+      </div>
+      <div
+        v-else-if="isPending"
+        class="inline-flex items-center gap-2 mt-3 px-3 py-1.5 rounded-full border border-rule bg-paper text-ink-3 font-mono text-[11px] tracking-[0.08em] uppercase"
+      >
+        <span class="w-1.5 h-1.5 rounded-full bg-ink-3 opacity-60 animate-pulse shrink-0" aria-hidden="true" />
+        Posting score…
+      </div>
     </div>
 
     <!-- Big stats -->

@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background tile -->
+  <rect width="512" height="512" rx="112" fill="#1e1c1a"/>
+
+  <!-- Outer meridian ring -->
+  <circle cx="256" cy="256" r="178" fill="none" stroke="#f0ede8" stroke-width="6" opacity="0.18"/>
+  <!-- Inner ring -->
+  <circle cx="256" cy="256" r="120" fill="none" stroke="#f0ede8" stroke-width="3" opacity="0.12"/>
+
+  <!-- Cardinal tick marks -->
+  <line x1="256" y1="72"  x2="256" y2="94"  stroke="#f0ede8" stroke-width="5" stroke-linecap="round" opacity="0.5"/>
+  <line x1="256" y1="418" x2="256" y2="440" stroke="#f0ede8" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="72"  y1="256" x2="94"  y2="256" stroke="#f0ede8" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+  <line x1="418" y1="256" x2="440" y2="256" stroke="#f0ede8" stroke-width="5" stroke-linecap="round" opacity="0.35"/>
+
+  <!-- Compass needle — north (terracotta) -->
+  <path d="M256 94 L272 256 L256 242 L240 256 Z" fill="#c2714a"/>
+  <!-- Compass needle — south (light, muted) -->
+  <path d="M256 418 L272 256 L256 270 L240 256 Z" fill="#f0ede8" opacity="0.55"/>
+
+  <!-- Centre hub -->
+  <circle cx="256" cy="256" r="14" fill="#1e1c1a"/>
+  <circle cx="256" cy="256" r="8"  fill="#f0ede8" opacity="0.85"/>
+</svg>

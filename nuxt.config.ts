@@ -8,7 +8,7 @@ export default defineNuxtConfig({
   compatibilityDate: '2025-01-01',
   devtools: { enabled: false },
 
-  modules: ['@pinia/nuxt'],
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
 
   css: ['~/assets/styles/main.css'],
 
@@ -27,6 +27,7 @@ export default defineNuxtConfig({
       title: 'Meridian — A Geographical Pastime',
       meta: [
         { name: 'description', content: 'A geographical guessing game of flags, pins, and maps.' },
+        { name: 'theme-color', content: '#1e1c1a' },
       ],
       link: [
         { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -36,6 +37,112 @@ export default defineNuxtConfig({
           href: 'https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&family=Public+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap',
         },
       ],
+    },
+  },
+
+  // ── Progressive Web App ────────────────────────────────────────────────────
+  pwa: {
+    // Auto-replace the old SW without prompting the user.
+    registerType: 'autoUpdate',
+
+    manifest: {
+      name: 'Meridian — A Geographical Pastime',
+      short_name: 'Meridian',
+      description: 'A geographical guessing game of flags, pins, and maps.',
+      theme_color: '#1e1c1a',
+      background_color: '#1e1c1a',
+      display: 'standalone',
+      orientation: 'portrait-primary',
+      start_url: '/',
+      icons: [
+        // SVG icon — supported in Chrome / Edge / Firefox
+        {
+          src: 'icons/icon.svg',
+          sizes: 'any',
+          type: 'image/svg+xml',
+          purpose: 'any',
+        },
+        // Maskable variant (adaptive icon on Android)
+        {
+          src: 'icons/icon.svg',
+          sizes: 'any',
+          type: 'image/svg+xml',
+          purpose: 'maskable',
+        },
+      ],
+    },
+
+    workbox: {
+      // ── Precache ────────────────────────────────────────────────────────
+      // JS/CSS bundles, data.json, HTML, fonts, AND all SVGs (flag images +
+      // the app icon).  The 179 flag SVGs are small individually and must be
+      // available offline so every quiz question can display its flag.
+      globPatterns: ['**/*.{js,css,html,json,ico,svg,woff,woff2,ttf}'],
+      cleanupOutdatedCaches: true,
+
+      // For navigation requests that aren't in the precache, fall back to
+      // the cached index so the Vue Router can handle the route client-side.
+      navigateFallback: '/',
+      navigateFallbackAllowlist: [
+        // Any path that isn't an API call or a Nuxt internal
+        /^(?!\/_nuxt\/|\/api\/).*/,
+      ],
+
+      // ── Runtime caching strategies ───────────────────────────────────────
+      runtimeCaching: [
+        // Google Fonts — stylesheet (small, changes rarely)
+        {
+          urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
+          handler: 'StaleWhileRevalidate' as const,
+          options: {
+            cacheName: 'google-fonts-stylesheets',
+            expiration: {
+              maxEntries: 4,
+              maxAgeSeconds: 60 * 60 * 24 * 7, // 1 week
+            },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+
+        // Google Fonts — actual font files (immutable, versioned URLs)
+        {
+          urlPattern: /^https:\/\/fonts\.gstatic\.com\/.*/i,
+          handler: 'CacheFirst' as const,
+          options: {
+            cacheName: 'google-fonts-webfonts',
+            expiration: {
+              maxEntries: 30,
+              maxAgeSeconds: 60 * 60 * 24 * 365, // 1 year
+            },
+            cacheableResponse: { statuses: [0, 200] },
+          },
+        },
+
+        // Leaderboard GET — NetworkFirst so scores are always fresh online,
+        // but the last-seen board is still readable when offline.
+        {
+          urlPattern: /\/api\/leaderboard(\?.*)?$/,
+          handler: 'NetworkFirst' as const,
+          options: {
+            cacheName: 'leaderboard-api',
+            networkTimeoutSeconds: 4,
+            expiration: {
+              maxEntries: 1,
+              maxAgeSeconds: 60 * 60, // 1 hour
+            },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+      ],
+    },
+
+    // Keep the SW active during development so you can test offline behaviour
+    // with devtools → Application → Service Workers.
+    devOptions: {
+      enabled: true,
+      suppressWarnings: true,
+      navigateFallbackAllowlist: [/^\/$/],
+      type: 'module',
     },
   },
 })

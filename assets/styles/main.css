@@ -215,6 +215,13 @@ button { font: inherit; color: inherit; cursor: pointer; }
 
 /* ── SVG map classes — cannot use utilities (SVG children + attr selectors) */
 .worldmap-svg { display: block; width: 100%; height: auto; background: var(--color-ocean); }
+/* In fill-parent mode the SVG stretches to 100% of its flex container on
+   wider screens.  On mobile (portrait) we keep height:auto so the wrapper
+   shrinks to the SVG's natural aspect-ratio height instead of leaving dead
+   ocean-coloured space above/below the rendered map. */
+@media (min-width: 640px) {
+  .worldmap-fill > .worldmap-svg { height: 100%; }
+}
 .worldmap-svg .ocean { fill: var(--color-ocean); }
 .worldmap-svg .country {
   fill: var(--color-land);

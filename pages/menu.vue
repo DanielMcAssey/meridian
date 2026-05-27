@@ -128,8 +128,6 @@ function startGame(mode: GameMode) {
         @mouseenter="($event.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-lg)'"
         @mouseleave="($event.currentTarget as HTMLElement).style.boxShadow = 'var(--shadow-sm)'"
       >
-        <div class="font-mono text-[11px] text-ink-3 tracking-[0.14em]">{{ String(i + 1).padStart(2, '0') }}</div>
-
         <!-- Art panel -->
         <div
           class="h-28 flex items-center justify-center overflow-hidden
