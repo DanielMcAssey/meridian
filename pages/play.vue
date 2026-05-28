@@ -6,8 +6,26 @@ const session = useSessionStore()
 const settings = useGameSettings()
 const playerName = useLocalStorage('geo.player.name', '')
 
+// ── Leave guard ──────────────────────────────────────────────────────────────
+// Warn the player before they navigate away or close the tab mid-game.
+// hasFinished becomes true inside finishGame() (before navigateTo('/results')),
+// so the guard never blocks the legitimate game-complete transition.
+
+function handleBeforeUnload(e: BeforeUnloadEvent) {
+  if (session.hasSession && !session.hasFinished) e.preventDefault()
+}
+
+onBeforeRouteLeave((_to, _from, next) => {
+  if (session.hasSession && !session.hasFinished
+    && !window.confirm('Leave this game? Your progress will be lost.')) {
+    return next(false)
+  }
+  next()
+})
+
 onMounted(() => {
   if (!session.hasSession) navigateTo('/menu')
+  window.addEventListener('beforeunload', handleBeforeUnload)
 })
 
 // ── Per-round reactive state ─────────────────────────────────────────────
@@ -59,6 +77,7 @@ watch(
 onUnmounted(() => {
   clearTick()
   if (advanceTimeout !== null) clearTimeout(advanceTimeout)
+  window.removeEventListener('beforeunload', handleBeforeUnload)
 })
 
 // ── Scoring ──────────────────────────────────────────────────────────────

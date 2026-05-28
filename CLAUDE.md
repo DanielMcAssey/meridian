@@ -18,6 +18,10 @@ There are no automated tests. CI runs `typecheck` + `build` on PRs.
 
 Commits must follow Conventional Commits (enforced by commitlint). Types: `feat`, `fix`, `chore`, `docs`, `refactor`, `perf`, `style`. Subject must be lower-case. Releases are cut automatically by semantic-release on merge to `main`.
 
+## Configuration
+
+All tunable constants belong in **`config/game.ts`** — never hardcoded inline in components, pages, or server routes. This includes scoring values, difficulty settings, round counts, timer durations, mode definitions, and any other value that could reasonably need updating without a code search. When adding a new configurable value, export it from `config/game.ts` and import it at the use site.
+
 ## Architecture
 
 Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **client-side only** (`definePageMeta({ ssr: false })`). The server side is a thin **Nitro** API (leaderboard only).
@@ -113,8 +117,8 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` which runs `migrate(db, { migrationsFolder })` from `drizzle-orm/node-sqlite/migrator` on every startup; migrations are idempotent. Stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access via `getDb()` from `server/utils/db.ts`.
-- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change: run `npm run db:generate`. Migrations use `CREATE TABLE IF NOT EXISTS` so they are safe to run against an existing database. In production, migration files are bundled by Nitro as server assets (`serverAssets: [{ baseName: 'db_migrations' }]`) and resolved from `assets/db_migrations/` relative to the server entry point.
+- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` (async plugin). Stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access via `getDb()` from `server/utils/db.ts`.
+- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change: run `npm run db:generate`. Migrations use `CREATE TABLE IF NOT EXISTS` so they are safe to run against an existing database. The plugin runs a **custom migration runner** (not drizzle's `migrate()`) using `useStorage('assets:db_migrations')` — this works via Nitro's virtual storage API in both dev (filesystem) and production (bundled via `serverAssets`). Applied migrations are tracked in a `_meridian_migrations` SQLite table. Statements are split on `--> statement-breakpoint`.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
 - Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`. Mode and difficulty enums are derived from `VALID_MODE_IDS` / `VALID_DIFFICULTY_IDS` in `config/game.ts` — Zod stays in sync with config automatically.
 - The POST payload requires `userId` and `gameToken` (both UUIDs). `gameToken` is unique per game, checked for idempotency — duplicate submissions (offline retries, double-submit) skip the insert and return the existing rank. `userId` upserts a `users` row.

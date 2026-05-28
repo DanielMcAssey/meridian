@@ -111,6 +111,11 @@ export const DIFFICULTY_TIER_WEIGHTS: Record<Difficulty, Record<number, number>>
   expert: { 1: 1, 2: 2, 3: 3, 4: 5 },
 }
 
+// ── SW reload protection ──────────────────────────────────────────────────────
+// Routes where a service-worker-triggered reload should be deferred until the
+// user navigates away, to avoid interrupting an active game or results review.
+export const SW_RELOAD_PROTECTED = new Set(['/play', '/results'])
+
 // ── Grand Tour round-type gates ───────────────────────────────────────────────
 // Defines which round types are included in 'mixed' mode at each difficulty.
 // Higher difficulties include all lower-tier types plus their own.

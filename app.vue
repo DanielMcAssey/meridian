@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { SW_RELOAD_PROTECTED } from '~/config/game'
+
 const atlas = useAtlasStore()
 const route = useRoute()
 
@@ -8,15 +10,26 @@ const route = useRoute()
 // initial render matches the server output.
 const mounted = ref(false)
 
+let swUpdatePending = false
+
+watch(() => route.path, (path) => {
+  if (swUpdatePending && !SW_RELOAD_PROTECTED.has(path)) window.location.reload()
+})
+
 onMounted(() => {
   mounted.value = true
   atlas.load()
   useUserId() // ensure every returning user gets a UUID on first load after migration
 
   // When autoUpdate activates a new SW (skipWaiting → controllerchange),
-  // reload so the new bundles are served instead of the old cached ones.
+  // reload immediately on safe pages; defer on /play and /results so we
+  // don't interrupt an active game or a results review.
   navigator.serviceWorker?.addEventListener('controllerchange', () => {
-    window.location.reload()
+    if (SW_RELOAD_PROTECTED.has(route.path)) {
+      swUpdatePending = true
+    } else {
+      window.location.reload()
+    }
   })
 })
 </script>
