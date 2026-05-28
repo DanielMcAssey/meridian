@@ -57,7 +57,7 @@ export default defineNitroPlugin(async () => {
   const config = useRuntimeConfig()
 
   // Prefer the Turso URL when set; fall back to a local SQLite file.
-  const tursoUrl   = config.tursoUrl   as string | undefined
+  const tursoUrl   = config.tursoDatabaseUrl as string | undefined
   const authToken  = config.tursoAuthToken as string | undefined
   const isRemote   = !!tursoUrl
 
