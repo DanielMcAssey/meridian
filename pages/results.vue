@@ -43,7 +43,7 @@ const TYPE_LABEL: Record<RoundType, string> = {
 
 function playAgain() {
   const atlas = useAtlasStore()
-  const rounds = buildRounds(atlas.countries, session.mode, session.results.length, session.difficulty)
+  const rounds = buildRounds(atlas.countries, session.mode, session.results.length, session.difficulty, atlas.languageNames)
   session.start(rounds, session.mode, session.difficulty)
   navigateTo('/play')
 }

@@ -8,7 +8,7 @@ interface AtlasData {
     Country & {
       flag:          string
       path:          string
-      shape?:        string
+      shape:         string | null
       langs?:        string[]
       subdivisions?: Subdivision[]
     }
@@ -20,19 +20,24 @@ export const useAtlasStore = defineStore('atlas', () => {
   // Marking these refs skips Pinia's SSR serialisation entirely, which avoids a
   // crash in Pinia's shouldHydrate() when Vue Router or @pinia/nuxt intern objects
   // with null-prototype (Object.create(null)) appear in the devalue traversal.
-  const countries    = skipHydrate(ref<Country[]>([]))
-  const countryPaths = skipHydrate(ref<Record<string, string>>({}))
-  const flagPaths    = skipHydrate(ref<Record<string, string>>({}))
-  const shapePaths   = skipHydrate(ref<Record<string, string>>({}))
-  const viewBox      = skipHydrate(ref(''))
-  const ready        = skipHydrate(ref(false))
-  const error        = skipHydrate(ref<string | null>(null))
+  const countries      = skipHydrate(ref<Country[]>([]))
+  const countryPaths   = skipHydrate(ref<Record<string, string>>({}))
+  const flagPaths      = skipHydrate(ref<Record<string, string>>({}))
+  const shapePaths     = skipHydrate(ref<Record<string, string>>({}))
+  const languageNames  = skipHydrate(ref<Record<string, string>>({}))
+  const viewBox        = skipHydrate(ref(''))
+  const ready          = skipHydrate(ref(false))
+  const error          = skipHydrate(ref<string | null>(null))
 
   async function load() {
     if (ready.value) return
     error.value = null
     try {
-      const data = await $fetch<AtlasData>('/data.json')
+      const [data, langs] = await Promise.all([
+        $fetch<AtlasData>('/data.json'),
+        $fetch<Record<string, string>>('/languages.json'),
+      ])
+      languageNames.value = langs
 
       viewBox.value = data.viewBox
 
@@ -48,6 +53,7 @@ export const useAtlasStore = defineStore('atlas', () => {
         tier:    c.tier,
         langs:        c.langs ?? [],
         subdivisions: c.subdivisions ?? [],
+        hasShape:     !!c.shape,
       }))
 
       const paths:  Record<string, string> = {}
@@ -70,5 +76,5 @@ export const useAtlasStore = defineStore('atlas', () => {
     }
   }
 
-  return { countries, countryPaths, flagPaths, shapePaths, viewBox, ready, error, load }
+  return { countries, countryPaths, flagPaths, shapePaths, languageNames, viewBox, ready, error, load }
 })

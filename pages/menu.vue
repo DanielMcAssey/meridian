@@ -16,7 +16,7 @@ onMounted(() => {
 })
 
 function startGame(mode: GameMode) {
-  const rounds = buildRounds(atlas.countries, mode, settings.rounds.value, settings.difficulty.value)
+  const rounds = buildRounds(atlas.countries, mode, settings.rounds.value, settings.difficulty.value, atlas.languageNames)
   session.start(rounds, mode, settings.difficulty.value)
   navigateTo('/play')
 }

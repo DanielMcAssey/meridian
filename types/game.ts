@@ -19,6 +19,7 @@ export interface Country {
   tier:         number
   langs:        string[]       // ISO 639-1 alpha-2 codes of official languages
   subdivisions: Subdivision[]  // top-level administrative divisions
+  hasShape:     boolean        // silhouette SVG is available (shape != null in data.json)
 }
 
 export interface Round {

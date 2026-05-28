@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { LANGUAGE_NAMES } from '~/utils/languages'
 import type { Country } from '~/types/game'
 
 const atlas  = useAtlasStore()
@@ -97,7 +96,7 @@ const TIER_BADGE_STYLE = [
 ]
 
 function langName(code: string): string {
-  return LANGUAGE_NAMES[code] ?? code.toUpperCase()
+  return atlas.languageNames[code] ?? code.toUpperCase()
 }
 
 function subdivisionCatLabel(cat: string): string {
@@ -230,6 +229,7 @@ const total = computed(() => atlas.countries.length)
 
   <!-- ── Detail modal ────────────────────────────────────────────────────────── -->
   <Teleport to="body">
+    <!-- Backdrop fades on its own so the blur doesn't animate with the panel -->
     <Transition
       enter-from-class="opacity-0"
       leave-to-class="opacity-0"
@@ -238,31 +238,31 @@ const total = computed(() => atlas.countries.length)
     >
       <div
         v-if="selected"
-        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
+        class="fixed inset-0 z-50 bg-ink/40 backdrop-blur-sm"
+        aria-hidden="true"
+        @click="closeDetail"
+      />
+    </Transition>
+
+    <!-- Panel slides/fades independently of the backdrop -->
+    <Transition
+      enter-from-class="translate-y-6 opacity-0 sm:translate-y-0 sm:scale-[0.96]"
+      leave-to-class="translate-y-6 opacity-0 sm:translate-y-0 sm:scale-[0.96]"
+      enter-active-class="transition-[transform,opacity] duration-200 ease-out"
+      leave-active-class="transition-[transform,opacity] duration-150 ease-in"
+    >
+      <div
+        v-if="selected"
+        class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 pointer-events-none"
         role="dialog"
         aria-modal="true"
         :aria-label="selected.name"
       >
-        <!-- Backdrop -->
         <div
-          class="absolute inset-0 bg-ink/40 backdrop-blur-sm"
-          aria-hidden="true"
-          @click="closeDetail"
-        />
-
-        <!-- Panel -->
-        <Transition
-          enter-from-class="translate-y-6 opacity-0 sm:translate-y-0 sm:scale-[0.96]"
-          leave-to-class="translate-y-6 opacity-0 sm:translate-y-0 sm:scale-[0.96]"
-          enter-active-class="transition-[transform,opacity] duration-200 ease-out"
-          leave-active-class="transition-[transform,opacity] duration-150 ease-in"
+          class="pointer-events-auto relative w-full sm:max-w-2xl bg-paper rounded-t-2xl sm:rounded-2xl
+                 border border-rule shadow-lg overflow-hidden flex flex-col"
+          style="max-height: 90dvh"
         >
-          <div
-            v-if="selected"
-            class="relative w-full sm:max-w-2xl bg-paper rounded-t-2xl sm:rounded-2xl
-                   border border-rule shadow-lg overflow-hidden flex flex-col"
-            style="max-height: 90dvh"
-          >
             <!-- Sticky header -->
             <div class="flex items-start justify-between gap-4 px-5 pt-5 pb-4 border-b border-rule shrink-0">
               <div class="min-w-0">
@@ -333,7 +333,9 @@ const total = computed(() => atlas.countries.length)
                 </div>
 
                 <!-- Silhouette -->
-                <div class="flex-1 sm:flex-none flex items-center justify-center
+                <div
+                  v-if="selected.hasShape"
+                  class="flex-1 sm:flex-none flex items-center justify-center
                             bg-bg-tint border border-rule rounded-xl p-4"
                   style="min-height: 7rem"
                 >
@@ -365,7 +367,43 @@ const total = computed(() => atlas.countries.length)
                     <dd class="font-mono text-[13px] uppercase tracking-[0.1em] text-ink">{{ selected.code }}</dd>
                   </div>
                   <div>
-                    <dt class="eyebrow mb-1">Difficulty</dt>
+                    <dt class="eyebrow mb-1 flex items-center gap-1">
+                      Difficulty
+                      <span class="group relative inline-flex items-center">
+                        <svg class="text-ink-3" viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+                          <circle cx="7" cy="7" r="6" />
+                          <path d="M7 6.5v3" />
+                          <circle cx="7" cy="4.25" r="0.6" fill="currentColor" stroke="none" />
+                        </svg>
+                        <!-- Tier legend tooltip -->
+                        <span
+                          class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2
+                                 opacity-0 group-hover:opacity-100 transition-opacity duration-150
+                                 bg-ink text-bg rounded-xl px-3 py-2.5 z-20 shadow-xl
+                                 text-[11px] font-mono tracking-[0.03em] whitespace-nowrap"
+                          role="tooltip"
+                        >
+                          <span class="flex flex-col gap-1">
+                            <span class="flex items-center gap-2">
+                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--color-ok)" />
+                              <span><span class="opacity-50">1 ·</span> Flagship &mdash; major world nations</span>
+                            </span>
+                            <span class="flex items-center gap-2">
+                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--accent)" />
+                              <span><span class="opacity-50">2 ·</span> Well-known &mdash; widely recognised</span>
+                            </span>
+                            <span class="flex items-center gap-2">
+                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: color-mix(in oklab, var(--color-bad) 40%, var(--accent) 60%)" />
+                              <span><span class="opacity-50">3 ·</span> Familiar &mdash; moderately known</span>
+                            </span>
+                            <span class="flex items-center gap-2">
+                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--color-bad)" />
+                              <span><span class="opacity-50">4 ·</span> Obscure &mdash; rare &amp; remote</span>
+                            </span>
+                          </span>
+                        </span>
+                      </span>
+                    </dt>
                     <dd>
                       <span
                         class="inline-block text-[11px] font-mono tracking-[0.06em] px-2.5 py-0.5 rounded-full"
@@ -403,7 +441,6 @@ const total = computed(() => atlas.countries.length)
               </div>
             </div>
           </div>
-        </Transition>
       </div>
     </Transition>
   </Teleport>

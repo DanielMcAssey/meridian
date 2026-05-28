@@ -1,211 +1,77 @@
-import { readFileSync, writeFileSync } from 'fs'
-import { join, dirname } from 'path'
-import { fileURLToPath } from 'url'
+/**
+ * Reads datasources/country-data.csv and stamps each country in data.json
+ * with a capital city name from the CSV's Capital field.
+ *
+ * Usage: node scripts/add-capitals.mjs
+ */
 
-const __dirname = dirname(fileURLToPath(import.meta.url))
-const dataPath = join(__dirname, '../public/data.json')
+import { readFileSync, writeFileSync } from 'node:fs'
+import { resolve, join }              from 'node:path'
 
-const CAPITALS = {
-  af: 'Kabul',
-  dz: 'Algiers',
-  ao: 'Luanda',
-  ar: 'Buenos Aires',
-  au: 'Canberra',
-  at: 'Vienna',
-  bd: 'Dhaka',
-  be: 'Brussels',
-  br: 'Brasília',
-  ca: 'Ottawa',
-  cl: 'Santiago',
-  cn: 'Beijing',
-  co: 'Bogotá',
-  cz: 'Prague',
-  dk: 'Copenhagen',
-  cd: 'Kinshasa',
-  eg: 'Cairo',
-  et: 'Addis Ababa',
-  fi: 'Helsinki',
-  fr: 'Paris',
-  de: 'Berlin',
-  gh: 'Accra',
-  gr: 'Athens',
-  hu: 'Budapest',
-  is: 'Reykjavík',
-  in: 'New Delhi',
-  id: 'Jakarta',
-  ir: 'Tehran',
-  iq: 'Baghdad',
-  ie: 'Dublin',
-  it: 'Rome',
-  ci: 'Yamoussoukro',
-  jp: 'Tokyo',
-  ke: 'Nairobi',
-  mg: 'Antananarivo',
-  my: 'Kuala Lumpur',
-  mx: 'Mexico City',
-  ma: 'Rabat',
-  mz: 'Maputo',
-  mm: 'Naypyidaw',
-  nl: 'Amsterdam',
-  nz: 'Wellington',
-  ng: 'Abuja',
-  no: 'Oslo',
-  pk: 'Islamabad',
-  pe: 'Lima',
-  ph: 'Manila',
-  pl: 'Warsaw',
-  pt: 'Lisbon',
-  ro: 'Bucharest',
-  ru: 'Moscow',
-  sa: 'Riyadh',
-  sg: 'Singapore',
-  za: 'Pretoria',
-  kr: 'Seoul',
-  es: 'Madrid',
-  sd: 'Khartoum',
-  se: 'Stockholm',
-  ch: 'Bern',
-  tz: 'Dodoma',
-  th: 'Bangkok',
-  tr: 'Ankara',
-  ug: 'Kampala',
-  ua: 'Kyiv',
-  ae: 'Abu Dhabi',
-  gb: 'London',
-  us: 'Washington, D.C.',
-  uz: 'Tashkent',
-  vn: 'Hanoi',
-  ye: 'Sanaa',
-  az: 'Baku',
-  by: 'Minsk',
-  bj: 'Porto-Novo',
-  bo: 'Sucre',
-  bg: 'Sofia',
-  bf: 'Ouagadougou',
-  bi: 'Gitega',
-  kh: 'Phnom Penh',
-  cm: 'Yaoundé',
-  cf: 'Bangui',
-  td: "N'Djamena",
-  cr: 'San José',
-  cu: 'Havana',
-  do: 'Santo Domingo',
-  ec: 'Quito',
-  sv: 'San Salvador',
-  gt: 'Guatemala City',
-  gn: 'Conakry',
-  ht: 'Port-au-Prince',
-  hn: 'Tegucigalpa',
-  il: 'Jerusalem',
-  jo: 'Amman',
-  kz: 'Astana',
-  kg: 'Bishkek',
-  la: 'Vientiane',
-  lb: 'Beirut',
-  lr: 'Monrovia',
-  ly: 'Tripoli',
-  mw: 'Lilongwe',
-  ml: 'Bamako',
-  np: 'Kathmandu',
-  ni: 'Managua',
-  ne: 'Niamey',
-  kp: 'Pyongyang',
-  om: 'Muscat',
-  pg: 'Port Moresby',
-  py: 'Asunción',
-  cg: 'Brazzaville',
-  rw: 'Kigali',
-  sn: 'Dakar',
-  rs: 'Belgrade',
-  sl: 'Freetown',
-  sk: 'Bratislava',
-  so: 'Mogadishu',
-  ss: 'Juba',
-  lk: 'Sri Jayawardenepura Kotte',
-  sy: 'Damascus',
-  tw: 'Taipei',
-  tj: 'Dushanbe',
-  tg: 'Lomé',
-  tn: 'Tunis',
-  tm: 'Ashgabat',
-  ve: 'Caracas',
-  zm: 'Lusaka',
-  zw: 'Harare',
-  al: 'Tirana',
-  am: 'Yerevan',
-  ba: 'Sarajevo',
-  bw: 'Gaborone',
-  hr: 'Zagreb',
-  cy: 'Nicosia',
-  dj: 'Djibouti',
-  gq: 'Malabo',
-  er: 'Asmara',
-  ee: 'Tallinn',
-  sz: 'Mbabane',
-  ga: 'Libreville',
-  gm: 'Banjul',
-  ge: 'Tbilisi',
-  gw: 'Bissau',
-  jm: 'Kingston',
-  kw: 'Kuwait City',
-  lv: 'Riga',
-  ls: 'Maseru',
-  lt: 'Vilnius',
-  mr: 'Nouakchott',
-  mu: 'Port Louis',
-  md: 'Chișinău',
-  mn: 'Ulaanbaatar',
-  na: 'Windhoek',
-  mk: 'Skopje',
-  pa: 'Panama City',
-  pr: 'San Juan',
-  qa: 'Doha',
-  si: 'Ljubljana',
-  tt: 'Port of Spain',
-  uy: 'Montevideo',
-  bs: 'Nassau',
-  bz: 'Belmopan',
-  bt: 'Thimphu',
-  bn: 'Bandar Seri Begawan',
-  cv: 'Praia',
-  km: 'Moroni',
-  dm: 'Roseau',
-  fk: 'Stanley',
-  gl: 'Nuuk',
-  gy: 'Georgetown',
-  lu: 'Luxembourg City',
-  mv: 'Malé',
-  mt: 'Valletta',
-  me: 'Podgorica',
-  nc: 'Nouméa',
-  lc: 'Castries',
-  vc: 'Kingstown',
-  st: 'São Tomé',
-  sc: 'Victoria',
-  sb: 'Honiara',
-  sr: 'Paramaribo',
-  vu: 'Port Vila',
+const ROOT      = resolve(import.meta.dirname, '..')
+const DATA_PATH = join(ROOT, 'public',      'data.json')
+const CSV_PATH  = join(ROOT, 'datasources', 'country-data.csv')
+
+// ── CSV parser ──────────────────────────────────────────────────────────────
+
+function parseLine(line) {
+  const out = []
+  let cur = '', q = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (q) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++ }
+      else if (ch === '"') q = false
+      else cur += ch
+    } else if (ch === '"') {
+      q = true
+    } else if (ch === ',') {
+      out.push(cur); cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  out.push(cur)
+  return out
 }
 
-const raw = readFileSync(dataPath, 'utf8')
-const data = JSON.parse(raw)
+function parseCsv(text) {
+  const lines   = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+  const headers = parseLine(lines[0] ?? '')
+  return lines.slice(1)
+    .filter(l => l.trim())
+    .map(line => {
+      const vals = parseLine(line)
+      return Object.fromEntries(headers.map((h, i) => [h, vals[i]?.trim() ?? '']))
+    })
+}
 
-let missing = []
+// ── Build code → capital map ────────────────────────────────────────────────
+
+const csvRows = parseCsv(readFileSync(CSV_PATH, 'utf8'))
+const capitals = new Map()
+for (const row of csvRows) {
+  const code    = row['ISO3166-1-Alpha-2']?.toLowerCase()
+  const capital = row['Capital']?.trim()
+  if (code && capital) capitals.set(code, capital)
+}
+
+// ── Stamp data.json ─────────────────────────────────────────────────────────
+
+const data    = JSON.parse(readFileSync(DATA_PATH, 'utf8'))
+let stamped   = 0
+const missing = []
+
 for (const country of data.countries) {
-  const capital = CAPITALS[country.code]
-  if (!capital) {
-    missing.push(country.code)
-  } else {
+  const capital = capitals.get(country.code)
+  if (capital) {
     country.capital = capital
+    stamped++
+  } else {
+    missing.push(country.code)
   }
 }
 
-if (missing.length > 0) {
-  console.warn('Missing capitals for:', missing)
-}
-
-const covered = data.countries.filter((c) => c.capital).length
-console.log(`Added capitals to ${covered}/${data.countries.length} countries`)
-
-writeFileSync(dataPath, JSON.stringify(data), 'utf8')
-console.log('data.json updated.')
+writeFileSync(DATA_PATH, JSON.stringify(data), 'utf8')
+console.log(`Stamped ${stamped}/${data.countries.length} countries with capitals.`)
+if (missing.length) console.warn('No capital found for:', missing.join(', '))

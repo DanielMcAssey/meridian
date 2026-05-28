@@ -1,74 +1,107 @@
 /**
- * Downloads the administrative-languages CSV and ISO language name map,
- * then stamps each country in data.json with a `langs` array of all valid
- * ISO 639-1 alpha-2 language codes so the game can randomly pick one per round.
+ * Reads datasources/country-data.csv for country→language mappings and
+ * datasources/all-languages.json for code→English name, then stamps each
+ * country in data.json with a `langs` array and regenerates utils/languages.ts.
  *
  * Usage: node scripts/add-languages.mjs
  */
 
 import { readFileSync, writeFileSync } from 'node:fs'
-import { resolve, join } from 'node:path'
+import { resolve, join }              from 'node:path'
 
 const ROOT      = resolve(import.meta.dirname, '..')
-const DATA_PATH = join(ROOT, 'public', 'data.json')
+const DATA_PATH = join(ROOT, 'public',      'data.json')
+const LANG_PATH = join(ROOT, 'datasources', 'all-languages.json')
+const CSV_PATH  = join(ROOT, 'datasources', 'country-data.csv')
 
-// ── 1. Fetch source data ────────────────────────────────────────────────────
-console.log('Fetching administrative-languages.csv …')
-const csvText = await fetch(
-  'https://raw.githubusercontent.com/ipregistry/iso3166/refs/heads/main/administrative-languages.csv'
-).then((r) => r.text())
+// ── CSV parser ──────────────────────────────────────────────────────────────
 
-console.log('Fetching en.json …')
-const langNames = await fetch(
-  'https://raw.githubusercontent.com/hotosm/iso-countries-languages/master/res/languages/en.json'
-).then((r) => r.json())
-
-// ── 2. Parse CSV: country_code (lower) → [alpha2_code, ...] ────────────────
-// Header: #country_code,alpha2_code,alpha3_code,short_name
-// Skip entries with empty alpha2 (e.g. Papiamento has only alpha3 "pap").
-const csvLangs = new Map()
-for (const line of csvText.split('\n')) {
-  if (line.startsWith('#') || !line.trim()) continue
-  const [cc, alpha2] = line.split(',')
-  if (!cc || !alpha2?.trim()) continue
-  const key = cc.trim().toLowerCase()
-  if (!csvLangs.has(key)) csvLangs.set(key, [])
-  csvLangs.get(key).push(alpha2.trim())
+function parseLine(line) {
+  const out = []
+  let cur = '', q = false
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i]
+    if (q) {
+      if (ch === '"' && line[i + 1] === '"') { cur += '"'; i++ }
+      else if (ch === '"') q = false
+      else cur += ch
+    } else if (ch === '"') {
+      q = true
+    } else if (ch === ',') {
+      out.push(cur); cur = ''
+    } else {
+      cur += ch
+    }
+  }
+  out.push(cur)
+  return out
 }
 
-// ── 3. Stamp data.json ─────────────────────────────────────────────────────
-const data = JSON.parse(readFileSync(DATA_PATH, 'utf8'))
-let stamped = 0
+function parseCsv(text) {
+  const lines   = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+  const headers = parseLine(lines[0] ?? '')
+  return lines.slice(1)
+    .filter(l => l.trim())
+    .map(line => {
+      const vals = parseLine(line)
+      return Object.fromEntries(headers.map((h, i) => [h, vals[i]?.trim() ?? '']))
+    })
+}
+
+// ── Extract ISO 639-1 codes from a Languages field ──────────────────────────
+// e.g. "fa-AF,ps,uz-AF,tk" → ["fa", "ps", "uz", "tk"]
+// Strips region tags, keeps only 2-letter ISO 639-1 codes.
+
+function extractLangCodes(field) {
+  if (!field) return []
+  return [...new Set(
+    field.split(',')
+      .map(l => l.split('-')[0].trim().toLowerCase())
+      .filter(l => l.length === 2),
+  )]
+}
+
+// ── Load datasources ────────────────────────────────────────────────────────
+
+const langDefs = JSON.parse(readFileSync(LANG_PATH, 'utf8'))  // code → { name, native }
+const csvRows   = parseCsv(readFileSync(CSV_PATH, 'utf8'))
+
+// Build: ISO 2-letter code (lower) → [lang codes present in all-languages.json]
+const csvLangs = new Map()
+for (const row of csvRows) {
+  const code = row['ISO3166-1-Alpha-2']?.toLowerCase()
+  if (!code) continue
+  const codes = extractLangCodes(row['Languages']).filter(l => langDefs[l])
+  if (codes.length) csvLangs.set(code, codes)
+}
+
+// ── Stamp data.json ─────────────────────────────────────────────────────────
+
+const data    = JSON.parse(readFileSync(DATA_PATH, 'utf8'))
+let stamped   = 0
 const missing = []
-for (const c of data.countries) {
-  const all = (csvLangs.get(c.code) ?? []).filter((l) => langNames[l])
-  if (all.length) {
-    c.langs = all
+
+for (const country of data.countries) {
+  const codes = csvLangs.get(country.code)
+  if (codes?.length) {
+    country.langs = codes
+    country.lang  = codes[0]
     stamped++
   } else {
-    delete c.langs
-    missing.push(c.code)
+    missing.push(country.code)
   }
 }
+
 writeFileSync(DATA_PATH, JSON.stringify(data), 'utf8')
-console.log(`Stamped ${stamped}/${data.countries.length} countries with langs arrays.`)
+console.log(`Stamped ${stamped}/${data.countries.length} countries with langs.`)
 if (missing.length) console.warn('No langs found for:', missing.join(', '))
 
-// ── 4. Emit utils/languages.ts ────────────────────────────────────────────
-// Collect all language codes that appear in any country's langs array.
-const usedCodes = new Set(data.countries.flatMap((c) => c.langs ?? []))
-const entries = [...usedCodes].sort().map((code) => {
-  const rawName = langNames[code] ?? code
-  const name    = rawName.split(',')[0].trim()
-  return `  ${JSON.stringify(code)}: ${JSON.stringify(name)},`
-})
+// ── Emit public/languages.json ───────────────────────────────────────────────
 
-const tsOut = `// Auto-generated by scripts/add-languages.mjs — do not edit manually.
-// Maps ISO 639-1 alpha-2 codes → English display names for all official
-// languages that appear in data.json.
-export const LANGUAGE_NAMES: Record<string, string> = {
-${entries.join('\n')}
-}
-`
-writeFileSync(join(ROOT, 'utils', 'languages.ts'), tsOut, 'utf8')
-console.log(`Wrote utils/languages.ts with ${usedCodes.size} language entries.`)
+const usedCodes = new Set(data.countries.flatMap(c => c.langs ?? []))
+const langMap   = Object.fromEntries(
+  [...usedCodes].sort().map(code => [code, langDefs[code]?.name ?? code]),
+)
+
+writeFileSync(join(ROOT, 'public', 'languages.json'), JSON.stringify(langMap), 'utf8')
+console.log(`Wrote public/languages.json with ${usedCodes.size} language entries.`)

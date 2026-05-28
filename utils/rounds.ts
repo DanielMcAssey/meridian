@@ -1,6 +1,5 @@
 import type { Country, Difficulty, GameMode, Round, RoundType } from '~/types/game'
 import { DIFFICULTY_TIER_WEIGHTS, MIXED_ROUND_TYPES } from '~/config/game'
-import { LANGUAGE_NAMES } from '~/utils/languages'
 
 export function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
@@ -34,22 +33,23 @@ function pickDistractors(answer: Country, pool: Country[], n: number): Country[]
 function pickLanguageOptions(
   answer: Country,
   pool: Country[],
+  languageNames: Record<string, string>,
 ): { langOptions: string[]; answerLang: string } | null {
-  const validCodes = answer.langs.filter((l) => LANGUAGE_NAMES[l])
+  const validCodes = answer.langs.filter((l) => languageNames[l])
   if (!validCodes.length) return null
 
   const answerCode = validCodes[Math.floor(Math.random() * validCodes.length)]!
-  const answerLang = LANGUAGE_NAMES[answerCode]!
+  const answerLang = languageNames[answerCode]!
   const excluded   = new Set(answer.langs)
 
   const candidateCodes = [...new Set(
-    pool.flatMap((c) => c.langs.filter((l) => !excluded.has(l) && LANGUAGE_NAMES[l])),
+    pool.flatMap((c) => c.langs.filter((l) => !excluded.has(l) && languageNames[l])),
   )]
 
   const distractors: string[] = []
   const usedNames = new Set([answerLang])
   for (const code of shuffle(candidateCodes)) {
-    const name = LANGUAGE_NAMES[code]!
+    const name = languageNames[code]!
     if (!usedNames.has(name)) {
       distractors.push(name)
       usedNames.add(name)
@@ -93,15 +93,20 @@ export function buildRounds(
   mode: GameMode,
   count: number,
   difficulty: Difficulty,
+  languageNames: Record<string, string>,
 ): Round[] {
   const pool = pickPool(countries, difficulty)
   // Wider pool for distractors (slightly harder distractors on easy)
   const widerPool = pickPool(countries, difficulty === 'easy' ? 'medium' : difficulty)
 
   // Mode-specific answer pools — exclude countries missing the required data.
-  const langPool     = pool.filter((c) => c.langs.length > 0 && c.langs.some((l) => LANGUAGE_NAMES[l]))
+  const langPool     = pool.filter((c) => c.langs.length > 0 && c.langs.some((l) => languageNames[l]))
   const provincePool = pool.filter((c) => c.subdivisions.length > 0)
-  const answerPool   = mode === 'language' ? langPool : mode === 'province' ? provincePool : pool
+  const shapePool    = pool.filter((c) => c.hasShape)
+  const answerPool   = mode === 'language' ? langPool
+                     : mode === 'province' ? provincePool
+                     : mode === 'shape'    ? shapePool
+                     : pool
   const answers = weightedSample(answerPool, count, difficulty)
 
   const rounds = answers.map((answer, i) => {
@@ -111,8 +116,12 @@ export function buildRounds(
       roundType = types[i % types.length]!
     }
 
+    if (roundType === 'shape' && !answer.hasShape) {
+      roundType = 'flag'  // fallback for countries without a silhouette SVG
+    }
+
     if (roundType === 'language') {
-      const lang = pickLanguageOptions(answer, widerPool)
+      const lang = pickLanguageOptions(answer, widerPool, languageNames)
       if (lang) return { type: roundType, answer, options: [], ...lang }
       roundType = 'flag'  // fallback for countries without language data
     }

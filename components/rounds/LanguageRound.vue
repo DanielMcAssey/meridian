@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import type { Round } from '~/types/game'
-import { LANGUAGE_NAMES } from '~/utils/languages'
 
 const props = defineProps<{
   round:      Round
@@ -28,7 +27,7 @@ function optClass(lang: string): string {
 // Show all of the answer country's language names in the feedback label.
 const label = computed(() => {
   const names = props.round.answer.langs
-    .map((l) => LANGUAGE_NAMES[l])
+    .map((l) => atlas.languageNames[l])
     .filter(Boolean)
     .join(', ')
   return names ? `Official: ${names}` : `The answer was ${props.round.answerLang}`
