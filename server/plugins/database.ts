@@ -85,7 +85,7 @@ export default defineNitroPlugin(async () => {
     await client.execute('PRAGMA foreign_keys = ON')
   }
 
-  const db = drizzle(client, { schema })
+  const db = drizzle({ client, schema })
 
   // Migration-tracking table.
   await client.execute(`
