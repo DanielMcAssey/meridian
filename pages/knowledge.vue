@@ -2,8 +2,6 @@
 import { LANGUAGE_NAMES } from '~/utils/languages'
 import type { Country } from '~/types/game'
 
-definePageMeta({ ssr: false })
-
 const atlas  = useAtlasStore()
 const route  = useRoute()
 const router = useRouter()

@@ -23,7 +23,7 @@ function validMode(v: unknown): GameMode | undefined {
 
 // ── Handler ───────────────────────────────────────────────────────────────────
 
-export default defineEventHandler((event): LeaderboardResponse => {
+export default defineEventHandler(async (event): Promise<LeaderboardResponse> => {
   const ip = (getRequestHeader(event, 'x-forwarded-for') ?? '').split(',')[0]?.trim()
            || event.node.req.socket?.remoteAddress
            || 'unknown'
@@ -42,7 +42,7 @@ export default defineEventHandler((event): LeaderboardResponse => {
   const db = getDb()
 
   // Fetch one extra row to detect truncation without a separate COUNT query.
-  const raw = db
+  const raw = await db
     .select({
       id:         scores.id,
       name:       scores.name,
@@ -61,8 +61,7 @@ export default defineEventHandler((event): LeaderboardResponse => {
       total      !== undefined ? eq(scores.total,      total)      : undefined,
     ))
     .orderBy(desc(scores.score), desc(scores.createdAt))
-    .limit(limit + 1)
-    .all() as LeaderboardRow[]
+    .limit(limit + 1) satisfies LeaderboardRow[]
 
   return {
     rows:    raw.slice(0, limit),

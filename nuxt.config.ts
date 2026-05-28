@@ -24,8 +24,13 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Override with DB_PATH env var in Docker / production
+    // Local SQLite fallback (used when NUXT_TURSO_URL is not set)
     dbPath: './data/leaderboard.db',
+    // Turso — set these on Vercel (or any remote host) to use the remote DB.
+    // NUXT_TURSO_URL=libsql://<db-name>.turso.io
+    // NUXT_TURSO_AUTH_TOKEN=<token>
+    tursoUrl:       '',
+    tursoAuthToken: '',
   },
 
   app: {

@@ -1,7 +1,7 @@
-import type { NodeSQLiteDatabase } from 'drizzle-orm/node-sqlite'
+import type { LibSQLDatabase } from 'drizzle-orm/libsql'
 import type * as schema from '../db/schema'
 
-export type DB = NodeSQLiteDatabase<typeof schema>
+export type DB = LibSQLDatabase<typeof schema>
 
 declare global {
   // eslint-disable-next-line no-var

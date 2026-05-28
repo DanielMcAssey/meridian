@@ -41,11 +41,12 @@ const bodySchema = z.object({
 import type { DB } from '~/server/utils/db'
 import type { SQL } from 'drizzle-orm'
 
-function rankResponse(db: DB, filter: SQL | undefined, score: number) {
-  const [row] = db.select({
+async function rankResponse(db: DB, filter: SQL | undefined, score: number) {
+  const rows = await db.select({
     scoresAhead: sql<number>`count(case when ${scores.score} > ${score} then 1 end)`,
     total:       count(),
-  }).from(scores).where(filter).all()
+  }).from(scores).where(filter)
+  const row = rows[0]
   return { rank: (row?.scoresAhead ?? 0) + 1, total: row?.total ?? 0 }
 }
 
@@ -74,22 +75,20 @@ export default defineEventHandler(async (event) => {
   // ── Idempotency check ───────────────────────────────────────────────────────
   // If this game token has already been recorded (offline retry, double-submit),
   // skip the insert and return the rank for the already-stored score.
-  const existing = db.select({ id: scores.id })
+  const existing = await db.select({ id: scores.id })
     .from(scores)
     .where(eq(scores.gameToken, body.gameToken))
-    .all()[0]
 
-  if (existing) return rankResponse(db, filter, body.score)
+  if (existing[0]) return rankResponse(db, filter, body.score)
 
   // ── Upsert user row ─────────────────────────────────────────────────────────
-  db.insert(users)
+  await db.insert(users)
     .values({ id: body.userId, name: body.name, firstSeen: now, lastSeen: now })
     .onConflictDoUpdate({ target: users.id, set: { name: body.name, lastSeen: now } })
-    .run()
 
   // ── Insert score ────────────────────────────────────────────────────────────
   const { userId, gameToken, ...scoreFields } = body
-  db.insert(scores).values({ ...scoreFields, userId, gameToken }).run()
+  await db.insert(scores).values({ ...scoreFields, userId, gameToken })
 
   return rankResponse(db, filter, body.score)
 })
