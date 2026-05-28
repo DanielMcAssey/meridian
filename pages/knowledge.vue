@@ -104,6 +104,23 @@ function subdivisionCatLabel(cat: string): string {
 }
 
 const total = computed(() => atlas.countries.length)
+
+// ── Tier legend tooltip ────────────────────────────────────────────────────────
+const tierTooltipVisible = ref(false)
+const tierTooltipAnchor  = ref<HTMLElement | null>(null)
+const tierTooltipStyle   = ref('')
+
+function showTierTooltip() {
+  if (!tierTooltipAnchor.value) return
+  const r = tierTooltipAnchor.value.getBoundingClientRect()
+  // Position above the icon, right-aligned to the anchor
+  tierTooltipStyle.value = `top:${r.top - 8}px;left:${r.right}px;transform:translate(-100%,-100%)`
+  tierTooltipVisible.value = true
+}
+
+function hideTierTooltip() {
+  tierTooltipVisible.value = false
+}
 </script>
 
 <template>
@@ -260,7 +277,7 @@ const total = computed(() => atlas.countries.length)
       >
         <div
           class="pointer-events-auto relative w-full sm:max-w-2xl bg-paper rounded-t-2xl sm:rounded-2xl
-                 border border-rule shadow-lg overflow-hidden flex flex-col"
+                 border border-rule shadow-lg flex flex-col"
           style="max-height: 90dvh"
         >
             <!-- Sticky header -->
@@ -369,39 +386,19 @@ const total = computed(() => atlas.countries.length)
                   <div>
                     <dt class="eyebrow mb-1 flex items-center gap-1">
                       Difficulty
-                      <span class="group relative inline-flex items-center">
-                        <svg class="text-ink-3" viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true">
+                      <span
+                        ref="tierTooltipAnchor"
+                        class="inline-flex items-center"
+                        @mouseenter="showTierTooltip"
+                        @mouseleave="hideTierTooltip"
+                        @focusin="showTierTooltip"
+                        @focusout="hideTierTooltip"
+                      >
+                        <svg class="text-ink-3" viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-describedby="tier-legend-tooltip">
                           <circle cx="7" cy="7" r="6" />
                           <path d="M7 6.5v3" />
                           <circle cx="7" cy="4.25" r="0.6" fill="currentColor" stroke="none" />
                         </svg>
-                        <!-- Tier legend tooltip -->
-                        <span
-                          class="pointer-events-none absolute bottom-full left-1/2 -translate-x-1/2 mb-2
-                                 opacity-0 group-hover:opacity-100 transition-opacity duration-150
-                                 bg-ink text-bg rounded-xl px-3 py-2.5 z-20 shadow-xl
-                                 text-[11px] font-mono tracking-[0.03em] whitespace-nowrap"
-                          role="tooltip"
-                        >
-                          <span class="flex flex-col gap-1">
-                            <span class="flex items-center gap-2">
-                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--color-ok)" />
-                              <span><span class="opacity-50">1 ·</span> Flagship &mdash; major world nations</span>
-                            </span>
-                            <span class="flex items-center gap-2">
-                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--accent)" />
-                              <span><span class="opacity-50">2 ·</span> Well-known &mdash; widely recognised</span>
-                            </span>
-                            <span class="flex items-center gap-2">
-                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: color-mix(in oklab, var(--color-bad) 40%, var(--accent) 60%)" />
-                              <span><span class="opacity-50">3 ·</span> Familiar &mdash; moderately known</span>
-                            </span>
-                            <span class="flex items-center gap-2">
-                              <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--color-bad)" />
-                              <span><span class="opacity-50">4 ·</span> Obscure &mdash; rare &amp; remote</span>
-                            </span>
-                          </span>
-                        </span>
                       </span>
                     </dt>
                     <dd>
@@ -441,6 +438,43 @@ const total = computed(() => atlas.countries.length)
               </div>
             </div>
           </div>
+      </div>
+    </Transition>
+
+    <!-- Tier legend tooltip — teleported so it escapes the modal's overflow-y-auto container -->
+    <Transition
+      enter-from-class="opacity-0 scale-95"
+      leave-to-class="opacity-0 scale-95"
+      enter-active-class="transition-[opacity,transform] duration-150 origin-bottom-right"
+      leave-active-class="transition-[opacity,transform] duration-100 origin-bottom-right"
+    >
+      <div
+        v-if="tierTooltipVisible"
+        id="tier-legend-tooltip"
+        role="tooltip"
+        class="fixed z-[70] pointer-events-none w-52
+               bg-ink text-bg rounded-xl px-3 py-2.5 shadow-xl
+               text-[11px] font-mono tracking-[0.03em]"
+        :style="tierTooltipStyle"
+      >
+        <span class="flex flex-col gap-1">
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--color-ok)" />
+            <span><span class="opacity-50">1 ·</span> Flagship &mdash; major world nations</span>
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--accent)" />
+            <span><span class="opacity-50">2 ·</span> Well-known &mdash; widely recognised</span>
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: color-mix(in oklab, var(--color-bad) 40%, var(--accent) 60%)" />
+            <span><span class="opacity-50">3 ·</span> Familiar &mdash; moderately known</span>
+          </span>
+          <span class="flex items-center gap-2">
+            <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background: var(--color-bad)" />
+            <span><span class="opacity-50">4 ·</span> Obscure &mdash; rare &amp; remote</span>
+          </span>
+        </span>
       </div>
     </Transition>
   </Teleport>

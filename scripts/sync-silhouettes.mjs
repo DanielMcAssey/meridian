@@ -39,6 +39,7 @@ for (const country of data.countries) {
 
   if (!FORCE && existsSync(dest)) {
     country.shape = `maps/${country.code}.svg`
+    country.hasShape = true
     cached++
     continue
   }
@@ -49,6 +50,7 @@ for (const country of data.countries) {
 
     if (res.status === 404) {
       country.shape = null
+      country.hasShape = false
       notFound++
       console.log(`  ✗ ${country.code}  (not in mapsicon)`)
       continue
@@ -57,12 +59,14 @@ for (const country of data.countries) {
 
     writeFileSync(dest, cleanSvg(await res.text()), 'utf8')
     country.shape = `maps/${country.code}.svg`
+    country.hasShape = true
     downloaded++
     console.log(`  ✓ ${country.code}`)
 
     await new Promise(r => setTimeout(r, 50))  // be polite to GitHub CDN
   } catch (err) {
     country.shape = null
+    country.hasShape = false
     failed++
     console.log(`  ✗ ${country.code}  (${err.message})`)
   }

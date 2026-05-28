@@ -131,9 +131,11 @@ function clamp(next: VbState, base?: VbState): VbState {
   if (next.w > maxW) next.w = maxW
   if (next.w < minW) next.w = minW
   next.h = next.w * (b.h / b.w)
-  if (next.x < b.x) next.x = b.x
+  // Horizontal: allow half a viewport-width of overscroll so edge countries can be centred.
+  const hOver = next.w / 2
+  if (next.x < b.x - hOver) next.x = b.x - hOver
+  if (next.x + next.w > b.x + b.w + hOver) next.x = b.x + b.w - next.w + hOver
   if (next.y < b.y) next.y = b.y
-  if (next.x + next.w > b.x + b.w) next.x = b.x + b.w - next.w
   if (next.y + next.h > b.y + b.h) next.y = b.y + b.h - next.h
   return next
 }
