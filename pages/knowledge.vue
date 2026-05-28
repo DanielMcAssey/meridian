@@ -106,9 +106,10 @@ function subdivisionCatLabel(cat: string): string {
 const total = computed(() => atlas.countries.length)
 
 // ── Tier legend tooltip ────────────────────────────────────────────────────────
-const tierTooltipVisible = ref(false)
-const tierTooltipAnchor  = ref<HTMLElement | null>(null)
-const tierTooltipStyle   = ref('')
+const tierTooltipVisible   = ref(false)
+const tierTooltipAnchor    = ref<HTMLElement | null>(null)
+const tierTooltipStyle     = ref('')
+const tierTooltipClickOpen = ref(false)  // true when opened by tap/click, not hover
 
 function showTierTooltip() {
   if (!tierTooltipAnchor.value) return
@@ -119,8 +120,30 @@ function showTierTooltip() {
 }
 
 function hideTierTooltip() {
+  // Don't close on mouseleave if the user tapped to open it — they need a
+  // second tap (or a tap elsewhere) to dismiss on touch devices.
+  if (tierTooltipClickOpen.value) return
   tierTooltipVisible.value = false
 }
+
+function toggleTierTooltip() {
+  if (tierTooltipClickOpen.value) {
+    tierTooltipClickOpen.value = false
+    tierTooltipVisible.value   = false
+  } else {
+    tierTooltipClickOpen.value = true
+    showTierTooltip()
+  }
+}
+
+// Close the click-opened tooltip when the user taps anywhere else.
+function closeTierTooltip() {
+  tierTooltipClickOpen.value = false
+  tierTooltipVisible.value   = false
+}
+
+onMounted(()   => document.addEventListener('click', closeTierTooltip))
+onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
 </script>
 
 <template>
@@ -388,11 +411,12 @@ function hideTierTooltip() {
                       Difficulty
                       <span
                         ref="tierTooltipAnchor"
-                        class="inline-flex items-center"
+                        class="inline-flex items-center cursor-pointer"
                         @mouseenter="showTierTooltip"
                         @mouseleave="hideTierTooltip"
                         @focusin="showTierTooltip"
                         @focusout="hideTierTooltip"
+                        @click.stop="toggleTierTooltip"
                       >
                         <svg class="text-ink-3" viewBox="0 0 14 14" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-describedby="tier-legend-tooltip">
                           <circle cx="7" cy="7" r="6" />
