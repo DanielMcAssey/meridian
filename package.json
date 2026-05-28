@@ -19,6 +19,8 @@
     "@tanstack/query-persist-client-core": "^5.100.14",
     "@tanstack/query-sync-storage-persister": "^5.100.14",
     "@tanstack/vue-query": "^5.100.14",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "drizzle-orm": "^1.0.0-rc.3",
     "nuxt": "^4.4.6",
     "pinia": "^3.0.4",

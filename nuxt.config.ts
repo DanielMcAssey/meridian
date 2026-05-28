@@ -13,7 +13,7 @@ export default defineNuxtConfig({
   },
   devtools: { enabled: false },
 
-  modules: ['@pinia/nuxt', '@vite-pwa/nuxt'],
+  modules: ['@pinia/nuxt', '@vite-pwa/nuxt', '@vercel/analytics/nuxt', '@vercel/speed-insights'],
 
   css: ['~/assets/styles/main.css'],
 
