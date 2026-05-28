@@ -35,9 +35,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="min-h-screen flex flex-col">
+  <div class="h-dvh flex flex-col">
     <AppChrome />
-    <div class="relative flex flex-col flex-1 min-h-0">
+    <div class="relative flex flex-col flex-1 min-h-0 overflow-auto">
       <NuxtPage />
       <Transition leave-active-class="transition-opacity duration-500 ease-in" leave-to-class="opacity-0">
         <GameSplash
@@ -46,5 +46,13 @@ onMounted(() => {
         />
       </Transition>
     </div>
+    <footer v-if="route.name !== 'play'" class="py-3 text-center text-xs text-ink/40 shrink-0">
+      <a
+        href="https://github.com/DanielMcAssey/meridian"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="hover:text-ink/70 transition-colors"
+      >Made with love for my wife ❤️, by Daniel McAssey</a>
+    </footer>
   </div>
 </template>

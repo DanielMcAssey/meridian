@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import type { Country } from '~/types/game'
+import { PIN_MAP_ZOOM } from '~/config/game'
 
 const props = withDefaults(
   defineProps<{
@@ -50,15 +51,64 @@ const vb0 = computed<VbState>(() => {
 
 const vb = reactive<VbState>({ x: 30.767, y: 241.591, w: 784.077, h: 458.627 })
 
+// ── animated viewBox transition ───────────────────────────────────────────
+
+let animFrame: number | null = null
+
+function animateVb(target: VbState, duration = 650) {
+  if (animFrame !== null) { cancelAnimationFrame(animFrame); animFrame = null }
+  const start = { ...vb }
+  const t0 = performance.now()
+  function tick() {
+    const p = Math.min(1, (performance.now() - t0) / duration)
+    const e = 1 - Math.pow(1 - p, 3) // ease-out cubic
+    vb.x = start.x + (target.x - start.x) * e
+    vb.y = start.y + (target.y - start.y) * e
+    vb.w = start.w + (target.w - start.w) * e
+    vb.h = start.h + (target.h - start.h) * e
+    if (p < 1) animFrame = requestAnimationFrame(tick)
+    else animFrame = null
+  }
+  animFrame = requestAnimationFrame(tick)
+}
+
+function cancelAnim() {
+  if (animFrame !== null) { cancelAnimationFrame(animFrame); animFrame = null }
+}
+
+// ── viewBox watchers ──────────────────────────────────────────────────────
+
+// Keep vb in sync when the atlas first loads (non-pin views reset to full map).
 watch(
   () => atlas.viewBox,
-  () => Object.assign(vb, vb0.value),
+  () => { if (!props.pinCode) Object.assign(vb, vb0.value) },
   { immediate: true },
 )
 
-watch([() => props.pinCode, () => props.revealCode], () => {
-  Object.assign(vb, vb0.value)
-})
+// Zoom to pin when pinCode changes or when the atlas finishes loading with a pin set.
+// revealCode changes are intentionally excluded — the halo appears at the same
+// SVG position as the pin, so there is no reason to reset the view on lock.
+watch(
+  [() => props.pinCode, () => atlas.ready],
+  ([code, ready]) => {
+    if (code && ready) {
+      const country = byCode.value[code]
+      if (country) {
+        const newW = vb0.value.w / PIN_MAP_ZOOM
+        const newH = vb0.value.h / PIN_MAP_ZOOM
+        animateVb(clamp({
+          x: country.svgCx - newW / 2,
+          y: country.svgCy - newH / 2,
+          w: newW,
+          h: newH,
+        }))
+        return
+      }
+    }
+    if (!code) Object.assign(vb, vb0.value)
+  },
+  { immediate: true },
+)
 
 // ── derived data ──────────────────────────────────────────────────────────
 
@@ -137,6 +187,7 @@ onMounted(() => {
 
   const onPointerDown = (e: PointerEvent) => {
     if ((e.target as Element).closest('.map-hud')) return
+    cancelAnim()
     // Capture so move/up events keep firing even when the finger leaves the element.
     el.setPointerCapture(e.pointerId)
     activePointers.set(e.pointerId, { x: e.clientX, y: e.clientY })
@@ -224,6 +275,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   cleanupListeners?.()
+  cancelAnim()
 })
 
 // ── click handler ────────────────────────────────────────────────────────
