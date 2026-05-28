@@ -4,15 +4,7 @@ import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from '../db/schema'
 
-// Embed migration SQL at build time via Vite's glob import so the content is
-// bundled into the server chunk. useStorage('assets:db_migrations') is
-// unreliable in serverless environments (Vercel + Turso) — getKeys() can
-// silently return [] leaving all tables uncreated.
-const rawMigrations = import.meta.glob<string>('../db/migrations/**/migration.sql', {
-  query: '?raw',
-  import: 'default',
-  eager: true,
-})
+import { MIGRATIONS } from '../db/migrations/list'
 
 // Splits a SQL file into individual statements, correctly handling single/double/
 // backtick-quoted strings, -- line comments, and /* */ block comments.
@@ -106,12 +98,7 @@ export default defineNitroPlugin(async () => {
     )
   `)
 
-  // Sort by directory name (timestamp-prefixed → lexicographic = chronological).
-  const migrations = Object.entries(rawMigrations)
-    .map(([path, sql]) => ({ name: path.split('/').at(-2)!, sql: sql as string }))
-    .sort((a, b) => a.name.localeCompare(b.name))
-
-  for (const { name, sql } of migrations) {
+  for (const { name, sql } of MIGRATIONS) {
     const existing = await client.execute({
       sql:  'SELECT 1 FROM _meridian_migrations WHERE name = ?',
       args: [name],

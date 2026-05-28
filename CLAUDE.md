@@ -9,7 +9,7 @@ npm run dev          # Start dev server (localhost:3000)
 npm run build        # Production build → .output/
 npm run preview      # Run the production build locally
 npm run typecheck    # Vue/TS type-check (vue-tsc)
-npm run db:generate  # Generate a new Drizzle migration from schema changes
+npm run db:generate  # Generate a new Drizzle migration + rebuild list.ts
 ```
 
 There are no automated tests. CI runs `typecheck` + `build` on PRs.
@@ -117,8 +117,8 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` (async plugin). Stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access via `getDb()` from `server/utils/db.ts`.
-- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change: run `npm run db:generate`. Migrations use `CREATE TABLE IF NOT EXISTS` so they are safe to run against an existing database. The plugin runs a **custom migration runner** (not drizzle's `migrate()`) using `useStorage('assets:db_migrations')` — this works via Nitro's virtual storage API in both dev (filesystem) and production (bundled via `serverAssets`). Applied migrations are tracked in a `_meridian_migrations` SQLite table. Statements are split on `--> statement-breakpoint`.
+- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) with **`@libsql/client`** (supports both local SQLite files and remote Turso). Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` (async plugin). Local path: `NUXT_DB_PATH` (default `./data/leaderboard.db`); remote: `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN`. Access via `getDb()` from `server/utils/db.ts`.
+- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change, run `npm run db:generate` — this calls `drizzle-kit generate` and then `scripts/gen-migration-list.mjs`, which auto-generates `server/db/migrations/list.ts` from all SQL files in that directory. `list.ts` is also regenerated automatically by `npm run build` (via a `prebuild` hook). The plugin reads from `list.ts` — a plain TS module bundled by any build tool. `import.meta.glob` (Vite-only) and `useStorage('assets:db_migrations')` (returns `[]` in Nitro's Rollup bundle) are **not** used. Applied migrations are tracked in a `_meridian_migrations` SQLite table.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
 - Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`. Mode and difficulty enums are derived from `VALID_MODE_IDS` / `VALID_DIFFICULTY_IDS` in `config/game.ts` — Zod stays in sync with config automatically.
 - The POST payload requires `userId` and `gameToken` (both UUIDs). `gameToken` is unique per game, checked for idempotency — duplicate submissions (offline retries, double-submit) skip the insert and return the existing rank. `userId` upserts a `users` row.
