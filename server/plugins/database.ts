@@ -66,7 +66,14 @@ export default defineNitroPlugin(async () => {
     url = tursoUrl!
   } else {
     const dbPath = resolve(config.dbPath as string)
-    mkdirSync(dirname(dbPath), { recursive: true })
+    try {
+      mkdirSync(dirname(dbPath), { recursive: true })
+    } catch {
+      throw new Error(
+        `[db] Cannot create local database directory at "${dirname(dbPath)}". ` +
+        'On Vercel or other read-only hosts set NUXT_TURSO_DATABASE_URL and NUXT_TURSO_AUTH_TOKEN.',
+      )
+    }
     url = `file:${dbPath}`
   }
 
