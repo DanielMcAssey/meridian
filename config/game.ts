@@ -95,6 +95,11 @@ export const VALID_MODES        = new Set<string>(MODES.map((m) => m.id))
 export const VALID_DIFFICULTIES = new Set<string>(DIFFICULTIES.map((d) => d.id))
 export const VALID_ROUND_COUNTS = new Set<number>(ROUND_COUNTS)
 
+/** Tuple form of MODES ids — use with z.enum() so the Zod schema stays in sync with config. */
+export const VALID_MODE_IDS = MODES.map((m) => m.id) as [GameMode, ...GameMode[]]
+/** Tuple form of DIFFICULTIES ids — use with z.enum() so the Zod schema stays in sync with config. */
+export const VALID_DIFFICULTY_IDS = DIFFICULTIES.map((d) => d.id) as [Difficulty, ...Difficulty[]]
+
 // ── Answer-selection tier weights ────────────────────────────────────────────
 // Controls how likely each tier of country is to be selected as a round answer.
 // Higher weights at higher difficulties push the pool toward obscure countries.

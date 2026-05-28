@@ -20,6 +20,7 @@ const timeLeft   = ref(0)
 let tickInterval: ReturnType<typeof setInterval> | null = null
 let advanceTimeout: ReturnType<typeof setTimeout> | null = null
 let startTime = Date.now()
+let timerEnd  = 0
 
 function clearTick() {
   if (tickInterval !== null) {
@@ -31,8 +32,10 @@ function clearTick() {
 function startTick() {
   clearTick()
   if (!settings.timer.value) return
+  timerEnd = Date.now() + DIFFICULTY_TIMER_SECS[session.difficulty] * 1000
   tickInterval = setInterval(() => {
-    timeLeft.value = Math.max(0, +(timeLeft.value - 0.1).toFixed(1))
+    const remaining = Math.max(0, (timerEnd - Date.now()) / 1000)
+    timeLeft.value = +remaining.toFixed(1)
     if (timeLeft.value === 0) {
       clearTick()
       handleLock(null, 0)
@@ -129,13 +132,14 @@ async function finishGame() {
   // calls session.setRank().  If offline, it's queued in localStorage and
   // retried automatically when connectivity returns.
   submitScore({
-    name: playerName.value,
+    name:      playerName.value,
     score,
     correct,
-    total: session.rounds.length,
-    mode: session.mode,
+    total:     session.rounds.length,
+    mode:      session.mode,
     difficulty: session.difficulty,
-    userId: userId.value || undefined,
+    userId:    userId.value,
+    gameToken: session.gameToken,
   })
 
   navigateTo('/results')

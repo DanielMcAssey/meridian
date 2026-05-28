@@ -150,9 +150,19 @@ const trophyColor: Record<TrophyKind, string> = {
       </div>
     </div>
 
+    <!-- Loading skeleton -->
+    <div v-if="isFetching && (!board || board.length === 0)" class="flex flex-col gap-2 mb-7">
+      <div
+        v-for="n in 5"
+        :key="n"
+        class="h-12 rounded-xl bg-paper border border-rule animate-pulse"
+        :style="{ opacity: 1 - n * 0.15 }"
+      />
+    </div>
+
     <!-- Empty state -->
     <div
-      v-if="!board || board.length === 0"
+      v-else-if="!board || board.length === 0"
       class="text-center py-20 px-5 font-serif italic text-2xl text-ink-3"
     >
       No scores yet for these settings. Set sail to inscribe your name.

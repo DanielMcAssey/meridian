@@ -207,11 +207,6 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
             <div class="font-mono text-[10.5px] tracking-[0.16em] uppercase" style="color: var(--accent-deep)">
               {{ m.note }}
             </div>
-            <span
-              v-if="m.id === 'shape'"
-              class="font-mono text-[9.5px] tracking-[0.18em] uppercase px-2.5 py-0.5 rounded-full font-medium"
-              style="background: oklch(0.92 0.08 80); color: oklch(0.45 0.12 60)"
-            >Beta</span>
           </div>
           <h2 class="font-serif font-normal text-[28px] tracking-[-0.015em] m-0">{{ m.title }}</h2>
           <p class="text-[14.5px] text-ink-2 m-0">{{ m.sub }}</p>

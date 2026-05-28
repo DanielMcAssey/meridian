@@ -16,6 +16,7 @@ export const useSessionStore = defineStore('session', () => {
   const finalCorrect = skipHydrate(ref(0))
   const rank         = skipHydrate(ref<number | null>(null))
   const lbTotal      = skipHydrate(ref<number | null>(null))
+  const gameToken    = skipHydrate(ref<string>(''))
 
   /**
    * True while the score has been submitted but the server hasn't responded
@@ -42,6 +43,7 @@ export const useSessionStore = defineStore('session', () => {
     rank.value = null
     lbTotal.value = null
     lbPending.value = false
+    gameToken.value = crypto.randomUUID()
   }
 
   function recordResult(result: RoundResult) {
@@ -86,6 +88,7 @@ export const useSessionStore = defineStore('session', () => {
     rank,
     lbTotal,
     lbPending,
+    gameToken,
     hasSession,
     hasFinished,
     currentRound,

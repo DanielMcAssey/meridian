@@ -9,6 +9,7 @@
     "preview": "node .output/server/index.mjs",
     "generate": "nuxt generate",
     "typecheck": "nuxt typecheck",
+    "db:generate": "drizzle-kit generate",
     "release": "semantic-release"
   },
   "dependencies": {
@@ -29,6 +30,7 @@
     "@semantic-release/github": "^12.0.8",
     "@types/node": "^24",
     "@vite-pwa/nuxt": "^1.1.1",
+    "drizzle-kit": "^1.0.0-beta.24",
     "semantic-release": "^25.0.3",
     "semantic-release-gha-output": "^1.1.2",
     "typescript": "^6.0.3",

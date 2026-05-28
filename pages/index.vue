@@ -83,8 +83,8 @@ function gamesFor(diff: Difficulty): string[] {
           A wager with the <em class="italic" style="color: var(--accent-deep)">world</em>.
         </h1>
         <p class="text-[17px] text-ink-2 mb-9 max-w-[460px]">
-          Six games of geography — flags, capitals, a pin dropped on a far shore, a continent to
-          name. Your wits against every land we know.
+          Eight games of geography — flags, silhouettes, capitals, languages, a pin dropped on a
+          far shore. Your wits against every land we know.
         </p>
 
         <form class="flex flex-col gap-5" @submit.prevent="submit">

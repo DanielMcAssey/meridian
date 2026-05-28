@@ -47,13 +47,14 @@ export interface RoundResult {
 
 /** Payload sent to POST /api/leaderboard after a game ends. */
 export interface LeaderboardEntry {
-  name:       string
-  score:      number
-  correct:    number
-  total:      number
-  mode:       GameMode
+  name:      string
+  score:     number
+  correct:   number
+  total:     number
+  mode:      GameMode
   difficulty: Difficulty
-  userId?:    string
+  userId:    string
+  gameToken: string
 }
 
 /** Full row returned by GET /api/leaderboard (server-persisted fields added). */

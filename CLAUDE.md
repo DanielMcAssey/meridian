@@ -9,6 +9,7 @@ npm run dev          # Start dev server (localhost:3000)
 npm run build        # Production build → .output/
 npm run preview      # Run the production build locally
 npm run typecheck    # Vue/TS type-check (vue-tsc)
+npm run db:generate  # Generate a new Drizzle migration from schema changes
 ```
 
 There are no automated tests. CI runs `typecheck` + `build` on PRs.
@@ -112,11 +113,12 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` (`CREATE TABLE IF NOT EXISTS` bootstrap + `ALTER TABLE` migration for existing DBs, then Drizzle wraps it) and stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access it via `getDb()` from `server/utils/db.ts`.
+- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` which runs `migrate(db, { migrationsFolder })` from `drizzle-orm/node-sqlite/migrator` on every startup; migrations are idempotent. Stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access via `getDb()` from `server/utils/db.ts`.
+- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change: run `npm run db:generate`. Migrations use `CREATE TABLE IF NOT EXISTS` so they are safe to run against an existing database. In production, migration files are bundled by Nitro as server assets (`serverAssets: [{ baseName: 'db_migrations' }]`) and resolved from `assets/db_migrations/` relative to the server entry point.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
-- Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`.
-- The POST payload accepts an optional `userId` (UUID). If present, a `users` row is upserted (insert or update `name`/`lastSeen`) and the score row is stored with `user_id`.
-- **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` (`CACHE_BUSTER = 'v2'`) and automatically retried on reconnect.
+- Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`. Mode and difficulty enums are derived from `VALID_MODE_IDS` / `VALID_DIFFICULTY_IDS` in `config/game.ts` — Zod stays in sync with config automatically.
+- The POST payload requires `userId` and `gameToken` (both UUIDs). `gameToken` is unique per game, checked for idempotency — duplicate submissions (offline retries, double-submit) skip the insert and return the existing rank. `userId` upserts a `users` row.
+- **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` (`CACHE_BUSTER = 'v3'`) and automatically retried on reconnect.
 
 ### User identity
 

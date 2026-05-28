@@ -7,8 +7,9 @@ const atlas = useAtlasStore()
     <div class="flex flex-col items-center gap-5">
       <template v-if="atlas.error">
         <p class="font-serif italic text-2xl" style="color: var(--color-bad)">
-          Failed to load atlas data. Please refresh.
+          Failed to load atlas data.
         </p>
+        <button class="btn-primary" @click="atlas.load()">Try again</button>
       </template>
       <template v-else>
         <div

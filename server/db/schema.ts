@@ -18,4 +18,5 @@ export const scores = sqliteTable('scores', {
   difficulty: text('difficulty', { enum: ['easy', 'medium', 'hard', 'expert'] }).notNull(),
   createdAt:  integer('created_at').notNull().default(sql`(unixepoch())`),
   userId:     text('user_id').references(() => users.id),
+  gameToken:  text('game_token').unique(),
 })

@@ -15,7 +15,17 @@ export default defineEventHandler((event): LeaderboardRow[] => {
   const db = getDb()
 
   return db
-    .select()
+    .select({
+      id:         scores.id,
+      name:       scores.name,
+      score:      scores.score,
+      correct:    scores.correct,
+      total:      scores.total,
+      mode:       scores.mode,
+      difficulty: scores.difficulty,
+      userId:     scores.userId,
+      createdAt:  scores.createdAt,
+    })
     .from(scores)
     .where(and(
       difficulty !== undefined ? eq(scores.difficulty, difficulty) : undefined,
@@ -24,5 +34,5 @@ export default defineEventHandler((event): LeaderboardRow[] => {
     ))
     .orderBy(desc(scores.score), desc(scores.createdAt))
     .limit(limit)
-    .all() as unknown as LeaderboardRow[]
+    .all() as LeaderboardRow[]
 })

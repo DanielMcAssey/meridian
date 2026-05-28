@@ -323,6 +323,7 @@ function zoomCenter(factor: number) {
                disabled:opacity-30 disabled:cursor-default"
         :disabled="!canZoomIn"
         title="Zoom in"
+        aria-label="Zoom in"
         @click="zoomCenter(1.4)"
       >+</button>
       <button
@@ -332,6 +333,7 @@ function zoomCenter(factor: number) {
                disabled:opacity-30 disabled:cursor-default"
         :disabled="!canZoomOut"
         title="Zoom out"
+        aria-label="Zoom out"
         @click="zoomCenter(1 / 1.4)"
       >−</button>
     </div>
