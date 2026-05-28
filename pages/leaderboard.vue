@@ -4,6 +4,7 @@ import type { Difficulty, GameMode, LeaderboardRow } from '~/types/game'
 import { DIFFICULTIES, MODES, ROUND_COUNTS, modeName } from '~/config/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
+const userId     = useUserId()
 const settings   = useGameSettings()
 const session    = useSessionStore()
 
@@ -183,10 +184,10 @@ const trophyColor: Record<TrophyKind, string> = {
         class="grid gap-3 px-4 sm:px-5 py-3 border-t border-rule items-center text-[14.5px] text-ink
                grid-cols-[3rem_1fr_auto] sm:grid-cols-[5rem_1.4fr_1fr_1fr_0.8fr_0.8fr]"
         :style="{
-          background: entry.name === playerName
+          background: (entry.userId && entry.userId === userId)
             ? 'color-mix(in oklab, var(--accent) 22%, var(--color-paper))'
             : trophyFor(i) ? trophyBg[trophyFor(i)!] : undefined,
-          boxShadow: entry.name === playerName && trophyFor(i) ? 'inset 4px 0 0 var(--accent)' : undefined,
+          boxShadow: (entry.userId && entry.userId === userId) && trophyFor(i) ? 'inset 4px 0 0 var(--accent)' : undefined,
         }"
       >
         <!-- Rank -->
@@ -206,7 +207,7 @@ const trophyColor: Record<TrophyKind, string> = {
         <span class="font-serif text-[19px] text-ink truncate">
           {{ entry.name }}
           <em
-            v-if="entry.name === playerName"
+            v-if="entry.userId && entry.userId === userId"
             class="font-mono not-italic text-[13px] ml-2 tracking-[0.08em]"
             :style="{ color: 'var(--accent)' }"
           >(you)</em>

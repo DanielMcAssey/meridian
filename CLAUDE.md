@@ -36,14 +36,16 @@ Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **clie
 
 Two Pinia stores:
 
-- **`useAtlasStore`** (`stores/atlas.ts`) — loads `public/data.json` once on first access. Holds the country list, SVG paths (`countryPaths`), and flag paths (`flagPaths`). The atlas is shared across all game pages.
+- **`useAtlasStore`** (`stores/atlas.ts`) — loads `public/data.json` once on first access. Holds the country list, SVG paths (`countryPaths`), flag paths (`flagPaths`), and silhouette paths (`shapePaths`). The atlas is shared across all game pages.
 - **`useSessionStore`** (`stores/session.ts`) — tracks the in-progress game: round list, current index, results, final score, and leaderboard rank. `markFinished()` tallies score and sets `lbPending = true`; `setRank()` is called later by the leaderboard mutation's `onSuccess` handler.
 
 ### Game data (`public/data.json`)
 
-Single static file containing every country with: ISO code, display name, capital city, lat/lng, SVG centroid (`svgCx`/`svgCy`), world-map SVG path, flag path, region, and `tier` (1–4). Tier controls the difficulty pool — easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=all.
+Single static file containing every country with: ISO code, display name, capital city, lat/lng, SVG centroid (`svgCx`/`svgCy`), world-map SVG path (`path`), flag path (`flag`), silhouette path (`shape`), region, `tier` (1–4), `langs` (ISO 639-1 codes of official languages), and `subdivisions` (top-level admin divisions with `name` and `cat`).
 
-Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers from the filtered pool, generates distractors, and cycles round types for `mixed` mode. For `region` rounds, `pickRegionOptions()` ensures each of the 4 options represents a distinct continent.
+Tier controls the difficulty pool — easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=all. Country selection is also **weighted by tier** toward the selected difficulty via `DIFFICULTY_TIER_WEIGHTS` in `config/game.ts` — expert difficulty makes obscure (high-tier) countries more likely.
+
+Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers via `weightedSample()`, generates distractors, and cycles round types for `mixed` mode. The same country cannot appear twice in a single run. For `region` rounds, `pickRegionOptions()` ensures each of the 4 options represents a distinct continent.
 
 ### Round types
 
@@ -52,24 +54,32 @@ Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers from 
 | `flag` | `FlagRound` | Identify country from its flag | 4 country names |
 | `pin` | `PinDropRound` | Identify country shown on world map with pin | 4 country names |
 | `cart` | `CartographerRound` | Click the named country on the world map | Click on SVG map |
-| `shape` | `SilhouetteRound` | Identify country from its outline | 4 country names |
+| `shape` | `SilhouetteRound` | Identify country from its silhouette outline | 4 country names |
 | `capital` | `CapitalRound` | Name the capital city of a country | 4 capital city names |
 | `region` | `RegionRound` | Name the continent a country belongs to | 4 continent names (one per continent) |
+| `language` | `LanguageRound` | Name an official language spoken in a country | 4 language name strings |
+| `province` | `ProvinceRound` | Name which country a state/province/canton belongs to | 4 country names |
 
-The `mixed` / **Grand Tour** mode cycles through a difficulty-gated subset of the above types (see `MIXED_ROUND_TYPES` in `config/game.ts`). The continent check for `region` rounds uses `opt.region === answer.region` instead of `opt.code === answer.code` — this is handled in `pages/play.vue`'s `isCorrect` computed and `handleLock`.
+**Language rounds**: `Round.langOptions` holds 4 shuffled language name strings; `Round.answerLang` is the correct string. Distractors exclude all of the answer country's official languages. Correctness check: `opt === round.answerLang`. Fallback to `flag` if no valid language data.
+
+**Province rounds**: `Round.subdivisionName` and `Round.subdivisionCat` hold the subdivision to identify. Options are standard `Country[]`. Fallback to `flag` if no subdivision data.
+
+The `mixed` / **Grand Tour** mode cycles through a difficulty-gated subset of the above types (see `MIXED_ROUND_TYPES` in `config/game.ts`). The continent check for `region` rounds uses `opt.region === answer.region` instead of `opt.code === answer.code` — handled in `pages/play.vue`'s `isCorrect` computed and `handleLock`.
 
 ### Mode difficulties and Grand Tour gating
 
-Each standalone mode has an intrinsic difficulty (`modeDiff` in `ModeConfig`):
+Each standalone mode has an intrinsic difficulty (`modeDiff` in `ModeConfig`). Modes are ordered by difficulty in `MODES`:
 
 | Mode | `modeDiff` |
 |---|---|
 | Continental (`region`) | easy |
+| Linguist (`language`) | easy |
 | Banner Game (`flag`) | medium |
 | Pin Drop (`pin`) | medium |
 | Cartographer (`cart`) | hard |
+| Capital Cities (`capital`) | hard |
 | Silhouette (`shape`) | expert |
-| Capital Cities (`capital`) | expert |
+| Province (`province`) | expert |
 
 Grand Tour (`mixed`) only includes round types up to the player's selected difficulty, defined in `MIXED_ROUND_TYPES` (`config/game.ts`):
 
@@ -77,14 +87,14 @@ Grand Tour (`mixed`) only includes round types up to the player's selected diffi
 |---|---|
 | Easy | `region` |
 | Medium | `region`, `flag`, `pin` |
-| Hard | `region`, `flag`, `pin`, `cart` |
-| Expert | `region`, `flag`, `pin`, `cart`, `shape`, `capital` |
+| Hard | `region`, `flag`, `pin`, `cart`, `capital` |
+| Expert | `region`, `flag`, `pin`, `cart`, `capital`, `shape`, `language`, `province` |
 
 The menu card for Grand Tour shows dynamic sub-tags that update as the player changes difficulty.
 
 ### Feedback overlay
 
-When a round is locked (answer picked or timer expired), a `RoundsFeedbackOverlay` component appears scoped to the **media section only** (flag image, world map, silhouette, or country name card). The answer buttons remain visible with their green/red state. Each round component receives `correct: boolean | null` and `points: number | null` props from `play.vue`; `null` means the round is not yet locked.
+When a round is locked (answer picked or timer expired), a `RoundsFeedbackOverlay` component appears scoped to the **media section only** (flag image, world map, silhouette, or country/subdivision name card). The answer buttons remain visible with their green/red state. Each round component receives `correct: boolean | null` and `points: number | null` props from `play.vue`; `null` means the round is not yet locked.
 
 ### Scoring
 
@@ -102,18 +112,23 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts`. The DB is initialised by `server/plugins/database.ts` (raw `CREATE TABLE IF NOT EXISTS` bootstrap, then Drizzle wraps it) and stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access it via `getDb()` from `server/utils/db.ts`, which returns a typed `NodeSQLiteDatabase<typeof schema>`.
+- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) over Node 24's built-in `node:sqlite`. Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` (`CREATE TABLE IF NOT EXISTS` bootstrap + `ALTER TABLE` migration for existing DBs, then Drizzle wraps it) and stored at `NUXT_DB_PATH` (default `./data/leaderboard.db`). Access it via `getDb()` from `server/utils/db.ts`.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
-- Valid modes: `flag | pin | cart | shape | capital | region | mixed`.
-- **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` and automatically retried on reconnect.
+- Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`.
+- The POST payload accepts an optional `userId` (UUID). If present, a `users` row is upserted (insert or update `name`/`lastSeen`) and the score row is stored with `user_id`.
+- **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` (`CACHE_BUSTER = 'v2'`) and automatically retried on reconnect.
+
+### User identity
+
+Each device gets a stable UUID generated once by `useUserId()` (`composables/useUserId.ts`) and stored under `geo.user.id` in localStorage. It is initialised in `app.vue`'s `onMounted` so all returning users are migrated on their first load. The UUID is sent with every leaderboard POST and used to highlight the player's own rows on the leaderboard (replacing the old fragile name-match approach).
 
 ### Settings persistence
 
-`useLocalStorage` (`composables/useLocalStorage.ts`) is a custom reactive localStorage binding with a module-level singleton registry — all components sharing a key get the same `Ref`. `useGameSettings` wraps the player's difficulty, round count, timer, theme, and accent preferences using this composable. localStorage keys are prefixed `geo.*`.
+`useLocalStorage` (`composables/useLocalStorage.ts`) is a custom reactive localStorage binding with a module-level singleton registry — all components sharing a key get the same `Ref`. `useGameSettings` wraps the player's difficulty, round count, and timer preferences. localStorage keys are prefixed `geo.*`.
 
 ### Styling
 
-Tailwind CSS v4 (via `@tailwindcss/vite`). Custom CSS variables in `assets/styles/main.css` drive the accent colour system (`--accent`, `--color-ok`, `--color-bad`, etc.) and the `ink`/`paper`/`rule` design tokens used throughout templates.
+Tailwind CSS v4 (via `@tailwindcss/vite`). Custom CSS variables in `assets/styles/main.css` drive the accent colour system (`--accent`, `--color-ok`, `--color-bad`, etc.) and the `ink`/`paper`/`rule` design tokens used throughout templates. Silhouette SVGs loaded as `<img>` use `filter: invert(1)` in dark mode (the SVGs use solid black fill on transparent background).
 
 ### Mobile compatibility
 
@@ -127,7 +142,7 @@ The app must work well on mobile devices. All UI changes should be tested at mob
 
 ### PWA
 
-Configured in `nuxt.config.ts` via `@vite-pwa/nuxt`. All SVGs (179 country flags), JS/CSS bundles, and `data.json` are precached so the game works fully offline. The leaderboard API uses a `NetworkFirst` runtime strategy with a 4-second timeout.
+Configured in `nuxt.config.ts` via `@vite-pwa/nuxt`. All SVGs (country flags + silhouettes), JS/CSS bundles, and `data.json` are precached so the game works fully offline. The leaderboard API uses a `NetworkFirst` runtime strategy with a 4-second timeout.
 
 ### Docker
 

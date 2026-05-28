@@ -115,6 +115,7 @@ async function handleLock(opt: Country | string | null, elapsedSec: number) {
 }
 
 const { submitScore } = useLeaderboardMutation()
+const userId = useUserId()
 
 async function finishGame() {
   const score   = session.results.reduce((s, r) => s + r.points, 0)
@@ -134,6 +135,7 @@ async function finishGame() {
     total: session.rounds.length,
     mode: session.mode,
     difficulty: session.difficulty,
+    userId: userId.value || undefined,
   })
 
   navigateTo('/results')

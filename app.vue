@@ -11,6 +11,7 @@ const mounted = ref(false)
 onMounted(() => {
   mounted.value = true
   atlas.load()
+  useUserId() // ensure every returning user gets a UUID on first load after migration
 
   // When autoUpdate activates a new SW (skipWaiting → controllerchange),
   // reload so the new bundles are served instead of the old cached ones.

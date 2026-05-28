@@ -8,6 +8,12 @@ import * as schema from '../db/schema'
 // Drizzle Kit (drizzle-kit generate / migrate) can take over this if the
 // schema ever grows to multiple tables or needs alter-column migrations.
 const BOOTSTRAP_SQL = `
+  CREATE TABLE IF NOT EXISTS users (
+    id         TEXT    PRIMARY KEY,
+    name       TEXT    NOT NULL,
+    first_seen INTEGER NOT NULL DEFAULT (unixepoch()),
+    last_seen  INTEGER NOT NULL DEFAULT (unixepoch())
+  );
   CREATE TABLE IF NOT EXISTS scores (
     id         INTEGER PRIMARY KEY AUTOINCREMENT,
     name       TEXT    NOT NULL,
@@ -16,7 +22,8 @@ const BOOTSTRAP_SQL = `
     total      INTEGER NOT NULL,
     mode       TEXT    NOT NULL,
     difficulty TEXT    NOT NULL,
-    created_at INTEGER NOT NULL DEFAULT (unixepoch())
+    created_at INTEGER NOT NULL DEFAULT (unixepoch()),
+    user_id    TEXT    REFERENCES users(id)
   );
   CREATE INDEX IF NOT EXISTS idx_scores_score ON scores(score DESC);
 `
@@ -31,6 +38,9 @@ export default defineNitroPlugin(() => {
   sqlite.exec('PRAGMA journal_mode = WAL')
   sqlite.exec('PRAGMA foreign_keys = ON')
   sqlite.exec(BOOTSTRAP_SQL)
+
+  // Add user_id column to existing databases that predate this migration.
+  try { sqlite.exec('ALTER TABLE scores ADD COLUMN user_id TEXT REFERENCES users(id)') } catch {}
 
   globalThis.__meridianDb = drizzle({ client: sqlite, schema })
 

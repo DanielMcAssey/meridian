@@ -53,10 +53,18 @@ export interface LeaderboardEntry {
   total:      number
   mode:       GameMode
   difficulty: Difficulty
+  userId?:    string
 }
 
 /** Full row returned by GET /api/leaderboard (server-persisted fields added). */
-export interface LeaderboardRow extends LeaderboardEntry {
-  id:        number
-  createdAt: number
+export interface LeaderboardRow {
+  id:         number
+  name:       string
+  score:      number
+  correct:    number
+  total:      number
+  mode:       GameMode
+  difficulty: Difficulty
+  userId:     string | null
+  createdAt:  number
 }

@@ -17,7 +17,7 @@ import type { LeaderboardEntry } from '~/types/game'
 
 // Bump this string whenever the leaderboard POST schema changes —
 // it busts the persisted cache so stale mutations aren't replayed.
-const CACHE_BUSTER = 'v1'
+const CACHE_BUSTER = 'v2'
 
 export default defineNuxtPlugin((nuxtApp) => {
   const queryClient = new QueryClient({
