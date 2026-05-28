@@ -104,7 +104,7 @@ export function buildRounds(
   const answerPool   = mode === 'language' ? langPool : mode === 'province' ? provincePool : pool
   const answers = weightedSample(answerPool, count, difficulty)
 
-  return answers.map((answer, i) => {
+  const rounds = answers.map((answer, i) => {
     let roundType: RoundType = mode as RoundType
     if (mode === 'mixed') {
       const types = MIXED_ROUND_TYPES[difficulty]
@@ -133,4 +133,15 @@ export function buildRounds(
         : shuffle([answer, ...pickDistractors(answer, widerPool, 3)])
     return { type: roundType, answer, options }
   })
+
+  if (import.meta.dev) {
+    for (const round of rounds) {
+      const ok = round.type === 'language'
+        ? (round.langOptions?.includes(round.answerLang!) ?? false)
+        : round.options.some((o) => o.code === round.answer.code)
+      if (!ok) console.warn('[rounds] answer not in options:', round)
+    }
+  }
+
+  return rounds
 }

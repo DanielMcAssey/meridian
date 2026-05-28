@@ -1,6 +1,21 @@
+<script lang="ts">
+// Module-level constants — these never change so there's no need to
+// re-create them on each component mount.
+export const trophyBg = {
+  gold:   'linear-gradient(90deg, color-mix(in oklab, oklch(0.84 0.13 90) 35%, var(--color-paper)), var(--color-paper))',
+  silver: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.85 0.02 250) 35%, var(--color-paper)), var(--color-paper))',
+  bronze: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.65 0.10 45) 30%, var(--color-paper)), var(--color-paper))',
+} as const
+export const trophyColor = {
+  gold:   'oklch(0.72 0.16 90)',
+  silver: 'oklch(0.78 0.015 250)',
+  bronze: 'oklch(0.55 0.11 45)',
+} as const
+</script>
+
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import type { Difficulty, GameMode, LeaderboardRow } from '~/types/game'
+import type { Difficulty, GameMode, LeaderboardResponse, TrophyKind } from '~/types/game'
 import { DIFFICULTIES, MODES, ROUND_COUNTS, modeName } from '~/config/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
@@ -35,16 +50,16 @@ const ROUND_OPTIONS = [
 // writing into the query cache.  initialData participates in stale-time checks so
 // a recently-persisted 'any' key could be served from localStorage without a
 // network request.  placeholderData is purely visual and never blocks a fetch.
-const { data: board, isFetching } = useQuery<LeaderboardRow[]>({
+const { data: leaderboardData, isFetching } = useQuery<LeaderboardResponse>({
   queryKey: ['leaderboard', filterMode, filterDifficulty, filterRounds],
   queryFn: () => {
     const params = new URLSearchParams({ limit: '50' })
     if (filterMode.value !== 'any')       params.set('mode',       filterMode.value)
     if (filterDifficulty.value !== 'any') params.set('difficulty', filterDifficulty.value)
     if (filterRounds.value > 0)           params.set('total',      String(filterRounds.value))
-    return $fetch<LeaderboardRow[]>(`/api/leaderboard?${params}`)
+    return $fetch<LeaderboardResponse>(`/api/leaderboard?${params}`)
   },
-  placeholderData: () => [],
+  placeholderData: () => ({ rows: [], hasMore: false }),
   staleTime: 1000 * 30,
   refetchOnWindowFocus: true,
   // 'offlineFirst': TanStack always fires the fetch regardless of navigator.onLine,
@@ -53,6 +68,9 @@ const { data: board, isFetching } = useQuery<LeaderboardRow[]>({
   // while offline and Workbox's fallback cache would never be reached.
   networkMode: 'offlineFirst',
 })
+
+const board   = computed(() => leaderboardData.value?.rows ?? [])
+const hasMore = computed(() => leaderboardData.value?.hasMore ?? false)
 
 // ── Filter summary text ───────────────────────────────────────────────────────
 const filterLabel = computed(() => {
@@ -65,23 +83,11 @@ const filterLabel = computed(() => {
 })
 
 // ── Trophy helpers ────────────────────────────────────────────────────────────
-type TrophyKind = 'gold' | 'silver' | 'bronze'
 function trophyFor(rank: number): TrophyKind | null {
   if (rank === 0) return 'gold'
   if (rank === 1) return 'silver'
   if (rank === 2) return 'bronze'
   return null
-}
-
-const trophyBg: Record<TrophyKind, string> = {
-  gold:   'linear-gradient(90deg, color-mix(in oklab, oklch(0.84 0.13 90) 35%, var(--color-paper)), var(--color-paper))',
-  silver: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.85 0.02 250) 35%, var(--color-paper)), var(--color-paper))',
-  bronze: 'linear-gradient(90deg, color-mix(in oklab, oklch(0.65 0.10 45) 30%, var(--color-paper)), var(--color-paper))',
-}
-const trophyColor: Record<TrophyKind, string> = {
-  gold:   'oklch(0.72 0.16 90)',
-  silver: 'oklch(0.78 0.015 250)',
-  bronze: 'oklch(0.55 0.11 45)',
 }
 </script>
 
@@ -94,8 +100,8 @@ const trophyColor: Record<TrophyKind, string> = {
         class="font-serif font-normal tracking-[-0.02em] leading-none mt-3 mb-1.5"
         style="font-size: clamp(40px, 5vw, 64px)"
       >Leaderboard.</h1>
-      <p class="text-ink-2 m-0 flex items-center gap-2">
-        Top 50 for <span class="text-ink font-medium">{{ filterLabel }}</span>.
+      <p class="text-ink-2 m-0 flex items-center gap-2 flex-wrap">
+        <span>Top {{ board.length }} for <span class="text-ink font-medium">{{ filterLabel }}</span><template v-if="hasMore"> — more available</template>.</span>
         <span
           v-if="isFetching"
           class="inline-block w-3 h-3 rounded-full border-2 border-rule border-t-ink-3 animate-spin"
@@ -151,7 +157,7 @@ const trophyColor: Record<TrophyKind, string> = {
     </div>
 
     <!-- Loading skeleton -->
-    <div v-if="isFetching && (!board || board.length === 0)" class="flex flex-col gap-2 mb-7">
+    <div v-if="isFetching && board.length === 0" class="flex flex-col gap-2 mb-7">
       <div
         v-for="n in 5"
         :key="n"
@@ -162,7 +168,7 @@ const trophyColor: Record<TrophyKind, string> = {
 
     <!-- Empty state -->
     <div
-      v-else-if="!board || board.length === 0"
+      v-else-if="board.length === 0"
       class="text-center py-20 px-5 font-serif italic text-2xl text-ink-3"
     >
       No scores yet for these settings. Set sail to inscribe your name.

@@ -30,6 +30,7 @@ export const useAtlasStore = defineStore('atlas', () => {
 
   async function load() {
     if (ready.value) return
+    error.value = null
     try {
       const data = await $fetch<AtlasData>('/data.json')
 

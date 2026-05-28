@@ -45,6 +45,7 @@ const label = computed(() => {
       <div class="flex flex-col items-center gap-3 text-center">
         <FlagImage
           :code="round.answer.code"
+          alt=""
           class="h-14 sm:h-20 w-auto rounded shadow-sm select-none"
           style="box-shadow: 0 4px 16px -4px rgba(20,15,10,0.3)"
         />

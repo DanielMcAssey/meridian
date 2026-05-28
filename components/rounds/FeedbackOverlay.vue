@@ -1,15 +1,25 @@
 <script setup lang="ts">
+import { onMounted, ref } from 'vue'
+
 defineProps<{
   correct:   boolean
   timedOut:  boolean
   label:     string
   points:    number | null
 }>()
+
+const overlayRef = ref<HTMLElement | null>(null)
+
+onMounted(() => {
+  overlayRef.value?.focus()
+})
 </script>
 
 <template>
   <div
-    class="absolute inset-0 z-10 flex items-center justify-center rounded-xl"
+    ref="overlayRef"
+    tabindex="-1"
+    class="absolute inset-0 z-10 flex items-center justify-center rounded-xl focus:outline-none"
     style="background: color-mix(in srgb, var(--paper) 84%, transparent); backdrop-filter: blur(6px); animation: fb-backdrop 0.22s ease both"
   >
     <div

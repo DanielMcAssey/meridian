@@ -9,7 +9,6 @@ const atlas = useAtlasStore()
     v-if="atlas.flagPaths[code]"
     v-bind="$attrs"
     :src="atlas.flagPaths[code]"
-    alt=""
     loading="lazy"
     :draggable="false"
   />

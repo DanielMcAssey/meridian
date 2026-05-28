@@ -47,15 +47,24 @@ export interface RoundResult {
 
 /** Payload sent to POST /api/leaderboard after a game ends. */
 export interface LeaderboardEntry {
-  name:      string
-  score:     number
-  correct:   number
-  total:     number
-  mode:      GameMode
+  name:       string
+  score:      number
+  correct:    number
+  total:      number
+  mode:       GameMode
   difficulty: Difficulty
-  userId:    string
-  gameToken: string
+  userId:     string
+  gameToken:  string
 }
+
+// Runtime mirror of LeaderboardEntry — TypeScript errors if this object diverges
+// from the interface (missing key, extra key, or renamed key all fail to compile).
+// The derived version string changes automatically when any field is added,
+// removed, or renamed, busting the persisted offline-mutation cache.
+const _leaderboardEntryShape: Record<keyof LeaderboardEntry, 1> = {
+  name: 1, score: 1, correct: 1, total: 1, mode: 1, difficulty: 1, userId: 1, gameToken: 1,
+}
+export const LEADERBOARD_MUTATION_VERSION = Object.keys(_leaderboardEntryShape).sort().join('|')
 
 /** Full row returned by GET /api/leaderboard (server-persisted fields added). */
 export interface LeaderboardRow {
@@ -69,3 +78,11 @@ export interface LeaderboardRow {
   userId:     string | null
   createdAt:  number
 }
+
+/** Response envelope for GET /api/leaderboard. */
+export interface LeaderboardResponse {
+  rows:    LeaderboardRow[]
+  hasMore: boolean
+}
+
+export type TrophyKind = 'gold' | 'silver' | 'bronze'

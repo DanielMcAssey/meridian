@@ -75,7 +75,7 @@ function handlePickLang(lang: string) {
   handleLock(lang, (Date.now() - startTime) / 1000)
 }
 
-async function handleLock(opt: Country | string | null, elapsedSec: number) {
+function handleLock(opt: Country | string | null, elapsedSec: number) {
   locked.value = true
   clearTick()
 
@@ -109,10 +109,10 @@ async function handleLock(opt: Country | string | null, elapsedSec: number) {
   }
   session.recordResult(result)
 
-  advanceTimeout = setTimeout(async () => {
+  advanceTimeout = setTimeout(() => {
     advanceTimeout = null
     const next = session.idx + 1
-    if (next >= session.rounds.length) await finishGame()
+    if (next >= session.rounds.length) finishGame()
     else session.advance()
   }, 1500)
 }
@@ -161,7 +161,7 @@ const isCorrect     = computed(() => {
 const lastResult    = computed(() => locked.value && session.results.length > 0 ? session.results[session.results.length - 1] : null)
 const timerPct      = computed(() =>
   settings.timer.value
-    ? Math.max(0, (timeLeft.value / DIFFICULTY_TIMER_SECS[session.difficulty]) * 100) : 0,
+    ? Math.min(100, Math.max(0, (timeLeft.value / DIFFICULTY_TIMER_SECS[session.difficulty]) * 100)) : 0,
 )
 const timerLow = computed(() => timeLeft.value < 4 && settings.timer.value)
 
@@ -237,11 +237,11 @@ function pipClass(i: number): string {
       </div>
     </div>
 
-    <!-- Round stage — flex-1 + min-h-0 lets it grow for the Cartographer map -->
+    <!-- Round stage — flex-1/min-h-0 only for Cartographer so its map fills the viewport -->
     <div
       :key="session.idx"
-      class="bg-paper border border-rule rounded-[18px] px-4 sm:px-6 lg:px-9 py-6
-             flex flex-col flex-1 min-h-0"
+      class="bg-paper border border-rule rounded-[18px] px-4 sm:px-6 lg:px-9 py-6 flex flex-col"
+      :class="session.currentRound.type === 'cart' ? 'flex-1 min-h-0' : ''"
       style="box-shadow: var(--shadow-md); animation: stage-in 0.4s cubic-bezier(.2,.7,.2,1)"
     >
       <RoundsFlagRound

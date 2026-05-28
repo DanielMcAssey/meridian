@@ -1,20 +1,48 @@
 import { and, desc, eq } from 'drizzle-orm'
-import type { Difficulty, GameMode, LeaderboardRow } from '~/types/game'
+import type { Difficulty, GameMode, LeaderboardResponse, LeaderboardRow } from '~/types/game'
 import { VALID_DIFFICULTIES, VALID_MODES } from '~/config/game'
 import { scores } from '~/server/db/schema'
+import { createRateLimiter } from '~/server/utils/rateLimit'
 
-export default defineEventHandler((event): LeaderboardRow[] => {
-  const query = getQuery(event)
+// ── Rate limiting ─────────────────────────────────────────────────────────────
+// 60 reads per IP per minute — generous enough for normal browsing.
+// NOTE: reads x-forwarded-for which can be spoofed if not behind a trusted
+// reverse proxy (Nginx, Cloudflare, etc.) that strips and re-adds the header.
 
+const isRateLimited = createRateLimiter(60)
+
+// ── Type-safe filter helpers ──────────────────────────────────────────────────
+
+function validDifficulty(v: unknown): Difficulty | undefined {
+  return typeof v === 'string' && VALID_DIFFICULTIES.has(v) ? (v as Difficulty) : undefined
+}
+
+function validMode(v: unknown): GameMode | undefined {
+  return typeof v === 'string' && VALID_MODES.has(v) ? (v as GameMode) : undefined
+}
+
+// ── Handler ───────────────────────────────────────────────────────────────────
+
+export default defineEventHandler((event): LeaderboardResponse => {
+  const ip = (getRequestHeader(event, 'x-forwarded-for') ?? '').split(',')[0]?.trim()
+           || event.node.req.socket?.remoteAddress
+           || 'unknown'
+
+  if (isRateLimited(ip)) {
+    throw createError({ statusCode: 429, message: 'Too many requests — please wait a moment' })
+  }
+
+  const query      = getQuery(event)
   const limit      = Math.min(Math.abs(Number(query.limit) || 50), 100)
-  const difficulty = VALID_DIFFICULTIES.has(query.difficulty as string) ? query.difficulty as Difficulty : undefined
-  const mode       = VALID_MODES.has(query.mode as string)              ? query.mode       as GameMode   : undefined
-  const totalRaw   = typeof query.total === 'string'                    ? Number(query.total)            : NaN
-  const total      = !isNaN(totalRaw) && totalRaw > 0                   ? totalRaw                      : undefined
+  const difficulty = validDifficulty(query.difficulty)
+  const mode       = validMode(query.mode)
+  const totalRaw   = typeof query.total === 'string' ? Number(query.total) : NaN
+  const total      = !isNaN(totalRaw) && totalRaw > 0 ? totalRaw : undefined
 
   const db = getDb()
 
-  return db
+  // Fetch one extra row to detect truncation without a separate COUNT query.
+  const raw = db
     .select({
       id:         scores.id,
       name:       scores.name,
@@ -33,6 +61,11 @@ export default defineEventHandler((event): LeaderboardRow[] => {
       total      !== undefined ? eq(scores.total,      total)      : undefined,
     ))
     .orderBy(desc(scores.score), desc(scores.createdAt))
-    .limit(limit)
+    .limit(limit + 1)
     .all() as LeaderboardRow[]
+
+  return {
+    rows:    raw.slice(0, limit),
+    hasMore: raw.length > limit,
+  }
 })

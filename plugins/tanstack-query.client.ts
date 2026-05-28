@@ -14,10 +14,11 @@ import { VueQueryPlugin, QueryClient } from '@tanstack/vue-query'
 import { persistQueryClient } from '@tanstack/query-persist-client-core'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import type { LeaderboardEntry } from '~/types/game'
+import { LEADERBOARD_MUTATION_VERSION } from '~/types/game'
 
-// Bump this string whenever the leaderboard POST schema changes —
-// it busts the persisted cache so stale mutations aren't replayed.
-const CACHE_BUSTER = 'v3'
+// Derived from LEADERBOARD_MUTATION_VERSION in types/game.ts — bump that
+// constant whenever LeaderboardEntry fields change to bust persisted mutations.
+const CACHE_BUSTER = LEADERBOARD_MUTATION_VERSION
 
 export default defineNuxtPlugin((nuxtApp) => {
   const queryClient = new QueryClient({

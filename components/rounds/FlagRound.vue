@@ -14,6 +14,10 @@ const emit = defineEmits<{ pick: [country: Country] }>()
 const label = computed(() =>
   props.correct ? `It is indeed ${props.round.answer.name}` : `The answer was ${props.round.answer.name}`,
 )
+
+const imageAlt = computed(() =>
+  props.correct !== null ? `Flag of ${props.round.answer.name}` : 'Country flag',
+)
 </script>
 
 <template>
@@ -28,7 +32,7 @@ const label = computed(() =>
                bg-paper rounded-md overflow-hidden flex items-center justify-center"
         style="box-shadow: 0 16px 40px -16px rgba(20,15,10,0.35), 0 1px 0 rgba(20,15,10,0.06)"
       >
-        <FlagImage :code="round.answer.code" class="w-full h-full block object-cover select-none" />
+        <FlagImage :code="round.answer.code" :alt="imageAlt" class="w-full h-full block object-cover select-none" />
       </div>
       <RoundsFeedbackOverlay
         v-if="correct !== null"

@@ -16,6 +16,10 @@ const atlas = useAtlasStore()
 const label = computed(() =>
   props.correct ? `It is indeed ${props.round.answer.name}` : `The answer was ${props.round.answer.name}`,
 )
+
+const imageAlt = computed(() =>
+  props.correct !== null ? `Silhouette of ${props.round.answer.name}` : 'Country silhouette outline',
+)
 </script>
 
 <template>
@@ -29,6 +33,7 @@ const label = computed(() =>
         <CountrySilhouette
           :src="atlas.shapePaths[round.answer.code]"
           :path="atlas.countryPaths[round.answer.code] ?? ''"
+          :alt="imageAlt"
         />
       </div>
       <RoundsFeedbackOverlay

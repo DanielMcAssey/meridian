@@ -30,6 +30,7 @@ const label = computed(() =>
     >
       <FlagImage
         :code="props.round.answer.code"
+        alt=""
         class="w-[90px] aspect-[3/2] block object-cover rounded shrink-0"
         style="box-shadow: 0 4px 12px -4px rgba(20,15,10,0.35), 0 1px 0 rgba(20,15,10,0.06)"
       />
