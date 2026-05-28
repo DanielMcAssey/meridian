@@ -1,11 +1,15 @@
 <script setup lang="ts">
-const props = defineProps<{ path: string }>()
+const props = defineProps<{ path: string; src?: string }>()
 
-const svgEl  = ref<SVGSVGElement | null>(null)
+const svgEl   = ref<SVGSVGElement | null>(null)
 const viewBox = ref('0 0 100 100')
 const visible = ref(false)
 
+// Reset when the displayed country changes.
+watch([() => props.src, () => props.path], () => { visible.value = false })
+
 onMounted(() => {
+  if (props.src) return // <img> path — visibility set by @load
   const el = svgEl.value
   if (!el) return
   const pathEl = el.querySelector('path')
@@ -14,7 +18,6 @@ onMounted(() => {
   const b = pathEl.getBBox()
   if (b.width < 1 || b.height < 1) return
 
-  // Pad by 12 % of the smaller dimension so the shape never touches the edge.
   const pad = Math.max(Math.min(b.width, b.height) * 0.12, 4)
   viewBox.value = `${b.x - pad} ${b.y - pad} ${b.width + pad * 2} ${b.height + pad * 2}`
   visible.value = true
@@ -22,11 +25,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <!--
-    Initially invisible so there is no jump from the default viewBox
-    to the computed one. Once getBBox is done, opacity transitions in.
-  -->
+  <!-- High-quality external SVG (preferred) -->
+  <img
+    v-if="src"
+    :src="src"
+    class="silhouette-img silhouette-svg"
+    :style="visible ? 'opacity:1' : 'opacity:0'"
+    alt=""
+    @load="visible = true"
+  />
+  <!-- Inline SVG path (fallback for countries without a shape file) -->
   <svg
+    v-else
     ref="svgEl"
     :viewBox="viewBox"
     class="silhouette-svg"

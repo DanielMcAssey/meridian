@@ -262,6 +262,15 @@ button { font: inherit; color: inherit; cursor: pointer; }
   stroke: none;
   filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
 }
+/* External SVG shape files use fill="#000000" — invert in dark mode so the
+   shape tracks --color-ink the same way the inline silhouette-path does.  */
+.silhouette-img {
+  object-fit: contain;
+  filter: drop-shadow(0 2px 6px rgba(0,0,0,0.12));
+}
+@media (prefers-color-scheme: dark) {
+  .silhouette-img { filter: invert(1) drop-shadow(0 2px 6px rgba(0,0,0,0.35)); }
+}
 
 /* ── Keyframe animations ─────────────────────────────────────────────────── */
 @keyframes gentle-spin { to { transform: rotate(360deg); } }

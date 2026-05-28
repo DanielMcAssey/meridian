@@ -1,5 +1,5 @@
 import type { Country, Difficulty, GameMode, Round, RoundType } from '~/types/game'
-import { MIXED_ROUND_TYPES } from '~/config/game'
+import { DIFFICULTY_TIER_WEIGHTS, MIXED_ROUND_TYPES } from '~/config/game'
 
 export function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
@@ -39,6 +39,21 @@ function pickRegionOptions(answer: Country, allCountries: Country[]): Country[] 
   return shuffle([answer, ...reps])
 }
 
+function weightedSample(pool: Country[], count: number, difficulty: Difficulty): Country[] {
+  const tw = DIFFICULTY_TIER_WEIGHTS[difficulty]
+  const candidates = pool.map((c) => ({ country: c, weight: tw[c.tier] ?? 1 }))
+  const result: Country[] = []
+  for (let i = 0; i < count && candidates.length > 0; i++) {
+    const total = candidates.reduce((s, c) => s + c.weight, 0)
+    let r = Math.random() * total
+    let idx = 0
+    while (idx < candidates.length - 1 && (r -= candidates[idx]!.weight) > 0) idx++
+    result.push(candidates[idx]!.country)
+    candidates.splice(idx, 1)
+  }
+  return result
+}
+
 export function buildRounds(
   countries: Country[],
   mode: GameMode,
@@ -48,7 +63,7 @@ export function buildRounds(
   const pool = pickPool(countries, difficulty)
   // Wider pool for distractors (slightly harder distractors on easy)
   const widerPool = pickPool(countries, difficulty === 'easy' ? 'medium' : difficulty)
-  const answers = shuffle(pool).slice(0, count)
+  const answers = weightedSample(pool, count, difficulty)
 
   return answers.map((answer, i) => {
     let roundType: RoundType = mode as RoundType

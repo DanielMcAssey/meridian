@@ -58,12 +58,12 @@ export interface ModeConfig {
 
 export const MODES: ModeConfig[] = [
   { id: 'mixed',   title: 'The Grand Tour',     label: 'Grand Tour',   sub: 'A curated mix — round types matched to your chosen difficulty.',  note: 'Mixed itinerary', icon: 'compass'                  },
+  { id: 'region',  title: 'The Continental',    label: 'Continental',  sub: 'Pick which continent each country belongs to.',                   note: 'Geography',       icon: 'region',  modeDiff: 'easy'   },
   { id: 'flag',    title: 'The Banner Game',    label: 'Banners',      sub: 'Identify the flag.',                                              note: 'Vexillology',     icon: 'flag',    modeDiff: 'medium' },
   { id: 'pin',     title: 'The Pin Drop',       label: 'Pin Drop',     sub: "Find a pin's country on the map.",                                note: 'Cartography',     icon: 'map',     modeDiff: 'medium' },
   { id: 'cart',    title: 'The Cartographer',   label: 'Cartographer', sub: 'Pinpoint a country on the world map.',                            note: 'Charting',        icon: 'cart',    modeDiff: 'hard'   },
+  { id: 'capital', title: 'The Capital Cities', label: 'Capitals',     sub: 'Name the capital city of each country.',                          note: 'Civics',          icon: 'capital', modeDiff: 'hard'   },
   { id: 'shape',   title: 'The Silhouette',     label: 'Silhouette',   sub: 'Name the country from its outline.',                              note: 'Topography',      icon: 'shape',   modeDiff: 'expert' },
-  { id: 'capital', title: 'The Capital Cities', label: 'Capitals',     sub: 'Name the capital city of each country.',                          note: 'Civics',          icon: 'capital', modeDiff: 'expert' },
-  { id: 'region',  title: 'The Continental',    label: 'Continental',  sub: 'Pick which continent each country belongs to.',                   note: 'Geography',       icon: 'region',  modeDiff: 'easy'   },
 ]
 
 /** Returns the short display name for a mode id (falls back to the raw string). */
@@ -93,12 +93,23 @@ export const VALID_MODES        = new Set<string>(MODES.map((m) => m.id))
 export const VALID_DIFFICULTIES = new Set<string>(DIFFICULTIES.map((d) => d.id))
 export const VALID_ROUND_COUNTS = new Set<number>(ROUND_COUNTS)
 
+// ── Answer-selection tier weights ────────────────────────────────────────────
+// Controls how likely each tier of country is to be selected as a round answer.
+// Higher weights at higher difficulties push the pool toward obscure countries.
+// Keys are tier numbers; missing tiers fall back to weight 1.
+export const DIFFICULTY_TIER_WEIGHTS: Record<Difficulty, Record<number, number>> = {
+  easy:   { 1: 1 },            // single tier anyway — weight is a no-op
+  medium: { 1: 1, 2: 3 },      // tier-2 countries ~3× more likely than tier-1
+  hard:   { 1: 1, 2: 2, 3: 4 },
+  expert: { 1: 1, 2: 2, 3: 3, 4: 5 },
+}
+
 // ── Grand Tour round-type gates ───────────────────────────────────────────────
 // Defines which round types are included in 'mixed' mode at each difficulty.
 // Higher difficulties include all lower-tier types plus their own.
 export const MIXED_ROUND_TYPES: Record<Difficulty, RoundType[]> = {
   easy:   ['region'],
   medium: ['region', 'flag', 'pin'],
-  hard:   ['region', 'flag', 'pin', 'cart'],
-  expert: ['region', 'flag', 'pin', 'cart', 'shape', 'capital'],
+  hard:   ['region', 'flag', 'pin', 'cart', 'capital'],
+  expert: ['region', 'flag', 'pin', 'cart', 'capital', 'shape'],
 }

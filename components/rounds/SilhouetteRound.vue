@@ -26,7 +26,10 @@ const label = computed(() =>
       style="background: repeating-linear-gradient(45deg, var(--color-bg-tint) 0 12px, var(--color-paper) 12px 24px)"
     >
       <div class="w-full max-w-[min(480px,100%)]" style="height: clamp(140px, 28vw, 260px)">
-        <CountrySilhouette :path="atlas.countryPaths[round.answer.code] ?? ''" />
+        <CountrySilhouette
+          :src="atlas.shapePaths[round.answer.code]"
+          :path="atlas.countryPaths[round.answer.code] ?? ''"
+        />
       </div>
       <RoundsFeedbackOverlay
         v-if="correct !== null"

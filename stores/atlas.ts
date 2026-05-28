@@ -6,8 +6,9 @@ interface AtlasData {
   viewBox: string
   countries: Array<
     Country & {
-      flag: string
-      path: string
+      flag:   string
+      path:   string
+      shape?: string
     }
   >
 }
@@ -20,6 +21,7 @@ export const useAtlasStore = defineStore('atlas', () => {
   const countries    = skipHydrate(ref<Country[]>([]))
   const countryPaths = skipHydrate(ref<Record<string, string>>({}))
   const flagPaths    = skipHydrate(ref<Record<string, string>>({}))
+  const shapePaths   = skipHydrate(ref<Record<string, string>>({}))
   const viewBox      = skipHydrate(ref(''))
   const ready        = skipHydrate(ref(false))
   const error        = skipHydrate(ref<string | null>(null))
@@ -43,15 +45,18 @@ export const useAtlasStore = defineStore('atlas', () => {
         tier:    c.tier,
       }))
 
-      const paths: Record<string, string> = {}
-      const flags: Record<string, string> = {}
+      const paths:  Record<string, string> = {}
+      const flags:  Record<string, string> = {}
+      const shapes: Record<string, string> = {}
       for (const c of data.countries) {
         paths[c.code] = c.path
-        // data.json has "flags/xx.svg" — prefix "/" so it resolves from public/
+        // data.json stores relative paths — prefix "/" to resolve from public/
         flags[c.code] = `/${c.flag}`
+        if (c.shape) shapes[c.code] = `/${c.shape}`
       }
       countryPaths.value = paths
-      flagPaths.value = flags
+      flagPaths.value    = flags
+      shapePaths.value   = shapes
 
       ready.value = true
     } catch (e) {
@@ -60,5 +65,5 @@ export const useAtlasStore = defineStore('atlas', () => {
     }
   }
 
-  return { countries, countryPaths, flagPaths, viewBox, ready, error, load }
+  return { countries, countryPaths, flagPaths, shapePaths, viewBox, ready, error, load }
 })
