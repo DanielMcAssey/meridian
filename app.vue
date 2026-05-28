@@ -35,9 +35,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="h-dvh flex flex-col">
+  <div class="flex flex-col" :class="route.name === 'play' ? 'h-dvh' : 'min-h-dvh'">
     <AppChrome />
-    <div class="relative flex flex-col flex-1 min-h-0 overflow-auto">
+    <div class="relative flex flex-col flex-1" :class="route.name === 'play' ? 'min-h-0 overflow-auto' : ''">
       <NuxtPage />
       <Transition leave-active-class="transition-opacity duration-500 ease-in" leave-to-class="opacity-0">
         <GameSplash
