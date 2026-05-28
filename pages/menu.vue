@@ -47,7 +47,7 @@ const GRAND_TOUR_TAGS: Record<Difficulty, string[]> = {
   easy:   ['Continental'],
   medium: ['Continental', 'Vexillology', 'Pin Drops'],
   hard:   ['Continental', 'Vexillology', 'Pin Drops', 'Charting', 'Civics'],
-  expert: ['Continental', 'Vexillology', 'Pin Drops', 'Charting', 'Civics', 'Silhouette', 'Linguistics'],
+  expert: ['Continental', 'Vexillology', 'Pin Drops', 'Charting', 'Civics', 'Silhouette', 'Linguistics', 'Sovereignty'],
 }
 
 const grandTourTags = computed(() => GRAND_TOUR_TAGS[settings.difficulty.value])
@@ -63,7 +63,7 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
         class="font-serif font-normal tracking-[-0.02em] leading-none mt-3 mb-3.5"
         style="font-size: clamp(40px, 5vw, 64px)"
       >
-        A book of <em class="italic" style="color: var(--accent-deep)">seven</em> games.
+        A book of <em class="italic" style="color: var(--accent-deep)">eight</em> games.
       </h1>
 
       <!-- Pill controls -->

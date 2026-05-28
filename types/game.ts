@@ -1,18 +1,24 @@
-export type GameMode  = 'flag' | 'pin' | 'cart' | 'shape' | 'capital' | 'region' | 'language' | 'mixed'
-export type RoundType = 'flag' | 'pin' | 'cart' | 'shape' | 'capital' | 'region' | 'language'
+export type GameMode  = 'flag' | 'pin' | 'cart' | 'shape' | 'capital' | 'region' | 'language' | 'province' | 'mixed'
+export type RoundType = 'flag' | 'pin' | 'cart' | 'shape' | 'capital' | 'region' | 'language' | 'province'
 export type Difficulty = 'easy' | 'medium' | 'hard' | 'expert'
 
+export interface Subdivision {
+  name: string
+  cat:  string  // raw category e.g. "STATE", "PROVINCE", "CANTON"
+}
+
 export interface Country {
-  code:    string
-  name:    string
-  capital: string
-  lat:     number
-  lng:     number
-  svgCx:   number
-  svgCy:   number
-  region:  string
-  tier:    number
-  langs:   string[]  // ISO 639-1 alpha-2 codes of official languages
+  code:         string
+  name:         string
+  capital:      string
+  lat:          number
+  lng:          number
+  svgCx:        number
+  svgCy:        number
+  region:       string
+  tier:         number
+  langs:        string[]       // ISO 639-1 alpha-2 codes of official languages
+  subdivisions: Subdivision[]  // top-level administrative divisions
 }
 
 export interface Round {
@@ -22,6 +28,9 @@ export interface Round {
   // Language rounds only — language names (shuffled) and the correct answer.
   langOptions?: string[]
   answerLang?:  string
+  // Province rounds only — the subdivision to identify.
+  subdivisionName?: string
+  subdivisionCat?:  string
 }
 
 export interface RoundResult {

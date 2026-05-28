@@ -301,6 +301,15 @@ function pipClass(i: number): string {
         :points="lastResult?.points ?? null"
         @pick-lang="handlePickLang"
       />
+      <RoundsProvinceRound
+        v-else-if="session.currentRound.type === 'province'"
+        :round="session.currentRound"
+        :picked="picked"
+        :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
+        @pick="handlePick"
+      />
     </div>
   </main>
 </template>

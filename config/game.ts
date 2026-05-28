@@ -51,7 +51,7 @@ export interface ModeConfig {
   sub:   string
   /** Category tag on menu card. */
   note:  string
-  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' | 'language'
+  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' | 'language' | 'province'
   /** Intrinsic difficulty of this mode — undefined for Grand Tour (mixed). */
   modeDiff?: Difficulty
 }
@@ -64,7 +64,8 @@ export const MODES: ModeConfig[] = [
   { id: 'cart',    title: 'The Cartographer',   label: 'Cartographer', sub: 'Pinpoint a country on the world map.',                            note: 'Charting',        icon: 'cart',    modeDiff: 'hard'   },
   { id: 'capital',  title: 'The Capital Cities', label: 'Capitals',  sub: 'Name the capital city of each country.',              note: 'Civics',      icon: 'capital',  modeDiff: 'hard'   },
   { id: 'shape',   title: 'The Silhouette',     label: 'Silhouette', sub: 'Name the country from its outline.',                  note: 'Topography',  icon: 'shape',    modeDiff: 'expert' },
-  { id: 'language', title: 'The Linguist',      label: 'Linguist',   sub: 'Name an official language spoken in each country.',   note: 'Linguistics', icon: 'language', modeDiff: 'expert' },
+  { id: 'language', title: 'The Linguist',  label: 'Linguist', sub: 'Name an official language spoken in each country.',        note: 'Linguistics', icon: 'language', modeDiff: 'expert' },
+  { id: 'province', title: 'The Province', label: 'Province', sub: 'Name the country each state or region belongs to.',         note: 'Sovereignty', icon: 'province', modeDiff: 'expert' },
 ]
 
 /** Returns the short display name for a mode id (falls back to the raw string). */
@@ -112,5 +113,5 @@ export const MIXED_ROUND_TYPES: Record<Difficulty, RoundType[]> = {
   easy:   ['region'],
   medium: ['region', 'flag', 'pin'],
   hard:   ['region', 'flag', 'pin', 'cart', 'capital'],
-  expert: ['region', 'flag', 'pin', 'cart', 'capital', 'shape', 'language'],
+  expert: ['region', 'flag', 'pin', 'cart', 'capital', 'shape', 'language', 'province'],
 }

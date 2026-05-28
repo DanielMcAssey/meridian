@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' | 'language' }>()
+defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' | 'language' | 'province' }>()
 </script>
 
 <template>
@@ -80,6 +80,19 @@ defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 
     <path d="M60 20 Q76 60 60 100" class="mi-stroke" style="fill:none" />
     <!-- Highlighted continent blob -->
     <path d="M44 46 L56 40 L68 44 L72 56 L66 66 L52 68 L40 62 L38 50 Z" class="mi-fill" />
+  </svg>
+
+  <!-- Province / territory — divided map with one highlighted region -->
+  <svg v-else-if="kind === 'province'" viewBox="0 0 120 120" class="mode-icon">
+    <!-- Highlighted top-left subdivision -->
+    <path d="M20 18 L62 18 L62 58 L16 58 L16 22 Q16 18 20 18 Z" class="mi-fill" />
+    <!-- Outer country boundary -->
+    <rect x="16" y="18" width="88" height="84" rx="4" class="mi-stroke" />
+    <!-- Internal division lines -->
+    <line x1="62" y1="18" x2="62" y2="102" class="mi-stroke" />
+    <line x1="16" y1="58" x2="104" y2="58" class="mi-stroke" />
+    <!-- Marker on highlighted region -->
+    <circle cx="37" cy="37" r="6" class="mi-hole" />
   </svg>
 
   <!-- Language / linguist — speech bubble with text lines -->

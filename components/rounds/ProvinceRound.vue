@@ -1,0 +1,103 @@
+<script setup lang="ts">
+import type { Country, Round } from '~/types/game'
+
+const props = defineProps<{
+  round:   Round
+  picked:  Country | null
+  locked:  boolean
+  correct: boolean | null
+  points:  number | null
+}>()
+
+const emit = defineEmits<{ pick: [country: Country] }>()
+
+// Normalise raw category ("STATE" → "State", "AUTONOMOUS COMMUNITY" → "Autonomous Community")
+const catLabel = computed(() =>
+  (props.round.subdivisionCat ?? 'Region')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase()),
+)
+
+const label = computed(() =>
+  props.correct
+    ? `${props.round.subdivisionName} is in ${props.round.answer.name}`
+    : `It belongs to ${props.round.answer.name}`,
+)
+
+function optClass(opt: Country): string {
+  const isPicked = props.picked?.code === opt.code
+  const isAnswer = opt.code === props.round.answer.code
+  if (props.locked) {
+    if (isAnswer) return 'opt-correct'
+    if (isPicked) return 'opt-wrong'
+    return 'opt-dim'
+  }
+  return isPicked ? 'opt-picked' : ''
+}
+</script>
+
+<template>
+  <div class="flex flex-col gap-6 items-center">
+    <!-- Subdivision name display -->
+    <div
+      class="relative w-full flex justify-center p-6 sm:p-10 rounded-xl border border-dashed border-rule-2"
+      style="background: repeating-linear-gradient(45deg, var(--color-bg-tint) 0 12px, var(--color-paper) 12px 24px)"
+    >
+      <div class="flex flex-col items-center gap-2 text-center">
+        <span class="font-mono text-[10px] tracking-[0.14em] uppercase text-ink-3">{{ catLabel }}</span>
+        <span
+          class="font-serif font-normal leading-[1.05] tracking-[-0.02em] text-ink"
+          style="font-size: clamp(28px, 5vw, 56px)"
+        >{{ round.subdivisionName }}</span>
+      </div>
+      <RoundsFeedbackOverlay
+        v-if="correct !== null"
+        :correct="correct"
+        :timed-out="!picked"
+        :label="label"
+        :points="points"
+      />
+    </div>
+
+    <!-- Prompt -->
+    <div class="text-center">
+      <span class="font-mono text-[10.5px] tracking-[0.18em] uppercase text-ink-3">Plate IX · Sovereignty</span>
+      <h2 class="font-serif font-normal text-[clamp(28px,3.5vw,40px)] tracking-[-0.015em] mt-1.5 mb-0">
+        In which <em class="italic" style="color: var(--accent-deep)">country</em> is this found?
+      </h2>
+    </div>
+
+    <!-- Country option buttons -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-3xl">
+      <button
+        v-for="(opt, i) in round.options"
+        :key="opt.code"
+        :class="[
+          'grid grid-cols-[auto_1fr_auto] items-center gap-3 text-left',
+          'bg-paper border border-rule rounded-xl px-4 py-3.5 min-h-[3rem]',
+          'transition-all duration-150',
+          'hover:not-disabled:border-ink-2 hover:not-disabled:-translate-y-px hover:not-disabled:shadow-sm',
+          'disabled:cursor-default',
+          optClass(opt) === 'opt-correct' && 'bg-ok-soft! border-ok! text-ink',
+          optClass(opt) === 'opt-wrong'   && 'bg-bad-soft! border-bad! text-ink',
+          optClass(opt) === 'opt-dim'     && 'opacity-50',
+          optClass(opt) === 'opt-picked'  && 'border-ink',
+        ]"
+        :disabled="locked"
+        @click="emit('pick', opt)"
+      >
+        <span
+          :class="[
+            'font-mono text-[11px] tracking-[0.1em] text-ink-3',
+            'border border-rule w-6 h-6 rounded-md',
+            'inline-flex items-center justify-center shrink-0',
+            optClass(opt) === 'opt-correct' && 'bg-ok! text-white! border-ok!',
+            optClass(opt) === 'opt-wrong'   && 'bg-bad! text-white! border-bad!',
+          ]"
+        >{{ String.fromCharCode(65 + i) }}</span>
+        <span class="font-serif text-xl font-normal tracking-[-0.01em]">{{ opt.name }}</span>
+        <span class="font-mono text-[10.5px] tracking-[0.12em] uppercase text-ink-3">{{ opt.region }}</span>
+      </button>
+    </div>
+  </div>
+</template>

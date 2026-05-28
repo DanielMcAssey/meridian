@@ -1,15 +1,16 @@
 import { defineStore, skipHydrate } from 'pinia'
 import { ref } from 'vue'
-import type { Country } from '~/types/game'
+import type { Country, Subdivision } from '~/types/game'
 
 interface AtlasData {
   viewBox: string
   countries: Array<
     Country & {
-      flag:   string
-      path:   string
-      shape?: string
-      langs?: string[]
+      flag:          string
+      path:          string
+      shape?:        string
+      langs?:        string[]
+      subdivisions?: Subdivision[]
     }
   >
 }
@@ -44,7 +45,8 @@ export const useAtlasStore = defineStore('atlas', () => {
         svgCy:   c.svgCy,
         region:  c.region,
         tier:    c.tier,
-        langs:   c.langs ?? [],
+        langs:        c.langs ?? [],
+        subdivisions: c.subdivisions ?? [],
       }))
 
       const paths:  Record<string, string> = {}

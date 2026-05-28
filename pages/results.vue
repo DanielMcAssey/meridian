@@ -38,6 +38,7 @@ const TYPE_LABEL: Record<RoundType, string> = {
   capital:  'Capital',
   region:   'Region',
   language: 'Language',
+  province: 'Province',
 }
 
 function playAgain() {

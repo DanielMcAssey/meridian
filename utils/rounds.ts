@@ -98,9 +98,10 @@ export function buildRounds(
   // Wider pool for distractors (slightly harder distractors on easy)
   const widerPool = pickPool(countries, difficulty === 'easy' ? 'medium' : difficulty)
 
-  // Language rounds require countries with language data.
-  const langPool = pool.filter((c) => c.langs.length > 0 && c.langs.some((l) => LANGUAGE_NAMES[l]))
-  const answerPool = mode === 'language' ? langPool : pool
+  // Mode-specific answer pools — exclude countries missing the required data.
+  const langPool     = pool.filter((c) => c.langs.length > 0 && c.langs.some((l) => LANGUAGE_NAMES[l]))
+  const provincePool = pool.filter((c) => c.subdivisions.length > 0)
+  const answerPool   = mode === 'language' ? langPool : mode === 'province' ? provincePool : pool
   const answers = weightedSample(answerPool, count, difficulty)
 
   return answers.map((answer, i) => {
@@ -113,8 +114,17 @@ export function buildRounds(
     if (roundType === 'language') {
       const lang = pickLanguageOptions(answer, widerPool)
       if (lang) return { type: roundType, answer, options: [], ...lang }
-      // Fallback for countries without language data: use flag round instead.
-      roundType = 'flag'
+      roundType = 'flag'  // fallback for countries without language data
+    }
+
+    if (roundType === 'province') {
+      const subs = answer.subdivisions
+      if (subs.length > 0) {
+        const sub = subs[Math.floor(Math.random() * subs.length)]!
+        const options = shuffle([answer, ...pickDistractors(answer, widerPool, 3)])
+        return { type: roundType, answer, options, subdivisionName: sub.name, subdivisionCat: sub.cat }
+      }
+      roundType = 'flag'  // fallback for countries without subdivision data
     }
 
     const options =
