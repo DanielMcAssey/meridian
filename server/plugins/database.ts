@@ -4,6 +4,16 @@ import { createClient } from '@libsql/client'
 import { drizzle } from 'drizzle-orm/libsql'
 import * as schema from '../db/schema'
 
+// Embed migration SQL at build time via Vite's glob import so the content is
+// bundled into the server chunk. useStorage('assets:db_migrations') is
+// unreliable in serverless environments (Vercel + Turso) — getKeys() can
+// silently return [] leaving all tables uncreated.
+const rawMigrations = import.meta.glob<string>('../db/migrations/**/migration.sql', {
+  query: '?raw',
+  import: 'default',
+  eager: true,
+})
+
 // Splits a SQL file into individual statements, correctly handling single/double/
 // backtick-quoted strings, -- line comments, and /* */ block comments.
 function splitSqlStatements(sql: string): string[] {
@@ -89,36 +99,29 @@ export default defineNitroPlugin(async () => {
 
   // Migration-tracking table.
   await client.execute(`
-    CREATE TABLE IF NOT EXISTS _hub_migrations (
+    CREATE TABLE IF NOT EXISTS _meridian_migrations (
       id         INTEGER PRIMARY KEY AUTOINCREMENT,
       name       TEXT UNIQUE,
       applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL
     )
   `)
 
-  // useStorage('assets:db_migrations') works in dev (FS driver) and production
-  // (bundled via Nitro serverAssets) without any manual path resolution.
-  const store = useStorage('assets:db_migrations')
-  const keys  = (await store.getKeys())
-    .filter((k) => k.split(/[:/]/).pop() === 'migration.sql')
-    .sort()
+  // Sort by directory name (timestamp-prefixed → lexicographic = chronological).
+  const migrations = Object.entries(rawMigrations)
+    .map(([path, sql]) => ({ name: path.split('/').at(-2)!, sql: sql as string }))
+    .sort((a, b) => a.name.localeCompare(b.name))
 
-  for (const key of keys) {
-    const name = key.replace(/[:/]migration\.sql$/, '')
-
+  for (const { name, sql } of migrations) {
     const existing = await client.execute({
-      sql:  'SELECT 1 FROM _hub_migrations WHERE name = ?',
+      sql:  'SELECT 1 FROM _meridian_migrations WHERE name = ?',
       args: [name],
     })
     if (existing.rows.length > 0) continue
 
-    const sql = await store.getItem<string>(key)
-    if (!sql) continue
-
     // Run all statements from the migration file plus the tracking INSERT as a
     // single batch so the migration is never partially applied.
     const stmts = splitSqlStatements(sql).map((s) => ({ sql: s, args: [] as never[] }))
-    stmts.push({ sql: `INSERT OR IGNORE INTO _hub_migrations (name) VALUES ('${name}')`, args: [] })
+    stmts.push({ sql: `INSERT OR IGNORE INTO _meridian_migrations (name) VALUES ('${name}')`, args: [] })
 
     await client.batch(stmts, 'write')
 

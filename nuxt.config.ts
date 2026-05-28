@@ -17,11 +17,7 @@ export default defineNuxtConfig({
 
   css: ['~/assets/styles/main.css'],
 
-  nitro: {
-    // node:sqlite is a Node 24 built-in — no bundling config needed.
-    // Rollup/Nitro auto-externalises all node: protocol imports.
-    serverAssets: [{ baseName: 'db_migrations', dir: './server/db/migrations' }],
-  },
+  nitro: {},
 
   runtimeConfig: {
     // Local SQLite fallback (used when NUXT_TURSO_URL is not set)
