@@ -51,19 +51,20 @@ export interface ModeConfig {
   sub:   string
   /** Category tag on menu card. */
   note:  string
-  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region'
+  icon:  'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' | 'language'
   /** Intrinsic difficulty of this mode — undefined for Grand Tour (mixed). */
   modeDiff?: Difficulty
 }
 
 export const MODES: ModeConfig[] = [
-  { id: 'mixed',   title: 'The Grand Tour',     label: 'Grand Tour',   sub: 'A curated mix — round types matched to your chosen difficulty.',  note: 'Mixed itinerary', icon: 'compass'                  },
+  { id: 'mixed',   title: 'The Grand Tour',     label: 'Grand Tour',   sub: 'Flags, maps, capitals, languages and more — matched to your difficulty.',  note: 'Mixed itinerary', icon: 'compass' },
   { id: 'region',  title: 'The Continental',    label: 'Continental',  sub: 'Pick which continent each country belongs to.',                   note: 'Geography',       icon: 'region',  modeDiff: 'easy'   },
   { id: 'flag',    title: 'The Banner Game',    label: 'Banners',      sub: 'Identify the flag.',                                              note: 'Vexillology',     icon: 'flag',    modeDiff: 'medium' },
   { id: 'pin',     title: 'The Pin Drop',       label: 'Pin Drop',     sub: "Find a pin's country on the map.",                                note: 'Cartography',     icon: 'map',     modeDiff: 'medium' },
   { id: 'cart',    title: 'The Cartographer',   label: 'Cartographer', sub: 'Pinpoint a country on the world map.',                            note: 'Charting',        icon: 'cart',    modeDiff: 'hard'   },
-  { id: 'capital', title: 'The Capital Cities', label: 'Capitals',     sub: 'Name the capital city of each country.',                          note: 'Civics',          icon: 'capital', modeDiff: 'hard'   },
-  { id: 'shape',   title: 'The Silhouette',     label: 'Silhouette',   sub: 'Name the country from its outline.',                              note: 'Topography',      icon: 'shape',   modeDiff: 'expert' },
+  { id: 'capital',  title: 'The Capital Cities', label: 'Capitals',  sub: 'Name the capital city of each country.',              note: 'Civics',      icon: 'capital',  modeDiff: 'hard'   },
+  { id: 'shape',   title: 'The Silhouette',     label: 'Silhouette', sub: 'Name the country from its outline.',                  note: 'Topography',  icon: 'shape',    modeDiff: 'expert' },
+  { id: 'language', title: 'The Linguist',      label: 'Linguist',   sub: 'Name an official language spoken in each country.',   note: 'Linguistics', icon: 'language', modeDiff: 'expert' },
 ]
 
 /** Returns the short display name for a mode id (falls back to the raw string). */
@@ -111,5 +112,5 @@ export const MIXED_ROUND_TYPES: Record<Difficulty, RoundType[]> = {
   easy:   ['region'],
   medium: ['region', 'flag', 'pin'],
   hard:   ['region', 'flag', 'pin', 'cart', 'capital'],
-  expert: ['region', 'flag', 'pin', 'cart', 'capital', 'shape'],
+  expert: ['region', 'flag', 'pin', 'cart', 'capital', 'shape', 'language'],
 }

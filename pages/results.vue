@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import type { RoundType } from '~/types/game'
+
 const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
 const { isPending, isPaused } = useLeaderboardMutation()
@@ -27,6 +29,16 @@ const percentText = computed(() => {
   const pct = Math.max(1, Math.round((session.rank / session.lbTotal) * 100))
   return `You are in the top ${pct}% — no. ${session.rank} of ${session.lbTotal} voyagers.`
 })
+
+const TYPE_LABEL: Record<RoundType, string> = {
+  flag:     'Flag',
+  pin:      'Pin',
+  cart:     'Map',
+  shape:    'Shape',
+  capital:  'Capital',
+  region:   'Region',
+  language: 'Language',
+}
 
 function playAgain() {
   const atlas = useAtlasStore()
@@ -105,7 +117,7 @@ function playAgain() {
           <span class="font-mono text-ink-3 text-xs w-7 shrink-0">{{ String(i + 1).padStart(2, '0') }}</span>
           <!-- Type — hidden on xs -->
           <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.14em] uppercase text-ink-3 w-14 shrink-0">
-            {{ r.type === 'flag' ? 'Flag' : r.type === 'pin' ? 'Pin' : r.type === 'cart' ? 'Map' : 'Shape' }}
+            {{ TYPE_LABEL[r.type] ?? r.type }}
           </span>
           <!-- Answer -->
           <span class="font-serif text-[18px] text-ink flex-1 min-w-0 truncate">{{ r.answer.name }}</span>
@@ -115,6 +127,7 @@ function playAgain() {
             :class="r.correct ? 'text-ok' : 'text-bad'"
           >
             <template v-if="r.picked">{{ r.correct ? '✓' : `✗ chose ${r.picked.name}` }}</template>
+            <template v-else-if="r.pickedLang">{{ r.correct ? '✓' : `✗ chose ${r.pickedLang}` }}</template>
             <template v-else>— no answer</template>
           </span>
           <!-- Points -->

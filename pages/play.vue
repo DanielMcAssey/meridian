@@ -12,9 +12,10 @@ onMounted(() => {
 
 // ── Per-round reactive state ─────────────────────────────────────────────
 
-const picked = ref<Country | null>(null)
-const locked = ref(false)
-const timeLeft = ref(0)
+const picked     = ref<Country | null>(null)
+const pickedLang = ref<string | null>(null)
+const locked     = ref(false)
+const timeLeft   = ref(0)
 
 let tickInterval: ReturnType<typeof setInterval> | null = null
 let advanceTimeout: ReturnType<typeof setTimeout> | null = null
@@ -43,6 +44,7 @@ watch(
   () => session.idx,
   () => {
     picked.value = null
+    pickedLang.value = null
     locked.value = false
     startTime = Date.now()
     timeLeft.value = settings.timer.value ? DIFFICULTY_TIMER_SECS[session.difficulty] : 0
@@ -64,16 +66,25 @@ function handlePick(opt: Country) {
   handleLock(opt, (Date.now() - startTime) / 1000)
 }
 
-async function handleLock(opt: Country | null, elapsedSec: number) {
+function handlePickLang(lang: string) {
+  if (locked.value) return
+  pickedLang.value = lang
+  handleLock(lang, (Date.now() - startTime) / 1000)
+}
+
+async function handleLock(opt: Country | string | null, elapsedSec: number) {
   locked.value = true
   clearTick()
 
   const round = session.currentRound!
-  const correct = !!opt && (
-    round.type === 'region'
-      ? opt.region === round.answer.region
-      : opt.code === round.answer.code
-  )
+  let correct = false
+  if (round.type === 'language') {
+    correct = typeof opt === 'string' && opt === round.answerLang
+  } else if (round.type === 'region') {
+    correct = typeof opt === 'object' && opt !== null && opt.region === round.answer.region
+  } else {
+    correct = typeof opt === 'object' && opt !== null && opt.code === round.answer.code
+  }
 
   const pts = correct
     ? calcPoints(
@@ -84,7 +95,15 @@ async function handleLock(opt: Country | null, elapsedSec: number) {
       )
     : 0
 
-  const result: RoundResult = { type: round.type, answer: round.answer, picked: opt, correct, points: pts, elapsed: elapsedSec }
+  const result: RoundResult = {
+    type:       round.type,
+    answer:     round.answer,
+    picked:     typeof opt === 'object' ? opt : null,
+    pickedLang: typeof opt === 'string' ? opt : undefined,
+    correct,
+    points:     pts,
+    elapsed:    elapsedSec,
+  }
   session.recordResult(result)
 
   advanceTimeout = setTimeout(async () => {
@@ -126,9 +145,12 @@ const total = computed(() => session.rounds.length)
 const runningScore  = computed(() => session.results.reduce((s, r) => s + r.points, 0))
 const correctSoFar  = computed(() => session.results.filter((r) => r.correct).length)
 const isCorrect     = computed(() => {
-  if (!picked.value || !session.currentRound) return false
-  if (session.currentRound.type === 'region') return picked.value.region === session.currentRound.answer.region
-  return picked.value.code === session.currentRound.answer.code
+  const round = session.currentRound
+  if (!round) return false
+  if (round.type === 'language') return pickedLang.value !== null && pickedLang.value === round.answerLang
+  if (!picked.value) return false
+  if (round.type === 'region') return picked.value.region === round.answer.region
+  return picked.value.code === round.answer.code
 })
 const lastResult    = computed(() => locked.value && session.results.length > 0 ? session.results[session.results.length - 1] : null)
 const timerPct      = computed(() =>
@@ -269,6 +291,15 @@ function pipClass(i: number): string {
         :correct="locked ? isCorrect : null"
         :points="lastResult?.points ?? null"
         @pick="handlePick"
+      />
+      <RoundsLanguageRound
+        v-else-if="session.currentRound.type === 'language'"
+        :round="session.currentRound"
+        :picked-lang="pickedLang"
+        :locked="locked"
+        :correct="locked ? isCorrect : null"
+        :points="lastResult?.points ?? null"
+        @pick-lang="handlePickLang"
       />
     </div>
   </main>

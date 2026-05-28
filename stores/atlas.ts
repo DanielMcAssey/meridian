@@ -9,6 +9,7 @@ interface AtlasData {
       flag:   string
       path:   string
       shape?: string
+      langs?: string[]
     }
   >
 }
@@ -43,6 +44,7 @@ export const useAtlasStore = defineStore('atlas', () => {
         svgCy:   c.svgCy,
         region:  c.region,
         tier:    c.tier,
+        langs:   c.langs ?? [],
       }))
 
       const paths:  Record<string, string> = {}

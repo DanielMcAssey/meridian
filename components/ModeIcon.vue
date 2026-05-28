@@ -1,5 +1,5 @@
 <script setup lang="ts">
-defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' }>()
+defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 'region' | 'language' }>()
 </script>
 
 <template>
@@ -80,6 +80,15 @@ defineProps<{ kind: 'flag' | 'map' | 'cart' | 'compass' | 'shape' | 'capital' | 
     <path d="M60 20 Q76 60 60 100" class="mi-stroke" style="fill:none" />
     <!-- Highlighted continent blob -->
     <path d="M44 46 L56 40 L68 44 L72 56 L66 66 L52 68 L40 62 L38 50 Z" class="mi-fill" />
+  </svg>
+
+  <!-- Language / linguist — speech bubble with text lines -->
+  <svg v-else-if="kind === 'language'" viewBox="0 0 120 120" class="mode-icon">
+    <path d="M24 22 Q24 12 34 12 L86 12 Q96 12 96 22 L96 74 Q96 84 86 84 L62 84 L46 100 L48 84 L34 84 Q24 84 24 74 Z" class="mi-fill" />
+    <path d="M24 22 Q24 12 34 12 L86 12 Q96 12 96 22 L96 74 Q96 84 86 84 L62 84 L46 100 L48 84 L34 84 Q24 84 24 74 Z" class="mi-stroke" />
+    <line x1="38" y1="36" x2="82" y2="36" stroke="var(--color-paper)" stroke-width="4.5" stroke-linecap="round" />
+    <line x1="38" y1="50" x2="82" y2="50" stroke="var(--color-paper)" stroke-width="4.5" stroke-linecap="round" />
+    <line x1="38" y1="64" x2="64" y2="64" stroke="var(--color-paper)" stroke-width="4.5" stroke-linecap="round" />
   </svg>
 
   <!-- Silhouette / shape — irregular country outline -->

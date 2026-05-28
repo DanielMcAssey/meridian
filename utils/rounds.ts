@@ -1,5 +1,6 @@
 import type { Country, Difficulty, GameMode, Round, RoundType } from '~/types/game'
 import { DIFFICULTY_TIER_WEIGHTS, MIXED_ROUND_TYPES } from '~/config/game'
+import { LANGUAGE_NAMES } from '~/utils/languages'
 
 export function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
@@ -25,6 +26,39 @@ function pickDistractors(answer: Country, pool: Country[], n: number): Country[]
   const picked = shuffle(sameRegion).slice(0, n)
   if (picked.length < n) picked.push(...shuffle(others).slice(0, n - picked.length))
   return picked
+}
+
+// For language rounds: randomly select one of the answer country's official
+// languages, then pick 3 distractor language names from the wider pool,
+// excluding all of the answer country's languages so none appear as a wrong option.
+function pickLanguageOptions(
+  answer: Country,
+  pool: Country[],
+): { langOptions: string[]; answerLang: string } | null {
+  const validCodes = answer.langs.filter((l) => LANGUAGE_NAMES[l])
+  if (!validCodes.length) return null
+
+  const answerCode = validCodes[Math.floor(Math.random() * validCodes.length)]!
+  const answerLang = LANGUAGE_NAMES[answerCode]!
+  const excluded   = new Set(answer.langs)
+
+  const candidateCodes = [...new Set(
+    pool.flatMap((c) => c.langs.filter((l) => !excluded.has(l) && LANGUAGE_NAMES[l])),
+  )]
+
+  const distractors: string[] = []
+  const usedNames = new Set([answerLang])
+  for (const code of shuffle(candidateCodes)) {
+    const name = LANGUAGE_NAMES[code]!
+    if (!usedNames.has(name)) {
+      distractors.push(name)
+      usedNames.add(name)
+      if (distractors.length === 3) break
+    }
+  }
+  if (distractors.length < 3) return null
+
+  return { langOptions: shuffle([answerLang, ...distractors]), answerLang }
 }
 
 // For region rounds: pick one representative country from each of 3 other regions.
@@ -63,7 +97,11 @@ export function buildRounds(
   const pool = pickPool(countries, difficulty)
   // Wider pool for distractors (slightly harder distractors on easy)
   const widerPool = pickPool(countries, difficulty === 'easy' ? 'medium' : difficulty)
-  const answers = weightedSample(pool, count, difficulty)
+
+  // Language rounds require countries with language data.
+  const langPool = pool.filter((c) => c.langs.length > 0 && c.langs.some((l) => LANGUAGE_NAMES[l]))
+  const answerPool = mode === 'language' ? langPool : pool
+  const answers = weightedSample(answerPool, count, difficulty)
 
   return answers.map((answer, i) => {
     let roundType: RoundType = mode as RoundType
@@ -71,6 +109,14 @@ export function buildRounds(
       const types = MIXED_ROUND_TYPES[difficulty]
       roundType = types[i % types.length]!
     }
+
+    if (roundType === 'language') {
+      const lang = pickLanguageOptions(answer, widerPool)
+      if (lang) return { type: roundType, answer, options: [], ...lang }
+      // Fallback for countries without language data: use flag round instead.
+      roundType = 'flag'
+    }
+
     const options =
       roundType === 'region'
         ? pickRegionOptions(answer, countries)
