@@ -30,6 +30,7 @@ const label = computed(() =>
     <div class="relative w-full">
       <WorldMap
         mode="static"
+        height-class="max-h-[38vh] sm:max-h-[48vh]"
         :pin-code="props.round.answer.code"
         :reveal-code="props.locked ? props.round.answer.code : null"
       />

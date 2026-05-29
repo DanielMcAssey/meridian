@@ -112,7 +112,7 @@ export const DIFFICULTY_TIER_WEIGHTS: Record<Difficulty, Record<number, number>>
 // ── Map display ───────────────────────────────────────────────────────────────
 /** How far to zoom in on the pin in Pin Drop rounds (multiplier over the full map).
  *  3 = shows ~⅓ of the world width, giving clear regional context. */
-export const PIN_MAP_ZOOM = 5
+export const PIN_MAP_ZOOM = 4
 
 // ── SW reload protection ──────────────────────────────────────────────────────
 // Routes where a service-worker-triggered reload should be deferred until the

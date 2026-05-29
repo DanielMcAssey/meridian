@@ -44,7 +44,7 @@ const label = computed(() =>
     </div>
 
     <!-- Map with feedback scoped here (no separate answer buttons) -->
-    <div class="relative flex-1 min-h-0">
+    <div class="relative flex-1 min-h-0 flex flex-col">
       <WorldMap
         mode="click"
         fill-parent

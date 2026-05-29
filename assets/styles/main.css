@@ -213,22 +213,26 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .pin { animation: pin-drop 0.5s cubic-bezier(.2,.9,.3,1.4); }
 
 /* ── Menu game-mode cards ────────────────────────────────────────────────── */
+/* Sheen strip: narrower than the card so translateX % values are predictable */
 .mode-card::before {
   content: '';
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    108deg,
-    transparent 30%,
-    rgba(255, 255, 255, 0.09) 50%,
-    transparent 70%
-  );
-  transform: translateX(-130%) skewX(-12deg);
+  top: -10%;
+  left: -60%;
+  width: 40%;
+  height: 120%;
+  background: linear-gradient(to right, transparent, rgba(0,0,0,0.07) 50%, transparent);
+  transform: skewX(-12deg) translateX(0);
   transition: transform 0.55s ease;
   pointer-events: none;
 }
 .mode-card:hover::before {
-  transform: translateX(230%) skewX(-12deg);
+  transform: skewX(-12deg) translateX(450%);
+}
+@media (prefers-color-scheme: dark) {
+  .mode-card::before {
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.14) 50%, transparent);
+  }
 }
 
 /* Brand-mark SVG classes */
