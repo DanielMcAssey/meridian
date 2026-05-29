@@ -33,7 +33,7 @@ export default defineNuxtConfig({
     head: {
       title: 'Meridian — A Geographical Pastime',
       meta: [
-        { name: 'viewport', content: 'width=device-width, initial-scale=1, minimum-scale=1' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no' },
         { name: 'description', content: 'A geographical guessing game of flags, pins, and maps.' },
         { name: 'theme-color', content: '#1e1c1a' },
         { name: 'apple-mobile-web-app-title', content: 'Meridian' },

@@ -4,6 +4,14 @@ import type { Difficulty } from '~/types/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
 const settings = useGameSettings()
+const atlas = useAtlasStore()
+
+const countByDiff = computed<Record<Difficulty, number>>(() => ({
+  easy:   pickPool(atlas.countries, 'easy').length,
+  medium: pickPool(atlas.countries, 'medium').length,
+  hard:   pickPool(atlas.countries, 'hard').length,
+  expert: atlas.countries.length,
+}))
 
 onMounted(() => {
   if (playerName.value) navigateTo('/menu')
@@ -134,7 +142,7 @@ function gamesFor(diff: Difficulty): string[] {
                 >{{ d.label }}</span>
                 <span class="text-[13px] text-ink-2">{{ d.note }}</span>
                 <span class="font-mono text-[10.5px] tracking-[0.08em] uppercase text-ink-3 mt-1">
-                  {{ d.est }} countries
+                  {{ countByDiff[d.id] }} countries
                 </span>
                 <!-- Game types unlocked at this difficulty -->
                 <div class="flex flex-wrap gap-1 mt-2.5">

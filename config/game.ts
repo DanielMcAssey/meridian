@@ -21,17 +21,15 @@ export interface DifficultyConfig {
   id:         Difficulty
   label:      string
   note:       string
-  /** Approximate country pool size shown in the menu tooltip. */
-  est:        number
   /** Score multiplier applied to every correct answer at this difficulty. */
   multiplier: number
 }
 
 export const DIFFICULTIES: DifficultyConfig[] = [
-  { id: 'easy',   label: 'Easy',   note: 'Flagship countries',    est: 70,  multiplier: 1.0 },
-  { id: 'medium', label: 'Medium', note: 'Well-known',            est: 125, multiplier: 1.5 },
-  { id: 'hard',   label: 'Hard',   note: 'Most of the world',     est: 157, multiplier: 2.0 },
-  { id: 'expert', label: 'Expert', note: 'Every country we have', est: 179, multiplier: 3.0 },
+  { id: 'easy',   label: 'Easy',   note: 'Flagship countries',    multiplier: 1.0 },
+  { id: 'medium', label: 'Medium', note: 'Well-known',            multiplier: 1.5 },
+  { id: 'hard',   label: 'Hard',   note: 'Most of the world',     multiplier: 2.0 },
+  { id: 'expert', label: 'Expert', note: 'Every country we have', multiplier: 3.0 },
 ]
 
 /** Pre-computed Record for O(1) lookup in scoring functions. */
@@ -114,7 +112,7 @@ export const DIFFICULTY_TIER_WEIGHTS: Record<Difficulty, Record<number, number>>
 // ── Map display ───────────────────────────────────────────────────────────────
 /** How far to zoom in on the pin in Pin Drop rounds (multiplier over the full map).
  *  3 = shows ~⅓ of the world width, giving clear regional context. */
-export const PIN_MAP_ZOOM = 3
+export const PIN_MAP_ZOOM = 5
 
 // ── SW reload protection ──────────────────────────────────────────────────────
 // Routes where a service-worker-triggered reload should be deferred until the

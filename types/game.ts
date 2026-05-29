@@ -20,6 +20,7 @@ export interface Country {
   langs:        string[]       // ISO 639-1 alpha-2 codes of official languages
   subdivisions: Subdivision[]  // top-level administrative divisions
   hasShape:     boolean        // silhouette SVG is available (shape != null in data.json)
+  hasMapPath:   boolean        // country has a real visible path on the world map SVG
 }
 
 export interface Round {

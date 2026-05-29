@@ -103,9 +103,12 @@ export function buildRounds(
   const langPool     = pool.filter((c) => c.langs.length > 0 && c.langs.some((l) => languageNames[l]))
   const provincePool = pool.filter((c) => c.subdivisions.length > 0)
   const shapePool    = pool.filter((c) => c.hasShape)
+  const mapPool      = pool.filter((c) => c.hasMapPath)
   const answerPool   = mode === 'language' ? langPool
                      : mode === 'province' ? provincePool
                      : mode === 'shape'    ? shapePool
+                     : mode === 'pin'      ? mapPool
+                     : mode === 'cart'     ? mapPool
                      : pool
   const answers = weightedSample(answerPool, count, difficulty)
 
@@ -118,6 +121,9 @@ export function buildRounds(
 
     if (roundType === 'shape' && !answer.hasShape) {
       roundType = 'flag'  // fallback for countries without a silhouette SVG
+    }
+    if ((roundType === 'pin' || roundType === 'cart') && !answer.hasMapPath) {
+      roundType = 'flag'  // fallback for countries not visible on the world map
     }
 
     if (roundType === 'language') {

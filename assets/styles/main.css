@@ -203,24 +203,28 @@ button { font: inherit; color: inherit; cursor: pointer; }
   stroke: var(--accent-deep);
   stroke-width: 0.8;
 }
+.country-pin    { fill: var(--accent) !important; stroke: var(--accent-deep); stroke-width: 0.8; }
 .country-reveal { fill: var(--color-ok) !important; stroke: oklch(0.42 0.14 150); stroke-width: 0.8; }
 .country-wrong  { fill: var(--color-bad) !important; stroke: oklch(0.42 0.18 25);  stroke-width: 0.8; }
 
-.reveal-marker .reveal-halo-outer {
-  fill: var(--color-ok);
-  opacity: 0.25;
-  animation: halo-pulse 1.4s ease-out infinite;
-  transform-box: fill-box;
-  transform-origin: center;
+/* ── Menu game-mode cards ────────────────────────────────────────────────── */
+.mode-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    108deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.09) 50%,
+    transparent 70%
+  );
+  transform: translateX(-130%) skewX(-12deg);
+  transition: transform 0.55s ease;
+  pointer-events: none;
 }
-.reveal-marker .reveal-halo-inner { fill: var(--color-ok); }
-
-.pin .pin-ring  { fill: var(--accent); opacity: 0.25; }
-.pin .pin-stem  { stroke: var(--accent-deep); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-.pin .pin-head  { fill: var(--accent); stroke: var(--accent-deep); stroke-width: 0.8; vector-effect: non-scaling-stroke; }
-.pin .pin-dot   { fill: var(--color-paper); }
-.pin .pin-base  { fill: var(--accent-deep); }
-.pin { animation: pin-drop 0.5s cubic-bezier(.2,.9,.3,1.4); }
+.mode-card:hover::before {
+  transform: translateX(230%) skewX(-12deg);
+}
 
 /* Brand-mark SVG classes */
 .brand-mark svg .mark-ring   { fill: none; stroke: var(--color-ink); stroke-width: 1.5; }
@@ -276,14 +280,6 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @keyframes gentle-spin { to { transform: rotate(360deg); } }
 @keyframes spin         { to { transform: rotate(360deg); } }
 @keyframes pulse        { to { opacity: 0.6; } }
-@keyframes pin-drop {
-  from { transform: translateY(-20px); opacity: 0; }
-  60%  { opacity: 1; }
-}
-@keyframes halo-pulse {
-  0%   { transform: scale(1);   opacity: 0.25; }
-  100% { transform: scale(2.2); opacity: 0;    }
-}
 @keyframes card-in       { to   { opacity: 1; transform: none; } }
 @keyframes stage-in      { from { opacity: 0; transform: translateY(8px); } }
 @keyframes toast-in      { from { opacity: 0; transform: translateY(6px); } }

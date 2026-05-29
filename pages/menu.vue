@@ -52,6 +52,13 @@ const GRAND_TOUR_TAGS: Record<Difficulty, string[]> = {
 
 const grandTourTags = computed(() => GRAND_TOUR_TAGS[settings.difficulty.value])
 const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.value].length)
+
+const countByDiff = computed<Record<Difficulty, number>>(() => ({
+  easy:   pickPool(atlas.countries, 'easy').length,
+  medium: pickPool(atlas.countries, 'medium').length,
+  hard:   pickPool(atlas.countries, 'hard').length,
+  expert: atlas.countries.length,
+}))
 </script>
 
 <template>
@@ -70,13 +77,15 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
       <div class="flex flex-wrap gap-6 mt-4 items-start">
         <!-- Difficulty -->
         <div class="flex flex-col gap-2">
-          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Difficulty</span>
+          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
+            Difficulty<span class="ml-1">({{ countByDiff[settings.difficulty.value] }} countries)</span>
+          </span>
           <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
             <button
               v-for="d in DIFFICULTIES"
               :key="d.id"
               :class="settings.difficulty.value === d.id ? 'diff-pill-on' : 'diff-pill'"
-              :title="`${d.note} — ${d.est} countries`"
+              :title="`${d.note} — ${countByDiff[d.id]} countries`"
               @click="settings.difficulty.value = d.id"
             >{{ d.label }}</button>
           </div>
@@ -113,13 +122,12 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
 
       <!-- ── The Grand Tour — featured, full-width card ───────────────────── -->
       <button
-        class="text-left flex flex-col sm:flex-row sm:items-center gap-6
+        class="mode-card text-left flex flex-col sm:flex-row sm:items-center gap-6
                cursor-pointer relative overflow-hidden
                rounded-[18px] px-6 py-7 sm:px-8 sm:py-8
                border-2 border-[var(--accent)]
                opacity-0 translate-y-2
-               transition-[transform,box-shadow] duration-[220ms] ease-[cubic-bezier(.2,.7,.2,1)]
-               hover:-translate-y-1 active:translate-y-0"
+               transition-[box-shadow] duration-[220ms] ease-[cubic-bezier(.2,.7,.2,1)]"
         :style="{
           background: 'linear-gradient(135deg, var(--accent-soft) 0%, var(--color-paper) 55%)',
           animationName: 'card-in',
@@ -176,11 +184,11 @@ const grandTourTypeCount = computed(() => MIXED_ROUND_TYPES[settings.difficulty.
       <button
         v-for="(m, i) in regularModes"
         :key="m.id"
-        class="bg-paper border border-rule rounded-[18px] px-6 py-[26px] pb-[22px]
+        class="mode-card bg-paper border border-rule rounded-[18px] px-6 py-[26px] pb-[22px]
                text-left flex flex-col gap-3.5 cursor-pointer relative overflow-hidden
                opacity-0 translate-y-2
-               transition-[transform,box-shadow,border-color] duration-[220ms] ease-[cubic-bezier(.2,.7,.2,1)]
-               hover:-translate-y-1 hover:border-[var(--accent)] active:translate-y-0"
+               transition-[box-shadow,border-color] duration-[220ms] ease-[cubic-bezier(.2,.7,.2,1)]
+               hover:border-[var(--accent)]"
         :style="{
           animationName: 'card-in',
           animationDuration: '0.5s',

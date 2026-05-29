@@ -86,8 +86,8 @@ watch(
 )
 
 // Zoom to pin when pinCode changes or when the atlas finishes loading with a pin set.
-// revealCode changes are intentionally excluded — the halo appears at the same
-// SVG position as the pin, so there is no reason to reset the view on lock.
+// revealCode changes are intentionally excluded — the country highlight is already
+// in view, so there is no reason to reset the viewBox on lock.
 watch(
   [() => props.pinCode, () => atlas.ready],
   ([code, ready]) => {
@@ -119,8 +119,6 @@ const byCode = computed<Record<string, Country>>(() => {
 })
 
 const codes = computed(() => Object.keys(atlas.countryPaths))
-const pin = computed(() => (props.pinCode ? byCode.value[props.pinCode] ?? null : null))
-const reveal = computed(() => (props.revealCode ? byCode.value[props.revealCode] ?? null : null))
 
 // ── clamp / zoom helpers ──────────────────────────────────────────────────
 
@@ -148,8 +146,10 @@ function zoomAtClient(clientX: number, clientY: number, factor: number) {
   const rect = el.getBoundingClientRect()
   const px = (clientX - rect.left) / rect.width
   const py = (clientY - rect.top) / rect.height
-  const newW = vb.w / factor
-  const newH = vb.h / factor
+  const b = vb0.value
+  // Clamp newW before deriving x/y so position stays stable at zoom limits.
+  const newW = Math.min(b.w, Math.max(b.w / 12, vb.w / factor))
+  const newH = newW * (b.h / b.w)
   const cx = vb.x + px * vb.w
   const cy = vb.y + py * vb.h
   const next = clamp({ x: cx - px * newW, y: cy - py * newH, w: newW, h: newH })
@@ -290,6 +290,7 @@ function handlePathClick(code: string) {
 }
 
 function classFor(code: string): string {
+  if (code === props.pinCode) return 'country country-pin'
   if (code === props.revealCode) return 'country country-reveal'
   if (code === props.selectedCode && props.selectedCode !== props.revealCode)
     return 'country country-wrong'
@@ -339,28 +340,6 @@ function zoomCenter(factor: number) {
         />
       </g>
 
-      <!-- Reveal marker (pulsing halo) -->
-      <g
-        v-if="reveal"
-        class="reveal-marker"
-        :transform="`translate(${reveal.svgCx},${reveal.svgCy})`"
-      >
-        <circle r="14" class="reveal-halo-outer" />
-        <circle r="6"  class="reveal-halo-inner" />
-      </g>
-
-      <!-- Pin -->
-      <g
-        v-if="pin"
-        class="pin"
-        :transform="`translate(${pin.svgCx},${pin.svgCy})`"
-      >
-        <circle r="9"   class="pin-ring" />
-        <line x1="0" y1="0" x2="0" y2="-22" class="pin-stem" />
-        <circle cx="0" cy="-22" r="4.5" class="pin-head" />
-        <circle cx="0" cy="-22" r="1.5" class="pin-dot" />
-        <circle r="1.6" class="pin-base" />
-      </g>
     </svg>
 
     <!-- HUD controls -->

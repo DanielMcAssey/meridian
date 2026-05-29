@@ -9,6 +9,7 @@ interface AtlasData {
       flag:          string
       path:          string
       shape:         string | null
+      hasMapPath:    boolean
       langs?:        string[]
       subdivisions?: Subdivision[]
     }
@@ -54,13 +55,14 @@ export const useAtlasStore = defineStore('atlas', () => {
         langs:        c.langs ?? [],
         subdivisions: c.subdivisions ?? [],
         hasShape:     !!c.shape,
+        hasMapPath:   c.hasMapPath,
       }))
 
       const paths:  Record<string, string> = {}
       const flags:  Record<string, string> = {}
       const shapes: Record<string, string> = {}
       for (const c of data.countries) {
-        paths[c.code] = c.path
+        if (c.hasMapPath) paths[c.code] = c.path
         // data.json stores relative paths — prefix "/" to resolve from public/
         flags[c.code] = `/${c.flag}`
         if (c.shape) shapes[c.code] = `/${c.shape}`
