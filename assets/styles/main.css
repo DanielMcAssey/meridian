@@ -150,6 +150,59 @@ button { font: inherit; color: inherit; cursor: pointer; }
 }
 .btn-ghost:hover { border-color: var(--color-ink-2); background: var(--color-paper); }
 
+/* ── Difficulty obscurity slider ─────────────────────────────────────────── */
+.diff-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 4px;
+  border-radius: 9999px;
+  outline: none;
+  cursor: pointer;
+  border: none;
+  /* Vertical padding expands the touch area to ~44px without changing visual height */
+  padding: 20px 0;
+  background-clip: content-box;
+}
+.diff-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-paper);
+  border: 2.5px solid var(--color-ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.14s, transform 0.14s, box-shadow 0.14s;
+}
+.diff-slider:hover::-webkit-slider-thumb,
+.diff-slider:focus-visible::-webkit-slider-thumb {
+  border-color: var(--accent);
+  transform: scale(1.1);
+  box-shadow: var(--shadow-md);
+}
+.diff-slider::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--color-paper);
+  border: 2.5px solid var(--color-ink);
+  cursor: pointer;
+  box-shadow: var(--shadow-sm);
+  transition: border-color 0.14s;
+  box-sizing: border-box;
+}
+.diff-slider:hover::-moz-range-thumb,
+.diff-slider:focus-visible::-moz-range-thumb {
+  border-color: var(--accent);
+}
+.diff-slider::-moz-range-track {
+  height: 4px;
+  border-radius: 9999px;
+  border: none;
+}
+
 /* Pill base shared by both states */
 .diff-pill,
 .diff-pill-on {

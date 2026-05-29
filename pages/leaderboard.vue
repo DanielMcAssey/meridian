@@ -118,11 +118,10 @@ function trophyFor(rank: number): TrophyKind | null {
         :model-value="filterMode"
         @update:model-value="filterMode = $event as typeof filterMode"
       />
-      <FilterPillGroup
-        label="Difficulty"
-        :options="[{ id: 'any', label: 'Any' }, ...DIFFICULTIES.map(d => ({ id: d.id, label: d.label }))]"
+      <DifficultySlider
+        allow-any
         :model-value="filterDifficulty"
-        @update:model-value="filterDifficulty = $event as typeof filterDifficulty"
+        @update:model-value="filterDifficulty = $event as Difficulty | 'any'"
       />
       <FilterPillGroup
         label="Rounds"

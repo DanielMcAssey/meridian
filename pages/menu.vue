@@ -62,13 +62,6 @@ const countByDiff = computed<Record<Difficulty, number>>(() => ({
 
 // ── Filter pill option arrays ─────────────────────────────────────────────────
 
-const difficultyLabel = computed(() =>
-  `Difficulty (${countByDiff.value[settings.difficulty.value]} countries)`,
-)
-const difficultyOptions = computed(() =>
-  DIFFICULTIES.map((d) => ({ id: d.id, label: d.label })),
-)
-
 const roundOptions = ROUND_COUNTS.map((n) => ({ id: n, label: String(n) }))
 
 const timerLabel = computed(() =>
@@ -93,12 +86,12 @@ function setTimer(v: string | number) { settings.timer.value = v === 'on' }
         A book of <em class="italic" style="color: var(--accent-deep)">eight</em> games.
       </h1>
 
-      <!-- Pill controls -->
+      <!-- Controls -->
       <div class="flex flex-wrap gap-6 mt-4 items-start">
-        <FilterPillGroup
-          :label="difficultyLabel"
-          :options="difficultyOptions"
+        <DifficultySlider
           :model-value="settings.difficulty.value"
+          label="Country Pool"
+          :count-by-diff="countByDiff"
           @update:model-value="settings.difficulty.value = $event as Difficulty"
         />
         <FilterPillGroup
