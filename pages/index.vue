@@ -186,7 +186,28 @@ function gamesFor(diff: Difficulty): string[] {
             </div>
           </div>
 
-          <button type="submit" class="btn-primary" :disabled="!name.trim()">Set sail →</button>
+          <button type="submit" class="sail-btn" :data-diff="difficulty" :disabled="!name.trim()">
+            <!-- Boat + wave scene -->
+            <svg class="sail-scene" viewBox="0 0 36 28" aria-hidden="true" fill="none">
+              <!-- Waves — bob on hover -->
+              <g class="sail-waves-grp" stroke="currentColor" stroke-linecap="round">
+                <path d="M0 24.5 Q4.5 22 9 24.5 Q13.5 27 18 24.5 Q22.5 22 27 24.5 Q31.5 27 36 24.5" stroke-width="1.2" opacity="0.75"/>
+                <path d="M0 27 Q4.5 24.5 9 27 Q13.5 28 18 27 Q22.5 24.5 27 27 Q31.5 28 36 27" stroke-width="0.8" opacity="0.4"/>
+              </g>
+              <!-- Boat — rocks on hover, pivots at hull waterline -->
+              <g class="sail-boat-grp" fill="currentColor">
+                <!-- Hull -->
+                <path d="M5 23 Q18 27 31 23 L29 19 L9 19 Z"/>
+                <!-- Mast -->
+                <line x1="18" y1="19" x2="18" y2="3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+                <!-- Main sail -->
+                <path d="M18 4 L18 18 L30 12 Z" opacity="0.9"/>
+                <!-- Pennant -->
+                <path d="M18 3 L23 5.5 L18 8 Z"/>
+              </g>
+            </svg>
+            Set sail →
+          </button>
         </form>
 
         <p class="mt-7 text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">
