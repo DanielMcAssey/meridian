@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { COMPASS_SPIN_SECS, DIFFICULTIES, MIXED_ROUND_TYPES, MODES } from '~/config/game'
+import { ADVENTURERS, COMPASS_SPIN_SECS, DIFFICULTIES, MIXED_ROUND_TYPES, MODES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
@@ -17,9 +17,20 @@ const name = ref(playerName.value)
 const difficulty = ref<Difficulty>(settings.difficulty.value)
 const inputRef = ref<HTMLInputElement | null>(null)
 
+
+const adventurerIndex = ref(0)
+let adventurerTimer: ReturnType<typeof setInterval> | null = null
+
 onMounted(() => {
   if (playerName.value) { navigateTo('/menu'); return }
   inputRef.value?.focus()
+  adventurerTimer = setInterval(() => {
+    adventurerIndex.value = (adventurerIndex.value + 1) % ADVENTURERS.length
+  }, 2800)
+})
+
+onUnmounted(() => {
+  if (adventurerTimer) clearInterval(adventurerTimer)
 })
 
 function submit() {
@@ -98,17 +109,36 @@ function gamesFor(diff: Difficulty): string[] {
             <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
               Inscribe your name in the manifest
             </span>
-            <input
-              ref="inputRef"
-              v-model="name"
-              class="font-serif italic text-[28px] py-3 bg-transparent border-0
-                     border-b-[1.5px] border-ink-2 text-ink outline-none transition-[0.2s]
-                     placeholder:text-ink-3 placeholder:opacity-55
-                     focus:border-[var(--accent)]"
-              type="text"
-              placeholder="e.g. Captain Aurelia Vance"
-              maxlength="28"
-            />
+            <div class="relative">
+              <input
+                ref="inputRef"
+                v-model="name"
+                class="relative z-10 w-full font-serif italic text-[28px] py-3 bg-transparent border-0
+                       border-b-[1.5px] border-ink-2 text-ink outline-none transition-[border-color_0.2s]
+                       focus:border-[var(--accent)]"
+                type="text"
+                maxlength="28"
+              />
+              <!-- Animated placeholder — hidden once user starts typing -->
+              <div
+                v-if="!name"
+                class="absolute inset-0 flex items-center pointer-events-none overflow-hidden"
+                aria-hidden="true"
+              >
+                <Transition
+                  enter-from-class="opacity-0 translate-y-3"
+                  leave-to-class="opacity-0 -translate-y-3"
+                  enter-active-class="transition-[opacity,transform] duration-300 ease-out"
+                  leave-active-class="transition-[opacity,transform] duration-200 ease-in"
+                  mode="out-in"
+                >
+                  <span
+                    :key="adventurerIndex"
+                    class="font-serif italic text-[28px] text-ink-3 opacity-55 select-none whitespace-nowrap"
+                  >e.g. {{ ADVENTURERS[adventurerIndex] }}</span>
+                </Transition>
+              </div>
+            </div>
           </label>
 
           <!-- Difficulty -->

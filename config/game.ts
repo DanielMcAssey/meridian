@@ -134,6 +134,23 @@ export const SW_RELOAD_PROTECTED = new Set(['/play', '/results'])
 /** Duration in seconds for the decorative compass rose spin on the landing page. */
 export const COMPASS_SPIN_SECS = 220
 
+/** Names cycled through the animated placeholder on the landing page name field. */
+export const ADVENTURERS = [
+  'Nellie Bly',
+  'Amelia Earhart',
+  'Ernest Shackleton',
+  'Gertrude Bell',
+  'Isabella Bird',
+  'Ibn Battuta',
+  'Freya Stark',
+  'Sacagawea',
+  'Roald Amundsen',
+  'Mary Kingsley',
+  'Alexandra David-Néel',
+  'Annie Londonderry',
+  'Osa Johnson',
+] as const
+
 // ── Grand Tour round-type gates ───────────────────────────────────────────────
 // Defines which round types are included in 'mixed' mode at each difficulty.
 // Higher difficulties include all lower-tier types plus their own.
