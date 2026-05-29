@@ -317,20 +317,20 @@ button { font: inherit; color: inherit; cursor: pointer; }
   transform-box: fill-box;
   transform-origin: 50% 100%;
 }
-.sail-btn:hover:not(:disabled)[data-diff="easy"]   .sail-boat-grp { animation: sail-rock-easy   2s   ease-in-out infinite; }
-.sail-btn:hover:not(:disabled)[data-diff="medium"] .sail-boat-grp { animation: sail-rock-medium 1.5s ease-in-out infinite; }
-.sail-btn:hover:not(:disabled)[data-diff="hard"]   .sail-boat-grp { animation: sail-rock-hard   1s   ease-in-out infinite; }
-.sail-btn:hover:not(:disabled)[data-diff="expert"] .sail-boat-grp { animation: sail-rock-expert 0.7s ease-in-out infinite; }
+.sail-btn[data-diff="easy"]   .sail-boat-grp { animation: sail-rock-easy   2s   ease-in-out infinite; }
+.sail-btn[data-diff="medium"] .sail-boat-grp { animation: sail-rock-medium 1.5s ease-in-out infinite; }
+.sail-btn[data-diff="hard"]   .sail-boat-grp { animation: sail-rock-hard   1s   ease-in-out infinite; }
+.sail-btn[data-diff="expert"] .sail-boat-grp { animation: sail-rock-expert 0.7s ease-in-out infinite; }
 
 /* Waves bob in sync */
 .sail-waves-grp {
   transform-box: fill-box;
   transform-origin: 50% 50%;
 }
-.sail-btn:hover:not(:disabled)[data-diff="easy"]   .sail-waves-grp { animation: sail-wave-easy   2s   ease-in-out infinite; }
-.sail-btn:hover:not(:disabled)[data-diff="medium"] .sail-waves-grp { animation: sail-wave-medium 1.5s ease-in-out infinite; }
-.sail-btn:hover:not(:disabled)[data-diff="hard"]   .sail-waves-grp { animation: sail-wave-hard   1s   ease-in-out infinite; }
-.sail-btn:hover:not(:disabled)[data-diff="expert"] .sail-waves-grp { animation: sail-wave-expert 0.7s ease-in-out infinite; }
+.sail-btn[data-diff="easy"]   .sail-waves-grp { animation: sail-wave-easy   2s   ease-in-out infinite; }
+.sail-btn[data-diff="medium"] .sail-waves-grp { animation: sail-wave-medium 1.5s ease-in-out infinite; }
+.sail-btn[data-diff="hard"]   .sail-waves-grp { animation: sail-wave-hard   1s   ease-in-out infinite; }
+.sail-btn[data-diff="expert"] .sail-waves-grp { animation: sail-wave-expert 0.7s ease-in-out infinite; }
 
 /* ── Keyframe animations ─────────────────────────────────────────────────── */
 @keyframes gentle-spin { to { transform: rotate(360deg); } }

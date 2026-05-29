@@ -13,6 +13,13 @@ const countByDiff = computed<Record<Difficulty, number>>(() => ({
   expert: pickPool(atlas.countries, 'expert').length,
 }))
 
+const { compassRotation } = useCompass()
+const compassStyle = computed(() =>
+  compassRotation.value !== null
+    ? { transform: `rotate(${compassRotation.value}deg)`, transition: 'transform 0.15s ease-out' }
+    : { animation: `gentle-spin ${COMPASS_SPIN_SECS}s linear infinite` },
+)
+
 const name = ref(playerName.value)
 const difficulty = ref<Difficulty>(settings.difficulty.value)
 const inputRef = ref<HTMLInputElement | null>(null)
@@ -60,7 +67,7 @@ function gamesFor(diff: Difficulty): string[] {
         class="relative aspect-square max-w-xs mx-auto w-full md:order-last md:max-w-none"
         aria-hidden="true"
       >
-        <svg viewBox="0 0 600 600" class="w-full h-full" :style="`animation: gentle-spin ${COMPASS_SPIN_SECS}s linear infinite`">
+        <svg viewBox="0 0 600 600" class="w-full h-full" :style="compassStyle">
           <defs>
             <radialGradient id="cg" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stop-color="rgba(0,0,0,0)" />

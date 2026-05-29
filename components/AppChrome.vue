@@ -1,6 +1,12 @@
 <script setup lang="ts">
 const route      = useRoute()
 const playerName = useLocalStorage('geo.player.name', '')
+const { compassRotation } = useCompass()
+const needleStyle = computed(() =>
+  compassRotation.value !== null
+    ? { transformOrigin: '20px 20px', transform: `rotate(${compassRotation.value}deg)`, transition: 'transform 0.15s ease-out' }
+    : {},
+)
 
 const mounted  = ref(false)
 const menuOpen = ref(false)
@@ -59,8 +65,10 @@ const showGameNav  = computed(() => mounted.value && route.name !== 'index' && !
           <svg viewBox="0 0 40 40" width="34" height="34">
             <circle cx="20" cy="20" r="18" class="mark-ring" />
             <circle cx="20" cy="20" r="1.6" class="mark-dot" />
-            <path d="M20 6 L23 20 L20 34 L17 20 Z" class="mark-needle" />
-            <path d="M6 20 L20 17 L34 20 L20 23 Z" class="mark-needle-h" />
+            <g :style="needleStyle">
+              <path d="M20 6 L23 20 L20 34 L17 20 Z" class="mark-needle" />
+              <path d="M6 20 L20 17 L34 20 L20 23 Z" class="mark-needle-h" />
+            </g>
           </svg>
         </span>
         <span class="flex flex-col leading-[1.1]">
