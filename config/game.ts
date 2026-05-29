@@ -136,19 +136,19 @@ export const COMPASS_SPIN_SECS = 220
 
 /** Names cycled through the animated placeholder on the landing page name field. */
 export const ADVENTURERS = [
-  'Nellie Bly',
-  'Amelia Earhart',
-  'Ernest Shackleton',
-  'Gertrude Bell',
-  'Isabella Bird',
-  'Ibn Battuta',
-  'Freya Stark',
+  'Captain Nellie Bly',
+  'Aviator Amelia Earhart',
+  'Sir Ernest Shackleton',
+  'Miss Gertrude Bell',
+  'Miss Isabella Bird',
+  'Ibn Battuta the Traveller',
+  'Dame Freya Stark',
   'Sacagawea',
-  'Roald Amundsen',
-  'Mary Kingsley',
+  'Captain Roald Amundsen',
+  'Miss Mary Kingsley',
   'Alexandra David-Néel',
-  'Annie Londonderry',
-  'Osa Johnson',
+  'Miss Annie Londonderry',
+  'Mrs. Osa Johnson',
 ] as const
 
 // ── Grand Tour round-type gates ───────────────────────────────────────────────
