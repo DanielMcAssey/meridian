@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, reactive, ref, watch } from 'vue'
 import type { Country } from '~/types/game'
-import { PIN_MAP_ZOOM } from '~/config/game'
+import { PIN_DROP_ANIMATION_MS, PIN_MAP_ZOOM } from '~/config/game'
 
 const props = withDefaults(
   defineProps<{
@@ -120,6 +120,20 @@ watch(
   },
   { immediate: true },
 )
+
+// Delay the country-pin highlight until the SMIL animation lands.
+const pinHighlightReady = ref(false)
+let pinHighlightTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(() => props.pinCode, (code) => {
+  if (pinHighlightTimer) { clearTimeout(pinHighlightTimer); pinHighlightTimer = null }
+  if (code) {
+    pinHighlightReady.value = false
+    pinHighlightTimer = setTimeout(() => { pinHighlightReady.value = true }, PIN_DROP_ANIMATION_MS)
+  } else {
+    pinHighlightReady.value = false
+  }
+}, { immediate: true })
 
 // ── clamp / zoom helpers ──────────────────────────────────────────────────
 
@@ -279,6 +293,7 @@ onMounted(() => {
 onUnmounted(() => {
   cleanupListeners?.()
   cancelAnim()
+  if (pinHighlightTimer) clearTimeout(pinHighlightTimer)
 })
 
 // ── click handler ────────────────────────────────────────────────────────
@@ -291,7 +306,7 @@ function handlePathClick(code: string) {
 }
 
 function classFor(code: string): string {
-  if (code === props.pinCode) return 'country country-pin'
+  if (code === props.pinCode && pinHighlightReady.value) return 'country country-pin'
   if (code === props.revealCode) return 'country country-reveal'
   if (code === props.selectedCode && props.selectedCode !== props.revealCode)
     return 'country country-wrong'

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Country, Round } from '~/types/game'
+import { PIN_DROP_ANIMATION_MS } from '~/config/game'
 
 const props = defineProps<{
   round:   Round
@@ -14,6 +15,18 @@ const emit = defineEmits<{ pick: [country: Country] }>()
 const label = computed(() =>
   props.correct ? `It is indeed ${props.round.answer.name}` : `The answer was ${props.round.answer.name}`,
 )
+
+// Block answer buttons until the pin drop animation completes.
+const pinReady = ref(false)
+let pinTimer: ReturnType<typeof setTimeout> | null = null
+
+watch(() => props.round, () => {
+  if (pinTimer) clearTimeout(pinTimer)
+  pinReady.value = false
+  pinTimer = setTimeout(() => { pinReady.value = true }, PIN_DROP_ANIMATION_MS)
+}, { immediate: true })
+
+onUnmounted(() => { if (pinTimer) clearTimeout(pinTimer) })
 </script>
 
 <template>
@@ -47,7 +60,7 @@ const label = computed(() =>
       :options="props.round.options"
       :answer="props.round.answer"
       :picked="props.picked"
-      :locked="props.locked"
+      :locked="props.locked || !pinReady"
       @pick="emit('pick', $event)"
     />
   </div>

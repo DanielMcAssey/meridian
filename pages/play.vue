@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Country, RoundResult } from '~/types/game'
-import { DIFFICULTY_TIMER_SECS } from '~/config/game'
+import { DIFFICULTY_TIMER_SECS, ROUND_TIMER_DELAY_MS } from '~/config/game'
 
 const session = useSessionStore()
 const settings = useGameSettings()
@@ -36,19 +36,17 @@ const locked     = ref(false)
 const timeLeft   = ref(0)
 
 let tickInterval: ReturnType<typeof setInterval> | null = null
+let timerDelayTimer: ReturnType<typeof setTimeout> | null = null
 let advanceTimeout: ReturnType<typeof setTimeout> | null = null
 let startTime = Date.now()
 let timerEnd  = 0
 
 function clearTick() {
-  if (tickInterval !== null) {
-    clearInterval(tickInterval)
-    tickInterval = null
-  }
+  if (timerDelayTimer !== null) { clearTimeout(timerDelayTimer); timerDelayTimer = null }
+  if (tickInterval !== null)    { clearInterval(tickInterval);   tickInterval = null }
 }
 
 function startTick() {
-  clearTick()
   if (!settings.timer.value) return
   timerEnd = Date.now() + DIFFICULTY_TIMER_SECS[session.difficulty] * 1000
   tickInterval = setInterval(() => {
@@ -67,9 +65,20 @@ watch(
     picked.value = null
     pickedLang.value = null
     locked.value = false
-    startTime = Date.now()
     timeLeft.value = settings.timer.value ? DIFFICULTY_TIMER_SECS[session.difficulty] : 0
-    startTick()
+    clearTick()
+
+    // Look up a per-round-type intro delay from config (e.g. pin drop animation).
+    // play.vue stays generic — it does not need to know why a delay exists.
+    const roundType = session.currentRound?.type
+    const delay = roundType ? (ROUND_TIMER_DELAY_MS[roundType] ?? 0) : 0
+    startTime = Date.now() + delay
+
+    if (delay > 0) {
+      timerDelayTimer = setTimeout(startTick, delay)
+    } else {
+      startTick()
+    }
   },
   { immediate: true },
 )
@@ -85,13 +94,13 @@ onUnmounted(() => {
 function handlePick(opt: Country) {
   if (locked.value) return
   picked.value = opt
-  handleLock(opt, (Date.now() - startTime) / 1000)
+  handleLock(opt, Math.max(0, (Date.now() - startTime) / 1000))
 }
 
 function handlePickLang(lang: string) {
   if (locked.value) return
   pickedLang.value = lang
-  handleLock(lang, (Date.now() - startTime) / 1000)
+  handleLock(lang, Math.max(0, (Date.now() - startTime) / 1000))
 }
 
 function handleLock(opt: Country | string | null, elapsedSec: number) {

@@ -113,6 +113,17 @@ export const DIFFICULTY_TIER_WEIGHTS: Record<Difficulty, Record<number, number>>
 /** How far to zoom in on the pin in Pin Drop rounds (multiplier over the full map).
  *  3 = shows ~⅓ of the world width, giving clear regional context. */
 export const PIN_MAP_ZOOM = 4
+/** Duration of the pin-drop SMIL animation in ms — timer and UI are delayed by this. */
+export const PIN_DROP_ANIMATION_MS = 550
+
+/**
+ * How many ms to wait after a round starts before the timer begins counting.
+ * Lets round components with intro animations complete before the clock starts.
+ * play.vue reads this generically — it does not need to know why a delay exists.
+ */
+export const ROUND_TIMER_DELAY_MS: Partial<Record<import('~/types/game').RoundType, number>> = {
+  pin: PIN_DROP_ANIMATION_MS,
+}
 
 // ── SW reload protection ──────────────────────────────────────────────────────
 // Routes where a service-worker-triggered reload should be deferred until the
