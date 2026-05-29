@@ -2,10 +2,11 @@
 import type { Country } from '~/types/game'
 
 const props = defineProps<{
-  options: Country[]
-  answer: Country
-  picked: Country | null
-  locked: boolean
+  options:   Country[]
+  answer:    Country
+  picked:    Country | null
+  locked:    boolean  // show result colours (correct/wrong/dim)
+  disabled?: boolean  // block interaction without revealing results
 }>()
 
 const emit = defineEmits<{
@@ -40,7 +41,7 @@ function optClass(opt: Country): string {
         optClass(opt) === 'opt-dim'     && 'opacity-50',
         optClass(opt) === 'opt-picked'  && 'border-ink',
       ]"
-      :disabled="locked"
+      :disabled="locked || disabled"
       @click="emit('pick', opt)"
     >
       <span

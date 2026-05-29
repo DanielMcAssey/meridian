@@ -60,7 +60,8 @@ onUnmounted(() => { if (pinTimer) clearTimeout(pinTimer) })
       :options="props.round.options"
       :answer="props.round.answer"
       :picked="props.picked"
-      :locked="props.locked || !pinReady"
+      :locked="props.locked"
+      :disabled="!pinReady"
       @pick="emit('pick', $event)"
     />
   </div>
