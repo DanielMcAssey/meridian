@@ -144,7 +144,7 @@ function gamesFor(diff: Difficulty): string[] {
           <!-- Difficulty -->
           <div class="flex flex-col gap-2.5">
             <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
-              Pick your peril · the wider the world, the harder
+              Pick your peril · the wider the world, the harder the voyage
             </span>
             <div class="grid grid-cols-2 gap-2">
               <button

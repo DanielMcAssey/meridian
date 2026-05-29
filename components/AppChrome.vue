@@ -15,7 +15,13 @@ function go(path: string) {
   navigateTo(path)
 }
 
-const isNavVisible = computed(() => mounted.value && route.name !== 'index' && !!playerName.value)
+function goChallenges() {
+  menuOpen.value = false
+  navigateTo(playerName.value ? '/menu' : '/')
+}
+
+const isNavVisible = computed(() => mounted.value)
+const showGameNav  = computed(() => mounted.value && route.name !== 'index' && !!playerName.value)
 </script>
 
 <template>
@@ -73,7 +79,7 @@ const isNavVisible = computed(() => mounted.value && route.name !== 'index' && !
                    bg-transparent border border-rule-2 px-4 py-2
                    rounded-full text-[13px] tracking-[0.02em] transition-[0.15s]
                    hover:bg-paper hover:border-ink-2"
-            @click="go('/menu')"
+            @click="goChallenges()"
           >The Challenges</button>
 
           <button
@@ -93,6 +99,7 @@ const isNavVisible = computed(() => mounted.value && route.name !== 'index' && !
           >Leaderboard</button>
 
           <div
+            v-if="showGameNav"
             class="flex flex-col items-end leading-[1.1]
                    pl-4 border-l border-rule cursor-pointer"
             title="Change name"
@@ -148,23 +155,21 @@ const isNavVisible = computed(() => mounted.value && route.name !== 'index' && !
         v-if="menuOpen && isNavVisible"
         class="sm:hidden border-t border-rule px-3 py-2"
       >
-        <!-- The Challenges -->
+        <!-- The Challenges — always visible; redirects to name entry if no name set -->
         <button
           class="w-full flex items-center justify-between
                  px-3 py-3.5 rounded-xl text-left
                  transition-colors duration-150 hover:bg-paper active:bg-paper"
-          @click="go('/menu')"
+          @click="goChallenges()"
         >
           <span class="font-serif italic text-[19px] tracking-[-0.01em]">The Challenges</span>
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="text-ink-3">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>
         </button>
-
-        <!-- Divider -->
         <div class="mx-3 border-t border-rule" />
 
-        <!-- The Knowledge -->
+        <!-- The Knowledge — always -->
         <button
           class="w-full flex items-center justify-between
                  px-3 py-3.5 rounded-xl text-left
@@ -177,10 +182,9 @@ const isNavVisible = computed(() => mounted.value && route.name !== 'index' && !
           </svg>
         </button>
 
-        <!-- Divider -->
         <div class="mx-3 border-t border-rule" />
 
-        <!-- Leaderboard -->
+        <!-- Leaderboard — always -->
         <button
           class="w-full flex items-center justify-between
                  px-3 py-3.5 rounded-xl text-left
@@ -193,23 +197,23 @@ const isNavVisible = computed(() => mounted.value && route.name !== 'index' && !
           </svg>
         </button>
 
-        <!-- Divider -->
-        <div class="mx-3 border-t border-rule" />
-
-        <!-- Player / change name -->
-        <button
-          class="w-full flex items-center justify-between
-                 px-3 py-3.5 rounded-xl text-left
-                 transition-colors duration-150 hover:bg-paper active:bg-paper"
-          title="Change name"
-          @click="go('/')"
-        >
-          <div class="flex flex-col leading-[1.1]">
-            <span class="font-mono text-[9.5px] tracking-[0.14em] uppercase text-ink-3">Traveller</span>
-            <span class="font-serif italic text-lg mt-0.5">{{ playerName }}</span>
-          </div>
-          <span class="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">Change</span>
-        </button>
+        <!-- Player / change name — only when a name is set -->
+        <template v-if="showGameNav">
+          <div class="mx-3 border-t border-rule" />
+          <button
+            class="w-full flex items-center justify-between
+                   px-3 py-3.5 rounded-xl text-left
+                   transition-colors duration-150 hover:bg-paper active:bg-paper"
+            title="Change name"
+            @click="go('/')"
+          >
+            <div class="flex flex-col leading-[1.1]">
+              <span class="font-mono text-[9.5px] tracking-[0.14em] uppercase text-ink-3">Traveller</span>
+              <span class="font-serif italic text-lg mt-0.5">{{ playerName }}</span>
+            </div>
+            <span class="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">Change</span>
+          </button>
+        </template>
       </nav>
     </Transition>
   </header>
