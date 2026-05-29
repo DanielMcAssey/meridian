@@ -5,6 +5,9 @@ const atlas  = useAtlasStore()
 const route  = useRoute()
 const router = useRouter()
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const TIER_LABELS = ['', 'Flagship', 'Well-known', 'Familiar', 'Obscure'] as const
+
 // ── Filters ───────────────────────────────────────────────────────────────────
 const search       = ref('')
 const regionFilter = ref('all')
@@ -80,9 +83,6 @@ onUnmounted(() => { if (copyTimer) clearTimeout(copyTimer) })
 function onKey(e: KeyboardEvent) { if (e.key === 'Escape') closeDetail() }
 onMounted(()   => window.addEventListener('keydown', onKey))
 onUnmounted(() => window.removeEventListener('keydown', onKey))
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-const TIER_LABELS = ['', 'Flagship', 'Well-known', 'Familiar', 'Obscure'] as const
 
 // Uses CSS custom-property expressions so colours adapt to dark mode.
 const TIER_DOT_STYLE = [
