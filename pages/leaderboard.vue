@@ -112,48 +112,24 @@ function trophyFor(rank: number): TrophyKind | null {
 
     <!-- Filters -->
     <div class="flex flex-wrap gap-5 mb-8 items-start">
-      <!-- Game mode -->
-      <div class="flex flex-col gap-2">
-        <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Game</span>
-        <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full flex-wrap">
-          <button
-            v-for="m in FILTER_MODES"
-            :key="m.id"
-            :class="filterMode === m.id ? 'diff-pill-on' : 'diff-pill'"
-            @click="filterMode = m.id"
-          >{{ m.label }}</button>
-        </div>
-      </div>
-
-      <!-- Difficulty -->
-      <div class="flex flex-col gap-2">
-        <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Difficulty</span>
-        <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full flex-wrap">
-          <button
-            :class="filterDifficulty === 'any' ? 'diff-pill-on' : 'diff-pill'"
-            @click="filterDifficulty = 'any'"
-          >Any</button>
-          <button
-            v-for="d in DIFFICULTIES"
-            :key="d.id"
-            :class="filterDifficulty === d.id ? 'diff-pill-on' : 'diff-pill'"
-            @click="filterDifficulty = d.id"
-          >{{ d.label }}</button>
-        </div>
-      </div>
-
-      <!-- Rounds -->
-      <div class="flex flex-col gap-2">
-        <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Rounds</span>
-        <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
-          <button
-            v-for="opt in ROUND_OPTIONS"
-            :key="opt.val"
-            :class="filterRounds === opt.val ? 'diff-pill-on' : 'diff-pill'"
-            @click="filterRounds = opt.val"
-          >{{ opt.label }}</button>
-        </div>
-      </div>
+      <FilterPillGroup
+        label="Game"
+        :options="FILTER_MODES"
+        :model-value="filterMode"
+        @update:model-value="filterMode = $event as typeof filterMode"
+      />
+      <FilterPillGroup
+        label="Difficulty"
+        :options="[{ id: 'any', label: 'Any' }, ...DIFFICULTIES.map(d => ({ id: d.id, label: d.label }))]"
+        :model-value="filterDifficulty"
+        @update:model-value="filterDifficulty = $event as typeof filterDifficulty"
+      />
+      <FilterPillGroup
+        label="Rounds"
+        :options="ROUND_OPTIONS.map(o => ({ id: o.val, label: o.label }))"
+        :model-value="filterRounds"
+        @update:model-value="filterRounds = $event as typeof filterRounds"
+      />
     </div>
 
     <!-- Loading skeleton -->

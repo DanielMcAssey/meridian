@@ -10,10 +10,15 @@ const search       = ref('')
 const regionFilter = ref('all')
 const tierFilter   = ref(0)
 
-const regions = computed(() => {
-  const r = new Set(atlas.countries.map((c) => c.region))
-  return ['all', ...Array.from(r).sort()]
-})
+const regionOptions = computed(() => [
+  { id: 'all', label: 'All regions' },
+  ...Array.from(new Set(atlas.countries.map((c) => c.region))).sort().map((r) => ({ id: r, label: r })),
+])
+
+const tierOptions = [
+  { id: 0, label: 'All tiers' },
+  ...([1, 2, 3, 4] as const).map((t) => ({ id: t, label: TIER_LABELS[t] })),
+]
 
 const filtered = computed(() => {
   let list = atlas.countries
@@ -166,7 +171,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
     </div>
 
     <!-- ── Filters ────────────────────────────────────────────────────────── -->
-    <div class="flex flex-col gap-3 mb-6">
+    <div class="flex flex-col gap-4 mb-6">
       <!-- Search -->
       <div class="relative max-w-sm">
         <svg
@@ -187,31 +192,20 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
         />
       </div>
 
-      <!-- Region pills -->
-      <div class="flex flex-wrap gap-1.5">
-        <button
-          v-for="r in regions"
-          :key="r"
-          class="diff-pill text-[12px] py-1.5 px-3 capitalize"
-          :class="regionFilter === r ? 'diff-pill-on' : ''"
-          @click="regionFilter = r"
-        >{{ r === 'all' ? 'All regions' : r }}</button>
-      </div>
-
-      <!-- Tier pills -->
-      <div class="flex flex-wrap gap-1.5">
-        <button
-          class="diff-pill text-[12px] py-1.5 px-3"
-          :class="tierFilter === 0 ? 'diff-pill-on' : ''"
-          @click="tierFilter = 0"
-        >All tiers</button>
-        <button
-          v-for="t in [1, 2, 3, 4]"
-          :key="t"
-          class="diff-pill text-[12px] py-1.5 px-3"
-          :class="tierFilter === t ? 'diff-pill-on' : ''"
-          @click="tierFilter = t"
-        >{{ TIER_LABELS[t] }}</button>
+      <!-- Region + Tier pill groups -->
+      <div class="flex flex-wrap gap-5 items-start">
+        <FilterPillGroup
+          label="Region"
+          :options="regionOptions"
+          :model-value="regionFilter"
+          @update:model-value="regionFilter = $event as string"
+        />
+        <FilterPillGroup
+          label="Tier"
+          :options="tierOptions"
+          :model-value="tierFilter"
+          @update:model-value="tierFilter = $event as number"
+        />
       </div>
     </div>
 

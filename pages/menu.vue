@@ -59,6 +59,26 @@ const countByDiff = computed<Record<Difficulty, number>>(() => ({
   hard:   pickPool(atlas.countries, 'hard').length,
   expert: atlas.countries.length,
 }))
+
+// ── Filter pill option arrays ─────────────────────────────────────────────────
+
+const difficultyLabel = computed(() =>
+  `Difficulty (${countByDiff.value[settings.difficulty.value]} countries)`,
+)
+const difficultyOptions = computed(() =>
+  DIFFICULTIES.map((d) => ({ id: d.id, label: d.label })),
+)
+
+const roundOptions = ROUND_COUNTS.map((n) => ({ id: n, label: String(n) }))
+
+const timerLabel = computed(() =>
+  settings.timer.value
+    ? `Timer (${DIFFICULTY_TIMER_SECS[settings.difficulty.value]}s)`
+    : 'Timer',
+)
+const timerOptions = [{ id: 'off', label: 'Off' }, { id: 'on', label: 'On' }]
+const timerValue   = computed(() => settings.timer.value ? 'on' : 'off')
+function setTimer(v: string | number) { settings.timer.value = v === 'on' }
 </script>
 
 <template>
@@ -75,45 +95,24 @@ const countByDiff = computed<Record<Difficulty, number>>(() => ({
 
       <!-- Pill controls -->
       <div class="flex flex-wrap gap-6 mt-4 items-start">
-        <!-- Difficulty -->
-        <div class="flex flex-col gap-2">
-          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
-            Difficulty<span class="ml-1">({{ countByDiff[settings.difficulty.value] }} countries)</span>
-          </span>
-          <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
-            <button
-              v-for="d in DIFFICULTIES"
-              :key="d.id"
-              :class="settings.difficulty.value === d.id ? 'diff-pill-on' : 'diff-pill'"
-              :title="`${d.note} — ${countByDiff[d.id]} countries`"
-              @click="settings.difficulty.value = d.id"
-            >{{ d.label }}</button>
-          </div>
-        </div>
-
-        <!-- Rounds -->
-        <div class="flex flex-col gap-2">
-          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Rounds</span>
-          <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
-            <button
-              v-for="n in ROUND_COUNTS"
-              :key="n"
-              :class="settings.rounds.value === n ? 'diff-pill-on' : 'diff-pill'"
-              @click="settings.rounds.value = n"
-            >{{ n }}</button>
-          </div>
-        </div>
-
-        <!-- Timer -->
-        <div class="flex flex-col gap-2">
-          <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
-            Timer<span v-if="settings.timer.value" class="text-ink-3 ml-1">({{ DIFFICULTY_TIMER_SECS[settings.difficulty.value] }}s)</span>
-          </span>
-          <div class="flex gap-1 p-[3px] bg-paper border border-rule rounded-full">
-            <button :class="!settings.timer.value ? 'diff-pill-on' : 'diff-pill'" @click="settings.timer.value = false">Off</button>
-            <button :class="settings.timer.value  ? 'diff-pill-on' : 'diff-pill'" @click="settings.timer.value = true">On</button>
-          </div>
-        </div>
+        <FilterPillGroup
+          :label="difficultyLabel"
+          :options="difficultyOptions"
+          :model-value="settings.difficulty.value"
+          @update:model-value="settings.difficulty.value = $event as Difficulty"
+        />
+        <FilterPillGroup
+          label="Rounds"
+          :options="roundOptions"
+          :model-value="settings.rounds.value"
+          @update:model-value="settings.rounds.value = $event as number"
+        />
+        <FilterPillGroup
+          :label="timerLabel"
+          :options="timerOptions"
+          :model-value="timerValue"
+          @update:model-value="setTimer($event)"
+        />
       </div>
     </div>
 
