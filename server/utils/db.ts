@@ -8,9 +8,13 @@ import { MIGRATIONS } from '../db/migrations/list'
 
 export type DB = LibSQLDatabase<typeof schema>
 
-// One promise per Lambda instance — shared across the plugin pre-warm and all
-// request handlers.  Cleared on failure so the next request can retry.
-let _init: Promise<DB> | null = null
+// Stored on globalThis so it survives Nitro hot-module re-evaluations in dev.
+// A plain module-level variable resets to null on every HMR reload, causing
+// createDb() to run again and opening a second client against the same file.
+declare global {
+  // eslint-disable-next-line no-var
+  var __meridianDbInit: Promise<DB> | undefined
+}
 
 // Splits a SQL file into individual statements, handling quoted strings and comments.
 function splitSqlStatements(sql: string): string[] {
@@ -118,11 +122,11 @@ async function createDb(): Promise<DB> {
  * Clears the cached promise on failure so the next request can retry.
  */
 export function getDb(): Promise<DB> {
-  if (!_init) {
-    _init = createDb().catch((e) => {
-      _init = null
+  if (!globalThis.__meridianDbInit) {
+    globalThis.__meridianDbInit = createDb().catch((e) => {
+      globalThis.__meridianDbInit = undefined
       throw e
     })
   }
-  return _init
+  return globalThis.__meridianDbInit
 }
