@@ -341,15 +341,33 @@ function zoomCenter(factor: number) {
         />
       </g>
 
-      <!-- Pin marker (no base ring — country shape highlight serves that purpose) -->
-      <g
-        v-if="pin"
-        class="pin"
-        :transform="`translate(${pin.svgCx},${pin.svgCy})`"
-      >
-        <line x1="0" y1="0" x2="0" y2="-22" class="pin-stem" />
-        <circle cx="0" cy="-22" r="4.5" class="pin-head" />
-        <circle cx="0" cy="-22" r="1.5" class="pin-dot" />
+      <!-- Pin marker — outer g positions at country centroid via SVG attribute,
+           inner g carries the CSS drop animation so translateY is relative to
+           the country position rather than the SVG origin. -->
+      <g v-if="pin" :transform="`translate(${pin.svgCx},${pin.svgCy})`">
+        <g class="pin">
+          <!-- SMIL drop: values are SVG user units so the animation scales with zoom -->
+          <animateTransform
+            attributeName="transform"
+            type="translate"
+            values="0,-70; 0,4; 0,0"
+            keyTimes="0; 0.75; 1"
+            keySplines="0.2 0 0.3 1; 0.4 0 0.6 1"
+            calcMode="spline"
+            dur="0.55s"
+            fill="remove"
+          />
+          <animate
+            attributeName="opacity"
+            values="0;1"
+            keyTimes="0;0.18"
+            dur="0.55s"
+            fill="freeze"
+          />
+          <line x1="0" y1="0" x2="0" y2="-22" class="pin-stem" />
+          <circle cx="0" cy="-22" r="4.5" class="pin-head" />
+          <circle cx="0" cy="-22" r="1.5" class="pin-dot" />
+        </g>
       </g>
     </svg>
 

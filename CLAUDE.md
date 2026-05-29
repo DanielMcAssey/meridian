@@ -22,6 +22,8 @@ Commits must follow Conventional Commits (enforced by commitlint). Types: `feat`
 
 All tunable constants belong in **`config/game.ts`** — never hardcoded inline in components, pages, or server routes. This includes scoring values, difficulty settings, round counts, timer durations, mode definitions, and any other value that could reasonably need updating without a code search. When adding a new configurable value, export it from `config/game.ts` and import it at the use site.
 
+`DifficultyConfig` does **not** carry a static country-count estimate — counts are derived dynamically from atlas data via `pickPool(atlas.countries, difficulty).length` wherever they are displayed (index, menu).
+
 ## Architecture
 
 Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **client-side only** (`definePageMeta({ ssr: false })`). The server side is a thin **Nitro** API (leaderboard only).
@@ -41,16 +43,19 @@ Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **clie
 
 Two Pinia stores:
 
-- **`useAtlasStore`** (`stores/atlas.ts`) — loads `public/data.json` once on first access. Holds the country list, SVG paths (`countryPaths`), flag paths (`flagPaths`), and silhouette paths (`shapePaths`). The atlas is shared across all game pages.
+- **`useAtlasStore`** (`stores/atlas.ts`) — loads `public/data.json` once on first access. Holds the country list, SVG paths (`countryPaths`), flag paths (`flagPaths`), and silhouette paths (`shapePaths`). `countryPaths` only includes countries where `hasMapPath: true` — stub-path countries are omitted so they never render on the world map. The atlas is shared across all game pages.
 - **`useSessionStore`** (`stores/session.ts`) — tracks the in-progress game: round list, current index, results, final score, and leaderboard rank. `markFinished()` tallies score and sets `lbPending = true`; `setRank()` is called later by the leaderboard mutation's `onSuccess` handler.
 
 ### Game data (`public/data.json`)
 
-Single static file containing every country with: ISO code, display name, capital city, lat/lng, SVG centroid (`svgCx`/`svgCy`), world-map SVG path (`path`), flag path (`flag`), silhouette path (`shape`), region, `tier` (1–4), `langs` (ISO 639-1 codes of official languages), and `subdivisions` (top-level admin divisions with `name` and `cat`).
+Single static file containing every country with: ISO code, display name, capital city, lat/lng, SVG centroid (`svgCx`/`svgCy`), world-map SVG path (`path`), flag path (`flag`), silhouette path (`shape`), region, `tier` (1–4), `langs` (ISO 639-1 codes of official languages), `subdivisions` (top-level admin divisions with `name` and `cat`), and `hasMapPath` / `hasShape` booleans.
 
-Tier controls the difficulty pool — easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=all. Country selection is also **weighted by tier** toward the selected difficulty via `DIFFICULTY_TIER_WEIGHTS` in `config/game.ts` — expert difficulty makes obscure (high-tier) countries more likely.
+- **`hasShape`** — `true` when a dedicated silhouette SVG exists (`maps/<code>.svg`). Derived from `shape != null`.
+- **`hasMapPath`** — `false` for the ~20 microstates/island nations whose world-map `path` is a tiny invisible stub triangle (e.g. Vatican City, Monaco, Andorra). These countries are excluded from `countryPaths` in the atlas store and from the answer pool for `pin` and `cart` rounds.
 
-Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers via `weightedSample()`, generates distractors, and cycles round types for `mixed` mode. The same country cannot appear twice in a single run. For `region` rounds, `pickRegionOptions()` ensures each of the 4 options represents a distinct continent.
+Tier controls the difficulty pool — easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=tier≥2 (excludes tier-1 easy countries). Country selection is also **weighted by tier** toward the selected difficulty via `DIFFICULTY_TIER_WEIGHTS` in `config/game.ts` — expert difficulty makes obscure (high-tier) countries more likely.
+
+Round generation lives in `utils/rounds.ts`: `buildRounds()` picks answers via `weightedSample()`, generates distractors, and cycles round types for `mixed` mode. The same country cannot appear twice in a single run. For `region` rounds, `pickRegionOptions()` ensures each of the 4 options represents a distinct continent. Mode-specific answer pools: `shapePool` filters by `hasShape`, `mapPool` filters by `hasMapPath` (used for `pin` and `cart`), `langPool` by language data, `provincePool` by subdivisions. In `mixed` mode, if a selected country lacks the required data for its assigned round type, it falls back to `flag`.
 
 ### Round types
 
@@ -117,7 +122,8 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard`. Uses **Drizzle ORM** (`drizzle-orm@rc`) with **`@libsql/client`** (supports both local SQLite files and remote Turso). Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. The DB is initialised by `server/plugins/database.ts` (async plugin). Local path: `NUXT_DB_PATH` (default `./data/leaderboard.db`); remote: `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN`. Access via `getDb()` from `server/utils/db.ts`.
+- **Server**: Nitro API at `GET/POST /api/leaderboard` and `GET /api/healthz`. Uses **Drizzle ORM** (`drizzle-orm@rc`) with **`@libsql/client`** (supports both local SQLite files and remote Turso). Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. Local path: `NUXT_DB_PATH` (default `./data/leaderboard.db`); remote: `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN`.
+- **DB initialisation**: All init logic (client creation, WAL pragma, migration runner) lives in `server/utils/db.ts`. `getDb()` returns `Promise<DB>` and initialises lazily on first call, caching the promise on `globalThis.__meridianDbInit` so it survives Nitro HMR module re-evaluations without opening a second client. `server/plugins/database.ts` simply calls `await getDb()` to pre-warm the connection before the first request. Always `await getDb()` in handlers — never call it synchronously.
 - **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change, run `npm run db:generate` — this calls `drizzle-kit generate` and then `scripts/gen-migration-list.mjs`, which auto-generates `server/db/migrations/list.ts` from all SQL files in that directory. `list.ts` is also regenerated automatically by `npm run build` (via a `prebuild` hook). The plugin reads from `list.ts` — a plain TS module bundled by any build tool. `import.meta.glob` (Vite-only) and `useStorage('assets:db_migrations')` (returns `[]` in Nitro's Rollup bundle) are **not** used. Applied migrations are tracked in a `_meridian_migrations` SQLite table.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
 - Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`. Mode and difficulty enums are derived from `VALID_MODE_IDS` / `VALID_DIFFICULTY_IDS` in `config/game.ts` — Zod stays in sync with config automatically.

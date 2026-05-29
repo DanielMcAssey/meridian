@@ -29,7 +29,7 @@ export const DIFFICULTIES: DifficultyConfig[] = [
   { id: 'easy',   label: 'Easy',   note: 'Flagship countries',    multiplier: 1.0 },
   { id: 'medium', label: 'Medium', note: 'Well-known',            multiplier: 1.5 },
   { id: 'hard',   label: 'Hard',   note: 'Most of the world',     multiplier: 2.0 },
-  { id: 'expert', label: 'Expert', note: 'Every country we have', multiplier: 3.0 },
+  { id: 'expert', label: 'Expert', note: 'No easy countries',     multiplier: 3.0 },
 ]
 
 /** Pre-computed Record for O(1) lookup in scoring functions. */

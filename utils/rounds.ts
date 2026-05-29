@@ -16,7 +16,7 @@ export function pickPool(countries: Country[], difficulty: Difficulty): Country[
   if (difficulty === 'easy') return countries.filter((c) => c.tier <= 1)
   if (difficulty === 'medium') return countries.filter((c) => c.tier <= 2)
   if (difficulty === 'hard') return countries.filter((c) => c.tier <= 3)
-  return countries // expert: all tiers
+  return countries.filter((c) => c.tier >= 2) // expert: excludes tier-1 (easy) countries
 }
 
 function pickDistractors(answer: Country, pool: Country[], n: number): Country[] {

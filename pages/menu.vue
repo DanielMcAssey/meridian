@@ -57,7 +57,7 @@ const countByDiff = computed<Record<Difficulty, number>>(() => ({
   easy:   pickPool(atlas.countries, 'easy').length,
   medium: pickPool(atlas.countries, 'medium').length,
   hard:   pickPool(atlas.countries, 'hard').length,
-  expert: atlas.countries.length,
+  expert: pickPool(atlas.countries, 'expert').length,
 }))
 
 // ── Filter pill option arrays ─────────────────────────────────────────────────
