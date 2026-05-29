@@ -1,0 +1,7 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <path d="M20 18 L62 18 L62 58 L16 58 L16 22 Q16 18 20 18 Z" class="mi-fill" />
+  <rect x="16" y="18" width="88" height="84" rx="4" class="mi-stroke" />
+  <line x1="62" y1="18" x2="62" y2="102" class="mi-stroke" />
+  <line x1="16" y1="58" x2="104" y2="58" class="mi-stroke" />
+  <circle cx="37" cy="37" r="6" class="mi-hole" />
+</svg>

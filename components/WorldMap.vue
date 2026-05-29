@@ -78,14 +78,8 @@ function cancelAnim() {
 
 // ── derived data ──────────────────────────────────────────────────────────
 
-const byCode = computed<Record<string, Country>>(() => {
-  const m: Record<string, Country> = {}
-  for (const c of atlas.countries) m[c.code] = c
-  return m
-})
-
 const codes = computed(() => Object.keys(atlas.countryPaths))
-const pin   = computed(() => (props.pinCode ? byCode.value[props.pinCode] ?? null : null))
+const pin   = computed(() => (props.pinCode ? atlas.byCode[props.pinCode] ?? null : null))
 
 // ── viewBox watchers ──────────────────────────────────────────────────────
 
@@ -103,7 +97,7 @@ watch(
   [() => props.pinCode, () => atlas.ready],
   ([code, ready]) => {
     if (code && ready) {
-      const country = byCode.value[code]
+      const country = atlas.byCode[code]
       if (country) {
         const newW = vb0.value.w / PIN_MAP_ZOOM
         const newH = vb0.value.h / PIN_MAP_ZOOM
@@ -181,6 +175,14 @@ let moved = false
 let pointerDownTarget: Element | null = null
 let cleanupListeners: (() => void) | null = null
 
+const PINCH_HINT_KEY = 'geo.pinch-hint-shown'
+const pinchHintVisible = ref(false)
+
+function dismissPinchHint() {
+  pinchHintVisible.value = false
+  localStorage.setItem(PINCH_HINT_KEY, '1')
+}
+
 function pinchDist() {
   const pts = [...activePointers.values()]
   const a = pts[0]!, b = pts[1]!
@@ -236,6 +238,7 @@ onMounted(() => {
         zoomAtClient(mid.x, mid.y, factor)
       }
       lastPinchDist = dist
+      dismissPinchHint()
       return
     }
 
@@ -288,6 +291,10 @@ onMounted(() => {
     el.removeEventListener('pointerup', onPointerUp)
     el.removeEventListener('pointercancel', onPointerUp)
   }
+
+  if (navigator.maxTouchPoints > 0 && !localStorage.getItem(PINCH_HINT_KEY)) {
+    pinchHintVisible.value = true
+  }
 })
 
 onUnmounted(() => {
@@ -301,7 +308,7 @@ onUnmounted(() => {
 function handlePathClick(code: string) {
   if (props.mode !== 'click') return
   if (moved) return
-  const country = byCode.value[code]
+  const country = atlas.byCode[code]
   if (country) emit('pick', country)
 }
 
@@ -414,5 +421,21 @@ function zoomCenter(factor: number) {
         @click="zoomCenter(1 / 1.4)"
       >−</button>
     </div>
+    <Transition
+      enter-from-class="opacity-0 translate-y-2"
+      leave-to-class="opacity-0 translate-y-2"
+      enter-active-class="transition-[opacity,transform] duration-300"
+      leave-active-class="transition-[opacity,transform] duration-200"
+    >
+      <div
+        v-if="pinchHintVisible"
+        class="map-hud absolute bottom-2.5 left-1/2 -translate-x-1/2 pointer-events-auto"
+        @click.stop="dismissPinchHint"
+      >
+        <span class="flex items-center gap-1.5 text-ink font-mono text-[11px] tracking-[0.06em] px-3 py-1.5 rounded-full whitespace-nowrap">
+          Pinch to zoom · tap to dismiss
+        </span>
+      </div>
+    </Transition>
   </div>
 </template>

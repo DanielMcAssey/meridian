@@ -1,0 +1,7 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <rect x="22" y="30" width="76" height="60" rx="4" class="mi-stroke" />
+  <path d="M34 50 L44 44 L56 52 L70 46 L82 54 L82 74 L34 74 Z" class="mi-fill" />
+  <circle cx="62" cy="58" r="3" class="mi-stroke" style="stroke: var(--ink); fill: var(--paper)" />
+  <path d="M62 58 L78 36" class="mi-stroke" />
+  <circle cx="80" cy="34" r="4" class="mi-fill" />
+</svg>

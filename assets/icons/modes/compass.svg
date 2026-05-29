@@ -1,0 +1,6 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="60" cy="60" r="44" class="mi-stroke" />
+  <path d="M60 22 L66 60 L60 98 L54 60 Z" class="mi-fill" />
+  <path d="M22 60 L60 54 L98 60 L60 66 Z" class="mi-fill" />
+  <circle cx="60" cy="60" r="3" class="mi-stroke" />
+</svg>

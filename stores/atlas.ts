@@ -1,5 +1,5 @@
 import { defineStore, skipHydrate } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import type { Country, Subdivision } from '~/types/game'
 
 interface AtlasData {
@@ -29,6 +29,12 @@ export const useAtlasStore = defineStore('atlas', () => {
   const viewBox        = skipHydrate(ref(''))
   const ready          = skipHydrate(ref(false))
   const error          = skipHydrate(ref<string | null>(null))
+
+  const byCode         = skipHydrate(computed<Record<string, Country>>(() => {
+    const m: Record<string, Country> = {}
+    for (const c of countries.value) m[c.code] = c
+    return m
+  }))
 
   async function load() {
     if (ready.value) return
@@ -78,5 +84,5 @@ export const useAtlasStore = defineStore('atlas', () => {
     }
   }
 
-  return { countries, countryPaths, flagPaths, shapePaths, languageNames, viewBox, ready, error, load }
+  return { countries, byCode, countryPaths, flagPaths, shapePaths, languageNames, viewBox, ready, error, load }
 })

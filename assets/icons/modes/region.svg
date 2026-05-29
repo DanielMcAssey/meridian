@@ -1,0 +1,10 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="60" cy="60" r="40" class="mi-stroke" />
+  <line x1="20" y1="60" x2="100" y2="60" class="mi-stroke" />
+  <line x1="60" y1="20" x2="60" y2="100" class="mi-stroke" />
+  <path d="M27 40 Q60 34 93 40" class="mi-stroke" style="fill:none" />
+  <path d="M27 80 Q60 86 93 80" class="mi-stroke" style="fill:none" />
+  <path d="M60 20 Q44 60 60 100" class="mi-stroke" style="fill:none" />
+  <path d="M60 20 Q76 60 60 100" class="mi-stroke" style="fill:none" />
+  <path d="M44 46 L56 40 L68 44 L72 56 L66 66 L52 68 L40 62 L38 50 Z" class="mi-fill" />
+</svg>

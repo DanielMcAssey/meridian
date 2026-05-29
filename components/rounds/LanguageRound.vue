@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Round } from '~/types/game'
+import { calcOptClass } from '~/composables/useRoundOptionClass'
 
 const props = defineProps<{
   round:      Round
@@ -14,14 +15,7 @@ const emit = defineEmits<{ pickLang: [lang: string] }>()
 const atlas = useAtlasStore()
 
 function optClass(lang: string): string {
-  const isPicked = props.pickedLang === lang
-  const isAnswer = lang === props.round.answerLang
-  if (props.locked) {
-    if (isAnswer) return 'opt-correct'
-    if (isPicked) return 'opt-wrong'
-    return 'opt-dim'
-  }
-  return isPicked ? 'opt-picked' : ''
+  return calcOptClass(lang === props.round.answerLang, props.pickedLang === lang, props.locked)
 }
 
 // Show all of the answer country's language names in the feedback label.
@@ -87,6 +81,7 @@ const label = computed(() => {
           optClass(lang) === 'opt-dim'     && 'opacity-50',
           optClass(lang) === 'opt-picked'  && 'border-ink',
         ]"
+        :aria-label="`Option ${String.fromCharCode(65 + i)}: ${lang}`"
         :disabled="locked"
         @click="emit('pickLang', lang)"
       >

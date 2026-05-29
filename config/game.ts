@@ -130,6 +130,10 @@ export const ROUND_TIMER_DELAY_MS: Partial<Record<import('~/types/game').RoundTy
 // user navigates away, to avoid interrupting an active game or results review.
 export const SW_RELOAD_PROTECTED = new Set(['/play', '/results'])
 
+// ── UI animations ────────────────────────────────────────────────────────────
+/** Duration in seconds for the decorative compass rose spin on the landing page. */
+export const COMPASS_SPIN_SECS = 220
+
 // ── Grand Tour round-type gates ───────────────────────────────────────────────
 // Defines which round types are included in 'mixed' mode at each difficulty.
 // Higher difficulties include all lower-tier types plus their own.

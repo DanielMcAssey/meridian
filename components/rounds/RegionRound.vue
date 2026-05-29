@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { Country, Round } from '~/types/game'
+import { calcOptClass } from '~/composables/useRoundOptionClass'
 
 const props = defineProps<{
   round:   Round
@@ -12,14 +13,7 @@ const props = defineProps<{
 const emit = defineEmits<{ pick: [country: Country] }>()
 
 function optClass(opt: Country): string {
-  const isPicked = props.picked?.code === opt.code
-  const isAnswer = opt.region === props.round.answer.region
-  if (props.locked) {
-    if (isAnswer) return 'opt-correct'
-    if (isPicked) return 'opt-wrong'
-    return 'opt-dim'
-  }
-  return isPicked ? 'opt-picked' : ''
+  return calcOptClass(opt.region === props.round.answer.region, props.picked?.code === opt.code, props.locked)
 }
 
 const label = computed(() => `It belongs to ${props.round.answer.region}`)
@@ -77,6 +71,7 @@ const label = computed(() => `It belongs to ${props.round.answer.region}`)
           optClass(opt) === 'opt-dim'     && 'opacity-50',
           optClass(opt) === 'opt-picked'  && 'border-ink',
         ]"
+        :aria-label="`Option ${String.fromCharCode(65 + i)}: ${opt.region}`"
         :disabled="locked"
         @click="emit('pick', opt)"
       >

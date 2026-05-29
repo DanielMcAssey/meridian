@@ -106,7 +106,7 @@ async function createDb(): Promise<DB> {
     if (existing.rows.length > 0) continue
 
     const stmts = splitSqlStatements(sql).map((s) => ({ sql: s, args: [] as never[] }))
-    stmts.push({ sql: `INSERT OR IGNORE INTO _meridian_migrations (name) VALUES ('${name}')`, args: [] })
+    stmts.push({ sql: 'INSERT OR IGNORE INTO _meridian_migrations (name) VALUES (?)', args: [name] as never[] })
     await client.batch(stmts, 'write')
 
     console.log(`[db] Applied migration: ${name}`)

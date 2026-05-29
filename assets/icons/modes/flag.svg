@@ -1,0 +1,5 @@
+<svg viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+  <line x1="30" y1="20" x2="30" y2="105" class="mi-pole" />
+  <path d="M30 28 L92 24 L86 50 L96 70 L30 74 Z" class="mi-fill" />
+  <path d="M30 28 L92 24 L86 50 L96 70 L30 74 Z" class="mi-stroke" />
+</svg>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DIFFICULTIES, MIXED_ROUND_TYPES, MODES } from '~/config/game'
+import { COMPASS_SPIN_SECS, DIFFICULTIES, MIXED_ROUND_TYPES, MODES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
@@ -13,15 +13,12 @@ const countByDiff = computed<Record<Difficulty, number>>(() => ({
   expert: pickPool(atlas.countries, 'expert').length,
 }))
 
-onMounted(() => {
-  if (playerName.value) navigateTo('/menu')
-})
-
 const name = ref(playerName.value)
 const difficulty = ref<Difficulty>(settings.difficulty.value)
 const inputRef = ref<HTMLInputElement | null>(null)
 
 onMounted(() => {
+  if (playerName.value) { navigateTo('/menu'); return }
   inputRef.value?.focus()
 })
 
@@ -52,7 +49,7 @@ function gamesFor(diff: Difficulty): string[] {
         class="relative aspect-square max-w-xs mx-auto w-full md:order-last md:max-w-none"
         aria-hidden="true"
       >
-        <svg viewBox="0 0 600 600" class="w-full h-full" style="animation: gentle-spin 220s linear infinite">
+        <svg viewBox="0 0 600 600" class="w-full h-full" :style="`animation: gentle-spin ${COMPASS_SPIN_SECS}s linear infinite`">
           <defs>
             <radialGradient id="cg" cx="50%" cy="50%" r="50%">
               <stop offset="0%" stop-color="rgba(0,0,0,0)" />
