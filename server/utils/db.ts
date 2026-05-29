@@ -69,15 +69,14 @@ async function createDb(): Promise<DB> {
   if (isRemote) {
     url = tursoUrl!
   } else {
-    const dbPath = resolve(config.dbPath as string)
-    try {
-      mkdirSync(dirname(dbPath), { recursive: true })
-    } catch {
+    if (process.env.VERCEL) {
       throw new Error(
-        `[db] Cannot create local database directory at "${dirname(dbPath)}". ` +
-        'On Vercel or other read-only hosts set NUXT_TURSO_DATABASE_URL and NUXT_TURSO_AUTH_TOKEN.',
+        '[db] Running on Vercel without a remote database. ' +
+        'Set NUXT_TURSO_DATABASE_URL and NUXT_TURSO_AUTH_TOKEN in your Vercel project settings.',
       )
     }
+    const dbPath = resolve(config.dbPath as string)
+    mkdirSync(dirname(dbPath), { recursive: true })
     url = `file:${dbPath}`
   }
 
