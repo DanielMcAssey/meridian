@@ -39,7 +39,7 @@ export default defineEventHandler(async (event): Promise<LeaderboardResponse> =>
   const totalRaw   = typeof query.total === 'string' ? Number(query.total) : NaN
   const total      = !isNaN(totalRaw) && totalRaw > 0 ? totalRaw : undefined
 
-  const db = getDb()
+  const db = await getDb()
 
   // Fetch one extra row to detect truncation without a separate COUNT query.
   const raw = await db

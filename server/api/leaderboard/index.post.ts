@@ -62,7 +62,7 @@ export default defineEventHandler(async (event) => {
   }
 
   const body = await readValidatedBody(event, bodySchema.parse)
-  const db   = getDb()
+  const db   = await getDb()
   const now  = Math.floor(Date.now() / 1000)
 
   // Shared filter for rank/total queries — same in both branches.
