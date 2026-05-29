@@ -223,11 +223,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
   height: 120%;
   background: linear-gradient(to right, transparent, rgba(0,0,0,0.07) 50%, transparent);
   transform: skewX(-12deg) translateX(0);
-  transition: transform 0.55s ease;
   pointer-events: none;
 }
 .mode-card:hover::before {
   transform: skewX(-12deg) translateX(450%);
+  transition: transform 0.55s ease;
 }
 @media (prefers-color-scheme: dark) {
   .mode-card::before {

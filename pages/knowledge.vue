@@ -99,8 +99,13 @@ function langName(code: string): string {
   return atlas.languageNames[code] ?? code.toUpperCase()
 }
 
-function subdivisionCatLabel(cat: string): string {
-  return cat.charAt(0) + cat.slice(1).toLowerCase()
+function subdivisionCatPlural(cat: string): string {
+  const words = cat.toLowerCase().split(' ')
+  const last = words[words.length - 1]!
+  if (/[^aeiou]y$/.test(last))      words[words.length - 1] = last.slice(0, -1) + 'ies'
+  else if (/(sh|ch|x)$/.test(last)) words[words.length - 1] = last + 'es'
+  else if (!/s$/.test(last))        words[words.length - 1] = last + 's'
+  return words.join(' ')
 }
 
 const total = computed(() => atlas.countries.length)
@@ -449,7 +454,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
                 <!-- Subdivisions -->
                 <div v-if="selected.subdivisions?.length">
                   <h3 class="eyebrow mb-2">
-                    {{ subdivisionCatLabel(selected.subdivisions?.[0]?.cat ?? '') }}s
+                    {{ subdivisionCatPlural(selected.subdivisions?.[0]?.cat ?? '') }}
                     <span class="opacity-50 ml-1">({{ selected.subdivisions.length }})</span>
                   </h3>
                   <p class="text-[13px] text-ink-2 leading-relaxed">

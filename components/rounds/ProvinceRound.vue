@@ -11,12 +11,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{ pick: [country: Country] }>()
 
-// Normalise raw category ("STATE" → "State", "AUTONOMOUS COMMUNITY" → "Autonomous Community")
-const catLabel = computed(() =>
-  (props.round.subdivisionCat ?? 'Region')
-    .toLowerCase()
-    .replace(/\b\w/g, (c) => c.toUpperCase()),
-)
+const catLabel = computed(() => props.round.subdivisionCat ?? 'Region')
 
 const label = computed(() =>
   props.correct
