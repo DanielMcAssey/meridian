@@ -110,8 +110,8 @@ const showGameNav  = computed(() => mounted.value && route.name !== 'index' && !
             v-if="showGameNav"
             class="flex flex-col items-end leading-[1.1]
                    pl-4 border-l border-rule cursor-pointer"
-            title="Change name"
-            @click="go('/')"
+            title="View profile"
+            @click="go('/profile')"
           >
             <span class="font-mono text-[9.5px] tracking-[0.14em] uppercase text-ink-3">Traveller</span>
             <span class="font-serif italic text-lg mt-0.5 max-w-[10rem] truncate">{{ playerName }}</span>
@@ -212,14 +212,14 @@ const showGameNav  = computed(() => mounted.value && route.name !== 'index' && !
             class="w-full flex items-center justify-between
                    px-3 py-3.5 rounded-xl text-left
                    transition-colors duration-150 hover:bg-paper active:bg-paper"
-            title="Change name"
-            @click="go('/')"
+            title="View profile"
+            @click="go('/profile')"
           >
             <div class="flex flex-col leading-[1.1]">
               <span class="font-mono text-[9.5px] tracking-[0.14em] uppercase text-ink-3">Traveller</span>
               <span class="font-serif italic text-lg mt-0.5">{{ playerName }}</span>
             </div>
-            <span class="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">Change</span>
+            <span class="font-mono text-[10px] tracking-[0.12em] uppercase text-ink-3">Profile</span>
           </button>
         </template>
       </nav>

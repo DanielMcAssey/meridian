@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ADVENTURERS, COMPASS_SPIN_SECS, DIFFICULTIES, MIXED_ROUND_TYPES, MODES } from '~/config/game'
+import { ADVENTURERS, COMPASS_SPIN_SECS, DIFFICULTIES, MAX_NAME_LENGTH, MIXED_ROUND_TYPES, MODES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
-const playerName = useLocalStorage('geo.player.name', '')
+const profile  = useProfileStore()
 const settings = useGameSettings()
-const atlas = useAtlasStore()
+const atlas    = useAtlasStore()
 
 const countByDiff = computed<Record<Difficulty, number>>(() => ({
   easy:   pickPool(atlas.countries, 'easy').length,
@@ -20,7 +20,7 @@ const compassStyle = computed(() =>
     : { animation: `gentle-spin ${COMPASS_SPIN_SECS}s linear infinite` },
 )
 
-const name = ref(playerName.value)
+const name = ref(profile.name)
 const difficulty = ref<Difficulty>(settings.difficulty.value)
 const inputRef = ref<HTMLInputElement | null>(null)
 
@@ -29,7 +29,7 @@ const adventurerIndex = ref(0)
 let adventurerTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
-  if (playerName.value) { navigateTo('/menu'); return }
+  if (profile.name) { navigateTo('/menu'); return }
   inputRef.value?.focus()
   adventurerTimer = setInterval(() => {
     adventurerIndex.value = (adventurerIndex.value + 1) % ADVENTURERS.length
@@ -41,9 +41,8 @@ onUnmounted(() => {
 })
 
 function submit() {
-  const n = name.value.trim()
-  if (!n) return
-  playerName.value = n
+  if (!profile.setName(name.value)) return
+  name.value = profile.name  // reflect sanitization back into the field
   settings.difficulty.value = difficulty.value
   navigateTo('/menu')
 }
@@ -124,7 +123,7 @@ function gamesFor(diff: Difficulty): string[] {
                        border-b-[1.5px] border-ink-2 text-ink outline-none transition-[border-color_0.2s]
                        focus:border-[var(--accent)]"
                 type="text"
-                maxlength="28"
+                :maxlength="MAX_NAME_LENGTH"
               />
               <!-- Animated placeholder — hidden once user starts typing -->
               <div
