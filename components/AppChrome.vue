@@ -21,7 +21,7 @@ function go(path: string) {
   navigateTo(path)
 }
 
-function goChallenges() {
+function goAtlas() {
   menuOpen.value = false
   navigateTo(playerName.value ? '/menu' : '/')
 }
@@ -87,8 +87,8 @@ const showGameNav  = computed(() => mounted.value && route.name !== 'index' && !
                    bg-transparent border border-rule-2 px-4 py-2
                    rounded-full text-[13px] tracking-[0.02em] transition-[0.15s]
                    hover:bg-paper hover:border-ink-2"
-            @click="goChallenges()"
-          >The Challenges</button>
+            @click="goAtlas()"
+          >The Atlas</button>
 
           <button
             class="inline-flex items-center
@@ -163,14 +163,14 @@ const showGameNav  = computed(() => mounted.value && route.name !== 'index' && !
         v-if="menuOpen && isNavVisible"
         class="sm:hidden border-t border-rule px-3 py-2"
       >
-        <!-- The Challenges — always visible; redirects to name entry if no name set -->
+        <!-- The Atlas — always visible; redirects to name entry if no name set -->
         <button
           class="w-full flex items-center justify-between
                  px-3 py-3.5 rounded-xl text-left
                  transition-colors duration-150 hover:bg-paper active:bg-paper"
-          @click="goChallenges()"
+          @click="goAtlas()"
         >
-          <span class="font-serif italic text-[19px] tracking-[-0.01em]">The Challenges</span>
+          <span class="font-serif italic text-[19px] tracking-[-0.01em]">The Atlas</span>
           <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="text-ink-3">
             <path d="M3 8h10M9 4l4 4-4 4" />
           </svg>
