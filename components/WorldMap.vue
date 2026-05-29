@@ -76,6 +76,17 @@ function cancelAnim() {
   if (animFrame !== null) { cancelAnimationFrame(animFrame); animFrame = null }
 }
 
+// ── derived data ──────────────────────────────────────────────────────────
+
+const byCode = computed<Record<string, Country>>(() => {
+  const m: Record<string, Country> = {}
+  for (const c of atlas.countries) m[c.code] = c
+  return m
+})
+
+const codes = computed(() => Object.keys(atlas.countryPaths))
+const pin   = computed(() => (props.pinCode ? byCode.value[props.pinCode] ?? null : null))
+
 // ── viewBox watchers ──────────────────────────────────────────────────────
 
 // Keep vb in sync when the atlas first loads (non-pin views reset to full map).
@@ -109,16 +120,6 @@ watch(
   },
   { immediate: true },
 )
-
-// ── derived data ──────────────────────────────────────────────────────────
-
-const byCode = computed<Record<string, Country>>(() => {
-  const m: Record<string, Country> = {}
-  for (const c of atlas.countries) m[c.code] = c
-  return m
-})
-
-const codes = computed(() => Object.keys(atlas.countryPaths))
 
 // ── clamp / zoom helpers ──────────────────────────────────────────────────
 
@@ -340,6 +341,16 @@ function zoomCenter(factor: number) {
         />
       </g>
 
+      <!-- Pin marker (no base ring — country shape highlight serves that purpose) -->
+      <g
+        v-if="pin"
+        class="pin"
+        :transform="`translate(${pin.svgCx},${pin.svgCy})`"
+      >
+        <line x1="0" y1="0" x2="0" y2="-22" class="pin-stem" />
+        <circle cx="0" cy="-22" r="4.5" class="pin-head" />
+        <circle cx="0" cy="-22" r="1.5" class="pin-dot" />
+      </g>
     </svg>
 
     <!-- HUD controls -->

@@ -207,6 +207,11 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .country-reveal { fill: var(--color-ok) !important; stroke: oklch(0.42 0.14 150); stroke-width: 0.8; }
 .country-wrong  { fill: var(--color-bad) !important; stroke: oklch(0.42 0.18 25);  stroke-width: 0.8; }
 
+.pin .pin-stem  { stroke: var(--accent-deep); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.pin .pin-head  { fill: var(--accent); stroke: var(--accent-deep); stroke-width: 0.8; vector-effect: non-scaling-stroke; }
+.pin .pin-dot   { fill: var(--color-paper); }
+.pin { animation: pin-drop 0.5s cubic-bezier(.2,.9,.3,1.4); }
+
 /* ── Menu game-mode cards ────────────────────────────────────────────────── */
 .mode-card::before {
   content: '';
@@ -280,6 +285,10 @@ button { font: inherit; color: inherit; cursor: pointer; }
 @keyframes gentle-spin { to { transform: rotate(360deg); } }
 @keyframes spin         { to { transform: rotate(360deg); } }
 @keyframes pulse        { to { opacity: 0.6; } }
+@keyframes pin-drop {
+  from { transform: translateY(-20px); opacity: 0; }
+  60%  { opacity: 1; }
+}
 @keyframes card-in       { to   { opacity: 1; transform: none; } }
 @keyframes stage-in      { from { opacity: 0; transform: translateY(8px); } }
 @keyframes toast-in      { from { opacity: 0; transform: translateY(6px); } }
