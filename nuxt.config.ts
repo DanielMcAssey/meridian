@@ -35,7 +35,7 @@ export default defineNuxtConfig({
           "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
           "font-src 'self' https://fonts.gstatic.com",
           "img-src 'self' data: blob:",
-          "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+          "connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com https://vitals.vercel-insights.com https://va.vercel-scripts.com",
           "worker-src 'self' blob:",
           "media-src 'self' blob:",
         ].join('; '),
