@@ -71,15 +71,16 @@ export const LEADERBOARD_MUTATION_VERSION = Object.keys(_leaderboardEntryShape).
 
 /** Full row returned by GET /api/leaderboard (server-persisted fields added). */
 export interface LeaderboardRow {
-  id:         number
-  name:       string
-  score:      number
-  correct:    number
-  total:      number
-  mode:       GameMode
-  difficulty: Difficulty
-  userId:     string | null
-  createdAt:  number
+  id:          number
+  name:        string
+  score:       number
+  correct:     number
+  total:       number
+  mode:        GameMode
+  difficulty:  Difficulty
+  userId:      string | null
+  createdAt:   number
+  countryCode: string | null
 }
 
 /** Response envelope for GET /api/leaderboard. */

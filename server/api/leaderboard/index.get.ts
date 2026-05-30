@@ -1,7 +1,7 @@
 import { and, desc, eq } from 'drizzle-orm'
 import type { Difficulty, GameMode, LeaderboardResponse, LeaderboardRow } from '~/types/game'
 import { VALID_DIFFICULTIES, VALID_MODES } from '~/config/game'
-import { scores } from '~/server/db/schema'
+import { scores, users } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
 import { getClientIp } from '~/server/utils/getClientIp'
 
@@ -38,17 +38,19 @@ export default defineEventHandler(async (event): Promise<LeaderboardResponse> =>
   // Fetch one extra row to detect truncation without a separate COUNT query.
   const raw = await db
     .select({
-      id:         scores.id,
-      name:       scores.name,
-      score:      scores.score,
-      correct:    scores.correct,
-      total:      scores.total,
-      mode:       scores.mode,
-      difficulty: scores.difficulty,
-      userId:     scores.userId,
-      createdAt:  scores.createdAt,
+      id:          scores.id,
+      name:        users.name,
+      score:       scores.score,
+      correct:     scores.correct,
+      total:       scores.total,
+      mode:        scores.mode,
+      difficulty:  scores.difficulty,
+      userId:      scores.userId,
+      createdAt:   scores.createdAt,
+      countryCode: users.countryCode,
     })
     .from(scores)
+    .innerJoin(users, eq(scores.userId, users.id))
     .where(and(
       difficulty !== undefined ? eq(scores.difficulty, difficulty) : undefined,
       mode       !== undefined ? eq(scores.mode,       mode)       : undefined,

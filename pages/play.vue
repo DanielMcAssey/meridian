@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Country, RoundResult } from '~/types/game'
-import { DIFFICULTY_TIMER_SECS, ROUND_TIMER_DELAY_MS } from '~/config/game'
+import { DIFFICULTY_TIMER_SECS, ROUND_TIMER_DELAY_MS, modeName } from '~/config/game'
 
 definePageMeta({
   ssr: false,
@@ -10,6 +10,10 @@ definePageMeta({
 const session = useSessionStore()
 const settings = useGameSettings()
 const playerName = useLocalStorage('geo.player.name', '')
+
+useSeoMeta({
+  title: computed(() => `${modeName(session.mode)} — Round ${session.idx + 1} of ${session.rounds.length}`),
+})
 
 // ── Leave guard ──────────────────────────────────────────────────────────────
 // Warn the player before they navigate away or close the tab mid-game.

@@ -99,7 +99,7 @@ export default defineEventHandler(async (event) => {
     .onConflictDoUpdate({ target: users.id, set: { name: body.name, lastSeen: now } })
 
   // ── Insert score ────────────────────────────────────────────────────────────
-  const { userId, gameToken, recoveryCode: _rc, ...scoreFields } = body
+  const { userId, gameToken, recoveryCode: _rc, name: _name, ...scoreFields } = body
   await db.insert(scores).values({ ...scoreFields, userId, gameToken })
 
   // ── Upsert cached user stats ────────────────────────────────────────────────

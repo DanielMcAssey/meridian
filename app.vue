@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { SW_RELOAD_PROTECTED } from '~/config/game'
 
+useHead({
+  titleTemplate: (t) => t ? `${t} — Meridian` : 'Meridian — A Geographical Pastime',
+})
+
 const atlas = useAtlasStore()
 const route = useRoute()
 

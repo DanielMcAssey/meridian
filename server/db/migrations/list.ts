@@ -7,4 +7,5 @@ export const MIGRATIONS: ReadonlyArray<{ name: string; sql: string }> = [
   { name: "20260530150015_glossy_speedball", sql: "ALTER TABLE `users` ADD `recovery_code` text;" },
   { name: "20260530160135_wild_darwin", sql: "ALTER TABLE `users` ADD `link_fail_count` integer DEFAULT 0 NOT NULL;--> statement-breakpoint\nALTER TABLE `users` ADD `link_locked_until` integer;" },
   { name: "20260530170000_meridian_user_stats", sql: "CREATE TABLE `user_stats` (\n\t`user_id` text NOT NULL PRIMARY KEY,\n\t`total_games` integer NOT NULL DEFAULT 0,\n\t`total_correct` integer NOT NULL DEFAULT 0,\n\t`total_rounds` integer NOT NULL DEFAULT 0,\n\t`best_score` integer NOT NULL DEFAULT 0,\n\t`favorite_mode` text,\n\t`favorite_difficulty` text,\n\t`updated_at` integer NOT NULL DEFAULT (unixepoch()),\n\tFOREIGN KEY (`user_id`) REFERENCES `users`(`id`)\n);\n" },
+  { name: "20260530234358_pretty_baron_zemo", sql: "ALTER TABLE `users` ADD `bio` text;--> statement-breakpoint\nALTER TABLE `users` ADD `country_code` text;--> statement-breakpoint\nALTER TABLE `scores` DROP COLUMN `name`;\n" },
 ]

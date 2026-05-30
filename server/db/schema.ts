@@ -4,6 +4,8 @@ import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 export const users = sqliteTable('users', {
   id:              text('id').primaryKey(),
   name:            text('name').notNull(),
+  bio:             text('bio'),
+  countryCode:     text('country_code'),
   firstSeen:       integer('first_seen').notNull().default(sql`(unixepoch())`),
   lastSeen:        integer('last_seen').notNull().default(sql`(unixepoch())`),
   recoveryCode:    text('recovery_code'),
@@ -24,7 +26,6 @@ export const userStats = sqliteTable('user_stats', {
 
 export const scores = sqliteTable('scores', {
   id:         integer('id').primaryKey({ autoIncrement: true }),
-  name:       text('name').notNull(),
   score:      integer('score').notNull(),
   correct:    integer('correct').notNull(),
   total:      integer('total').notNull(),

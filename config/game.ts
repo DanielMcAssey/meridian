@@ -156,6 +156,9 @@ export const COMPASS_SPIN_SECS = 220
 /** Maximum character length for a player name. */
 export const MAX_NAME_LENGTH = 28
 
+/** Maximum character length for a profile bio. */
+export const MAX_BIO_LENGTH = 200
+
 /** Names cycled through the animated placeholder on the landing page name field. */
 export const ADVENTURERS = [
   'Captain Nellie Bly',

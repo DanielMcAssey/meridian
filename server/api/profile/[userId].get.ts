@@ -17,9 +17,12 @@ export default defineEventHandler(async (event) => {
   const { userId } = await getValidatedRouterParams(event, paramsSchema.parse)
   const db = await getDb()
 
-  const [user] = await db.select({ name: users.name, firstSeen: users.firstSeen })
-    .from(users)
-    .where(eq(users.id, userId))
+  const [user] = await db.select({
+    name:        users.name,
+    bio:         users.bio,
+    countryCode: users.countryCode,
+    firstSeen:   users.firstSeen,
+  }).from(users).where(eq(users.id, userId))
 
   if (!user) {
     throw createError({ statusCode: 404, message: 'Profile not found' })
@@ -48,6 +51,8 @@ export default defineEventHandler(async (event) => {
 
   return {
     name:         user.name,
+    bio:          user.bio ?? null,
+    countryCode:  user.countryCode ?? null,
     firstSeen:    user.firstSeen,
     stats:        stats ?? null,
     recentScores,

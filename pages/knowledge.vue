@@ -1,6 +1,11 @@
 <script setup lang="ts">
 import type { Country } from '~/types/game'
 
+useSeoMeta({
+  title: 'The Atlas',
+  description: 'Browse all countries in Meridian — regions, tiers, and game availability.',
+})
+
 const atlas  = useAtlasStore()
 const route  = useRoute()
 const router = useRouter()

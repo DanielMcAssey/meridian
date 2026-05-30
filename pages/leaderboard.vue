@@ -18,10 +18,17 @@ import { useQuery } from '@tanstack/vue-query'
 import type { Difficulty, GameMode, LeaderboardResponse, TrophyKind } from '~/types/game'
 import { DIFFICULTIES, MODES, POOL_LABEL, ROUND_COUNTS, VALID_ROUND_COUNTS, modeName } from '~/config/game'
 
+useSeoMeta({
+  title: 'Leaderboard',
+  description: 'The Hall of Travellers — top scores across all game modes and difficulty levels.',
+  ogTitle: 'Leaderboard — Meridian',
+  ogDescription: 'The Hall of Travellers — top scores across all game modes and difficulty levels.',
+  twitterTitle: 'Leaderboard — Meridian',
+  twitterDescription: 'The Hall of Travellers — top scores across all game modes and difficulty levels.',
+})
+
 const playerName = useLocalStorage('geo.player.name', '')
 const userId     = useUserId()
-const settings   = useGameSettings()
-const session    = useSessionStore()
 const route      = useRoute()
 const router     = useRouter()
 
@@ -33,20 +40,20 @@ function initMode(): GameMode | 'any' {
   const q = route.query.mode
   if (typeof q === 'string' && (q === 'any' || MODES.some((m) => m.id === q)))
     return q as GameMode | 'any'
-  return session.hasSession ? session.mode : 'mixed'
+  return 'any'
 }
 
 function initDifficulty(): Difficulty | 'any' {
   const q = route.query.difficulty
   if (typeof q === 'string' && (q === 'any' || DIFFICULTIES.some((d) => d.id === q)))
     return q as Difficulty | 'any'
-  return session.hasSession ? session.difficulty : settings.difficulty.value
+  return 'any'
 }
 
 function initRounds(): number {
   const n = Number(route.query.rounds)
   if (route.query.rounds !== undefined && (n === 0 || VALID_ROUND_COUNTS.has(n))) return n
-  return session.hasSession ? session.rounds.length : settings.rounds.value
+  return 0
 }
 
 const filterMode       = ref<GameMode | 'any'>(initMode())
@@ -228,21 +235,31 @@ function trophyFor(rank: number): TrophyKind | null {
         </span>
 
         <!-- Name -->
-        <component
-          :is="entry.userId ? 'a' : 'span'"
-          :href="entry.userId ? `/profile/${entry.userId}` : undefined"
-          :target="entry.userId ? '_blank' : undefined"
-          :rel="entry.userId ? 'noopener noreferrer' : undefined"
-          class="font-serif text-[19px] text-ink truncate"
-          :class="{ 'hover:underline underline-offset-2 decoration-ink-3 cursor-pointer': entry.userId }"
-        >
-          {{ entry.name }}
-          <em
-            v-if="entry.userId && entry.userId === userId"
-            class="font-mono not-italic text-[13px] ml-2 tracking-[0.08em]"
-            :style="{ color: 'var(--accent)' }"
-          >(you)</em>
-        </component>
+        <div class="flex items-center gap-2 min-w-0">
+          <img
+            v-if="entry.countryCode"
+            :src="`/flags/${entry.countryCode.toLowerCase()}.svg`"
+            :alt="entry.countryCode"
+            width="20"
+            height="14"
+            class="rounded-sm shrink-0 object-cover"
+          />
+          <component
+            :is="entry.userId ? 'a' : 'span'"
+            :href="entry.userId ? `/profile/${entry.userId}` : undefined"
+            :target="entry.userId ? '_blank' : undefined"
+            :rel="entry.userId ? 'noopener noreferrer' : undefined"
+            class="font-serif text-[19px] text-ink truncate"
+            :class="{ 'hover:underline underline-offset-2 decoration-ink-3 cursor-pointer': entry.userId }"
+          >
+            {{ entry.name }}
+            <em
+              v-if="entry.userId && entry.userId === userId"
+              class="font-mono not-italic text-[13px] ml-2 tracking-[0.08em]"
+              :style="{ color: 'var(--accent)' }"
+            >(you)</em>
+          </component>
+        </div>
 
         <!-- Game + Difficulty — hidden on mobile -->
         <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2">{{ modeName(entry.mode) }}</span>

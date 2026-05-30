@@ -10,6 +10,10 @@ const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
 const { isPending, isPaused } = useLeaderboardMutation()
 
+useSeoMeta({
+  title: computed(() => `${session.finalScore} pts — Your Results`),
+})
+
 const total    = computed(() => session.results.length)
 const accuracy = computed(() =>
   total.value > 0 ? Math.round((session.finalCorrect / total.value) * 100) : 0,
@@ -144,7 +148,7 @@ function playAgain() {
     <div class="flex gap-3 flex-wrap">
       <button class="btn-primary" @click="playAgain">Play again</button>
       <button class="btn-ghost" @click="navigateTo('/menu')">Change game</button>
-      <button class="btn-ghost" @click="navigateTo('/leaderboard')">View leaderboard</button>
+      <button class="btn-ghost" @click="navigateTo({ path: '/leaderboard', query: { mode: session.mode, difficulty: session.difficulty, rounds: String(session.results.length) } })">View leaderboard</button>
     </div>
   </main>
 </template>

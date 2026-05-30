@@ -7,6 +7,11 @@ definePageMeta({
   middleware: ['require-name'],
 })
 
+useSeoMeta({
+  title: 'Choose Your Game',
+  description: 'Pick a game mode, difficulty, and round count. Eight ways to test your geographical knowledge.',
+})
+
 const atlas    = useAtlasStore()
 const session  = useSessionStore()
 const settings = useGameSettings()

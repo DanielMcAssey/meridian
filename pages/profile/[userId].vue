@@ -8,11 +8,18 @@ const route  = useRoute()
 const userId = route.params.userId as string
 
 // ── Online detection ──────────────────────────────────────────────────────────
-const isOnline = ref(true)
+const isOnline = ref(import.meta.client ? navigator.onLine : true)
+
+function setOnline()  { isOnline.value = true }
+function setOffline() { isOnline.value = false }
+
 onMounted(() => {
-  isOnline.value = navigator.onLine
-  window.addEventListener('online',  () => { isOnline.value = true })
-  window.addEventListener('offline', () => { isOnline.value = false })
+  window.addEventListener('online',  setOnline)
+  window.addEventListener('offline', setOffline)
+})
+onUnmounted(() => {
+  window.removeEventListener('online',  setOnline)
+  window.removeEventListener('offline', setOffline)
 })
 
 // ── Profile data ──────────────────────────────────────────────────────────────
@@ -34,6 +41,8 @@ interface ProfileStats {
 }
 interface ProfileData {
   name:         string
+  bio:          string | null
+  countryCode:  string | null
   firstSeen:    number
   stats:        ProfileStats | null
   recentScores: RecentScore[]
@@ -48,33 +57,42 @@ const { data, isPending, isError } = useQuery<ProfileData>({
   networkMode: 'offlineFirst',
 })
 
+const profileTitle = computed(() =>
+  data.value?.name ? `${data.value.name}'s Voyages` : 'Traveller\'s Log',
+)
+const profileDescription = computed(() => {
+  if (!data.value) return 'View this traveller\'s geography game history on Meridian.'
+  if (!data.value.stats) return `${data.value.name} hasn't completed any voyages yet.`
+  return `${data.value.name} has completed ${data.value.stats.totalGames} voyages with a best score of ${data.value.stats.bestScore}.`
+})
+
+useSeoMeta({
+  title:              profileTitle,
+  description:        profileDescription,
+  ogTitle:            computed(() => `${profileTitle.value} — Meridian`),
+  ogDescription:      profileDescription,
+  twitterTitle:       computed(() => `${profileTitle.value} — Meridian`),
+  twitterDescription: profileDescription,
+})
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function formatDate(unix: number) {
   return new Date(unix * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+function formatDateShort(unix: number) {
+  return new Date(unix * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })
 }
 
 function accuracy(correct: number, total: number) {
   if (!total) return '—'
   return `${Math.round((correct / total) * 100)}%`
 }
-
 </script>
 
 <template>
   <main class="screen">
     <div class="max-w-xl">
-
-      <!-- ── Back link ─────────────────────────────────────────────────────── -->
-      <NuxtLink
-        to="/leaderboard"
-        class="inline-flex items-center gap-1.5 font-mono text-[11px] tracking-[0.12em] uppercase
-               text-ink-3 hover:text-ink transition-colors duration-150 mb-8"
-      >
-        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M10 3L5 8l5 5" />
-        </svg>
-        Leaderboard
-      </NuxtLink>
 
       <!-- ── Offline state ──────────────────────────────────────────────────── -->
       <div v-if="!isOnline" class="flex flex-col items-start gap-5 py-16">
@@ -111,15 +129,35 @@ function accuracy(correct: number, total: number) {
 
         <!-- Header -->
         <span class="eyebrow">Traveller's Log</span>
-        <h1
-          class="font-serif font-normal tracking-[-0.02em] leading-none mt-3 mb-1"
-          style="font-size: clamp(34px, 5vw, 52px)"
-        >
-          {{ data.name }}
-        </h1>
+        <div class="flex items-center gap-3 mt-3 mb-1 flex-wrap">
+          <img
+            v-if="data.countryCode"
+            :src="`/flags/${data.countryCode.toLowerCase()}.svg`"
+            :alt="data.countryCode"
+            width="36"
+            height="26"
+            class="rounded shrink-0 object-cover"
+          />
+          <h1
+            class="font-serif font-normal tracking-[-0.02em] leading-none"
+            style="font-size: clamp(34px, 5vw, 52px)"
+          >
+            {{ data.name }}
+          </h1>
+        </div>
+        <p v-if="data.bio" class="text-[15px] text-ink-2 mt-3 mb-1">{{ data.bio }}</p>
         <p class="text-[13.5px] text-ink-3 mb-8">
           Exploring since {{ formatDate(data.firstSeen) }}
         </p>
+
+        <!-- ── No voyages ──────────────────────────────────────────────────── -->
+        <div
+          v-if="!data.stats && data.recentScores.length === 0"
+          class="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] text-ink-2 mb-5"
+          style="border-color: var(--color-rule-2); background: var(--color-bg-tint)"
+        >
+          This traveller hasn't completed any voyages yet.
+        </div>
 
         <!-- ── Stats grid ──────────────────────────────────────────────────── -->
         <section
@@ -178,15 +216,6 @@ function accuracy(correct: number, total: number) {
           </dl>
         </section>
 
-        <!-- No stats yet -->
-        <div
-          v-else
-          class="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] text-ink-2 mb-5"
-          style="border-color: var(--color-rule-2); background: var(--color-bg-tint)"
-        >
-          This traveller hasn't completed any voyages yet.
-        </div>
-
         <!-- ── Recent voyages ──────────────────────────────────────────────── -->
         <section
           v-if="data.recentScores.length > 0"
@@ -202,23 +231,25 @@ function accuracy(correct: number, total: number) {
           <ol class="list-none m-0 p-0">
             <!-- Column header -->
             <li class="grid gap-3 px-5 py-2.5 bg-bg-tint border-b border-rule
-                        grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto]">
+                        grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_1fr_1fr_auto_auto]">
               <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Game</span>
               <span class="hidden sm:block font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Country Pool</span>
+              <span class="hidden sm:block font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Date</span>
               <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Correct</span>
               <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3 text-right">Score</span>
             </li>
 
             <li
-              v-for="(s, i) in data.recentScores"
-              :key="i"
+              v-for="s in data.recentScores"
+              :key="s.createdAt"
               class="grid gap-3 px-5 py-3 border-t border-rule items-center text-[14px]
-                     grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto]"
+                     grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_1fr_1fr_auto_auto]"
             >
               <span class="font-mono text-[12.5px] text-ink-2">{{ modeName(s.mode) }}</span>
               <span class="hidden sm:block font-mono text-[12.5px] text-ink-2">
                 {{ POOL_LABEL[s.difficulty as keyof typeof POOL_LABEL] ?? s.difficulty }}
               </span>
+              <span class="hidden sm:block font-mono text-[12.5px] text-ink-3">{{ formatDateShort(s.createdAt) }}</span>
               <span class="font-mono text-ink-2">{{ s.correct }}/{{ s.total }}</span>
               <span class="font-mono font-semibold text-right text-ink">{{ s.score }}</span>
             </li>

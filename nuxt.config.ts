@@ -1,29 +1,5 @@
 import tailwindcss from '@tailwindcss/vite'
 import svgLoader from 'vite-svg-loader'
-import { createHash } from 'node:crypto'
-import { readFileSync, readdirSync } from 'node:fs'
-import { join } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const rootDir = fileURLToPath(new URL('.', import.meta.url))
-
-// @vite-pwa/nuxt scopes globPatterns to the Vite bundle output and misses
-// files in public/ sub-directories entirely.  Enumerate them here so Workbox
-// includes them in the precache manifest at SW install time rather than only
-// caching them on first encounter.  Content hash = stable across CI rebuilds,
-// invalidates automatically when a file actually changes.
-function svgManifestEntries(subdir: string) {
-  const dir = join(rootDir, 'public', subdir)
-  return readdirSync(dir)
-    .filter(f => f.endsWith('.svg'))
-    .map(f => ({
-      url: `/${subdir}/${f}`,
-      revision: createHash('sha1').update(readFileSync(join(dir, f))).digest('hex').slice(0, 8),
-    }))
-}
-
-const flagEntries = svgManifestEntries('flags')
-const mapEntries  = svgManifestEntries('maps')
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
@@ -93,9 +69,12 @@ export default defineNuxtConfig({
       title: 'Meridian — A Geographical Pastime',
       meta: [
         { name: 'viewport', content: 'width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no' },
-        { name: 'description', content: 'A geographical guessing game of flags, pins, and maps.' },
+        { name: 'description', content: 'A geographical guessing game of flags, pins, maps, and more. Test your world knowledge.' },
         { name: 'theme-color', content: '#1e1c1a' },
         { name: 'apple-mobile-web-app-title', content: 'Meridian' },
+        { property: 'og:site_name', content: 'Meridian' },
+        { property: 'og:type', content: 'website' },
+        { name: 'twitter:card', content: 'summary' },
       ],
       link: [
         // ── Favicons ──────────────────────────────────────────────────────
@@ -161,8 +140,6 @@ export default defineNuxtConfig({
       // on every deploy.
       additionalManifestEntries: [
         { url: '/', revision: String(Date.now()) },
-        ...flagEntries,
-        ...mapEntries,
       ],
 
       // For any navigation request that isn't an API call or a Nuxt asset,

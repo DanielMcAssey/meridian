@@ -1,21 +1,80 @@
 <script setup lang="ts">
 import QRCode from 'qrcode'
-import { MAX_NAME_LENGTH } from '~/config/game'
+import { useQuery } from '@tanstack/vue-query'
+import { MAX_BIO_LENGTH, MAX_NAME_LENGTH } from '~/config/game'
 
 definePageMeta({
   ssr: false,
   middleware: ['require-name'],
 })
 
+useSeoMeta({ title: 'Your Profile' })
+
 const profile      = useProfileStore()
 const recoveryCode = useRecoveryCode()
+const atlas        = useAtlasStore()
 
+// ── Name ──────────────────────────────────────────────────────────────────────
 const nameInput   = ref(profile.name)
 const nameSaved   = ref(false)
 const showDelete  = ref(false)
 const confirmText = ref('')
 const qrDataUrl   = ref('')
 const codeCopied  = ref(false)
+
+// ── Public identity ───────────────────────────────────────────────────────────
+const bioInput      = ref('')
+const countryInput  = ref('')
+const identitySaved = ref(false)
+const identityError = ref('')
+const identitySaving = ref(false)
+
+// Fetch current bio + countryCode from the server once the recovery code is available.
+const { data: serverProfile } = useQuery<{ bio: string | null; countryCode: string | null }>({
+  queryKey:  ['profile', profile.userId],
+  queryFn:   () => $fetch<{ bio: string | null; countryCode: string | null }>(`/api/profile/${profile.userId}` as string),
+  enabled:   computed(() => !!profile.userId && !!recoveryCode.value),
+  staleTime: 1000 * 60 * 5,
+  retry:     1,
+})
+
+const identityInitialised = ref(false)
+watch(serverProfile, (data) => {
+  if (!data || identityInitialised.value) return
+  bioInput.value     = data.bio     ?? ''
+  countryInput.value = data.countryCode ?? ''
+  identityInitialised.value = true
+})
+
+const sortedCountries = computed(() =>
+  [...atlas.countries].sort((a, b) => a.name.localeCompare(b.name)),
+)
+
+async function saveIdentity() {
+  if (!profile.userId || !recoveryCode.value) return
+  identitySaving.value = true
+  identityError.value  = ''
+  try {
+    await $fetch('/api/profile/update', {
+      method: 'POST',
+      body: {
+        userId:       profile.userId,
+        recoveryCode: recoveryCode.value,
+        bio:          bioInput.value.trim() || null,
+        countryCode:  countryInput.value   || null,
+      },
+    })
+    identitySaved.value = true
+    setTimeout(() => { identitySaved.value = false }, 2800)
+  }
+  catch (e: unknown) {
+    const msg = (e as { data?: { message?: string } })?.data?.message
+    identityError.value = msg ?? 'Failed to save — please try again.'
+  }
+  finally {
+    identitySaving.value = false
+  }
+}
 
 const recoveryUri = computed(() =>
   profile.userId && recoveryCode.value
@@ -126,21 +185,6 @@ function deleteProfile() {
             />
           </label>
 
-          <!-- Warning -->
-          <div
-            class="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] text-ink-2"
-            style="border-color: var(--color-rule-2); background: var(--color-bg-tint)"
-          >
-            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-px" style="color: var(--accent-deep)" aria-hidden="true">
-              <path d="M8 2L14.5 13.5H1.5L8 2Z" />
-              <line x1="8" y1="7" x2="8" y2="9.5" />
-              <circle cx="8" cy="11.5" r="0.5" fill="currentColor" />
-            </svg>
-            <span>
-              Previous leaderboard entries will retain your old name — only new scores will appear under the updated one.
-            </span>
-          </div>
-
           <div class="flex items-center gap-3 flex-wrap">
             <button
               type="submit"
@@ -162,6 +206,134 @@ function deleteProfile() {
               >
                 ✓ Name updated
               </span>
+            </Transition>
+          </div>
+        </form>
+      </section>
+
+      <!-- ── Public Identity ──────────────────────────────────────────────────── -->
+      <section
+        class="rounded-[18px] border border-rule bg-paper px-6 py-6 mb-5"
+        :style="{ boxShadow: 'var(--shadow-sm)' }"
+      >
+        <div class="flex items-start gap-3 mb-5">
+          <!-- Globe icon -->
+          <svg viewBox="0 0 40 40" width="32" height="32" class="shrink-0 mt-0.5" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="var(--color-rule-2)" stroke-width="1.5" />
+            <ellipse cx="20" cy="20" rx="7" ry="17" fill="none" stroke="var(--accent)" stroke-width="1.5" />
+            <line x1="3" y1="20" x2="37" y2="20" stroke="var(--accent)" stroke-width="1.5" />
+            <line x1="6" y1="12" x2="34" y2="12" stroke="var(--color-ink)" stroke-width="1" opacity="0.3" />
+            <line x1="6" y1="28" x2="34" y2="28" stroke="var(--color-ink)" stroke-width="1" opacity="0.3" />
+          </svg>
+          <div>
+            <h2 class="font-serif font-normal text-[22px] tracking-[-0.015em] m-0 leading-tight">
+              Public identity
+            </h2>
+            <p class="text-[13.5px] text-ink-2 mt-1 m-0">
+              Shown on your profile and next to your name on the leaderboard.
+            </p>
+          </div>
+        </div>
+
+        <!-- Requires first voyage -->
+        <div
+          v-if="!recoveryCode"
+          class="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] text-ink-2"
+          style="border-color: var(--color-rule-2); background: var(--color-bg-tint)"
+        >
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-px" style="color: var(--color-ink-3)" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5" />
+            <line x1="8" y1="5.5" x2="8" y2="8.5" />
+            <circle cx="8" cy="10.5" r="0.5" fill="currentColor" />
+          </svg>
+          <span>Complete your first voyage to set up your public identity.</span>
+        </div>
+
+        <form v-else class="flex flex-col gap-5" @submit.prevent="saveIdentity">
+          <!-- Country selector -->
+          <label class="flex flex-col gap-2">
+            <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Home nation</span>
+            <div class="relative">
+              <select
+                v-model="countryInput"
+                class="w-full appearance-none bg-transparent border-0 border-b-[1.5px] border-ink-2
+                       text-[15px] text-ink py-2.5 pr-8 outline-none cursor-pointer
+                       transition-[border-color] duration-200 focus:border-[var(--accent)]"
+              >
+                <option value="">None</option>
+                <option
+                  v-for="c in sortedCountries"
+                  :key="c.code"
+                  :value="c.code"
+                >{{ c.name }}</option>
+              </select>
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none absolute right-1 top-1/2 -translate-y-1/2 text-ink-3" aria-hidden="true">
+                <path d="M4 6l4 4 4-4" />
+              </svg>
+            </div>
+            <div v-if="countryInput" class="flex items-center gap-2">
+              <img
+                :src="`/flags/${countryInput.toLowerCase()}.svg`"
+                :alt="countryInput"
+                width="28"
+                height="20"
+                class="rounded-sm object-cover"
+              />
+              <span class="text-[13px] text-ink-2">
+                {{ sortedCountries.find(c => c.code === countryInput)?.name }}
+              </span>
+            </div>
+          </label>
+
+          <!-- Bio textarea -->
+          <label class="flex flex-col gap-2">
+            <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
+              Bio
+              <span class="normal-case text-[11px] tracking-normal text-ink-3 ml-1">(optional)</span>
+            </span>
+            <textarea
+              v-model="bioInput"
+              :maxlength="MAX_BIO_LENGTH"
+              rows="3"
+              placeholder="A few words about your travels…"
+              class="bg-transparent border border-rule rounded-xl px-4 py-3 text-[15px] text-ink
+                     outline-none resize-none transition-[border-color] duration-200
+                     focus:border-[var(--accent)] placeholder:text-ink-3"
+            />
+            <span class="text-[11px] text-ink-3 text-right">{{ bioInput.length }}/{{ MAX_BIO_LENGTH }}</span>
+          </label>
+
+          <div class="flex items-center gap-3 flex-wrap">
+            <button
+              type="submit"
+              class="btn-primary"
+              :disabled="identitySaving"
+            >
+              {{ identitySaving ? 'Saving…' : 'Save identity' }}
+            </button>
+            <Transition
+              enter-from-class="opacity-0 translate-y-1"
+              leave-to-class="opacity-0"
+              enter-active-class="transition-[opacity,transform] duration-300 ease-out"
+              leave-active-class="transition-opacity duration-200 ease-in"
+            >
+              <span
+                v-if="identitySaved"
+                class="font-mono text-[11px] tracking-[0.14em] uppercase"
+                style="color: var(--color-ok)"
+              >✓ Saved</span>
+            </Transition>
+            <Transition
+              enter-from-class="opacity-0"
+              leave-to-class="opacity-0"
+              enter-active-class="transition-opacity duration-200"
+              leave-active-class="transition-opacity duration-150"
+            >
+              <span
+                v-if="identityError"
+                class="text-[13px]"
+                style="color: var(--color-bad)"
+              >{{ identityError }}</span>
             </Transition>
           </div>
         </form>
