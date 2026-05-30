@@ -6,9 +6,7 @@ export default defineEventHandler(async () => {
     await db.run(sql`SELECT 1`)
     return { status: 'ok' }
   } catch (e) {
-    throw createError({
-      statusCode: 503,
-      message: `Database unavailable: ${e instanceof Error ? e.message : String(e)}`,
-    })
+    console.error('[healthz] Database unavailable:', e)
+    throw createError({ statusCode: 503, message: 'Service temporarily unavailable' })
   }
 })

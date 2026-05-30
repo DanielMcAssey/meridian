@@ -10,7 +10,37 @@ export default defineNuxtConfig({
 
   // All pages are client-side only — the server only handles /api/* routes.
   routeRules: {
-    '/**': { ssr: false },
+    '/**': {
+      ssr: false,
+      headers: {
+        // Prevent MIME-type sniffing
+        'X-Content-Type-Options': 'nosniff',
+        // Disallow framing to block clickjacking
+        'X-Frame-Options': 'DENY',
+        // Limit referrer information sent to third parties
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        // Restrict camera to same origin only (used by LinkAccountModal)
+        'Permissions-Policy': 'camera=(self)',
+        // Content Security Policy
+        // script-src: 'unsafe-inline' required for Nuxt hydration chunks;
+        //   va.vercel-scripts.com for Vercel Analytics.
+        // style-src: 'unsafe-inline' required for Tailwind v4 inline styles;
+        //   fonts.googleapis.com for Google Fonts CSS.
+        // img-src: data: for QR code canvas data-URIs; blob: for camera frames.
+        // connect-src: vitals.vercel-insights.com for Vercel Speed Insights.
+        // worker-src: blob: required by Workbox service worker injection.
+        'Content-Security-Policy': [
+          "default-src 'self'",
+          "script-src 'self' 'unsafe-inline' https://va.vercel-scripts.com",
+          "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+          "font-src 'self' https://fonts.gstatic.com",
+          "img-src 'self' data: blob:",
+          "connect-src 'self' https://vitals.vercel-insights.com https://va.vercel-scripts.com",
+          "worker-src 'self' blob:",
+          "media-src 'self' blob:",
+        ].join('; '),
+      },
+    },
   },
   devtools: { enabled: false },
 
@@ -28,6 +58,10 @@ export default defineNuxtConfig({
     // NUXT_TURSO_AUTH_TOKEN=<token>
     tursoDatabaseUrl: '',
     tursoAuthToken:   '',
+    // Set NUXT_TRUST_PROXY=1 when running behind a trusted reverse proxy
+    // (Nginx, Cloudflare, etc.) that sets X-Forwarded-For.  Without this,
+    // rate limiters use the raw socket address to prevent IP spoofing.
+    trustProxy: '',
   },
 
   app: {

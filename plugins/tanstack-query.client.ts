@@ -62,7 +62,7 @@ export default defineNuxtPlugin((nuxtApp) => {
     persistQueryClient({
       queryClient,
       persister,
-      maxAge: 1_000 * 60 * 60 * 24 * 7,
+      maxAge: 1_000 * 60 * 60 * 24,
       buster: CACHE_BUSTER,
     })
   } catch {

@@ -2,10 +2,13 @@ import { sql } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
-  id:        text('id').primaryKey(),
-  name:      text('name').notNull(),
-  firstSeen: integer('first_seen').notNull().default(sql`(unixepoch())`),
-  lastSeen:  integer('last_seen').notNull().default(sql`(unixepoch())`),
+  id:              text('id').primaryKey(),
+  name:            text('name').notNull(),
+  firstSeen:       integer('first_seen').notNull().default(sql`(unixepoch())`),
+  lastSeen:        integer('last_seen').notNull().default(sql`(unixepoch())`),
+  recoveryCode:    text('recovery_code'),
+  linkFailCount:   integer('link_fail_count').notNull().default(0),
+  linkLockedUntil: integer('link_locked_until'),
 })
 
 export const scores = sqliteTable('scores', {

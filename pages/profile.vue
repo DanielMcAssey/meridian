@@ -1,15 +1,33 @@
 <script setup lang="ts">
+import QRCode from 'qrcode'
 import { MAX_NAME_LENGTH } from '~/config/game'
-import { sanitizeName } from '~/stores/profile'
 
 definePageMeta({ ssr: false })
 
-const profile = useProfileStore()
+const profile      = useProfileStore()
+const recoveryCode = useRecoveryCode()
 
 const nameInput   = ref(profile.name)
 const nameSaved   = ref(false)
 const showDelete  = ref(false)
 const confirmText = ref('')
+const qrDataUrl   = ref('')
+const codeCopied  = ref(false)
+
+const recoveryUri = computed(() =>
+  profile.userId && recoveryCode.value
+    ? `meridian://link?uid=${profile.userId}&rc=${recoveryCode.value}`
+    : '',
+)
+
+watch(recoveryUri, async (uri) => {
+  if (!uri) { qrDataUrl.value = ''; return }
+  qrDataUrl.value = await QRCode.toDataURL(uri, {
+    width: 280,
+    margin: 2,
+    color: { dark: '#000000', light: '#ffffff' },
+  })
+}, { immediate: true })
 
 onMounted(() => {
   if (!profile.name) navigateTo('/')
@@ -21,6 +39,15 @@ function saveName() {
   nameInput.value = profile.name  // reflect any sanitization back into the field
   nameSaved.value = true
   setTimeout(() => { nameSaved.value = false }, 2800)
+}
+
+async function copyCode() {
+  if (!recoveryUri.value) return
+  try {
+    await navigator.clipboard.writeText(recoveryUri.value)
+    codeCopied.value = true
+    setTimeout(() => { codeCopied.value = false }, 2800)
+  } catch { /* clipboard unavailable */ }
 }
 
 function deleteProfile() {
@@ -122,6 +149,92 @@ function deleteProfile() {
             </Transition>
           </div>
         </form>
+      </section>
+
+      <!-- ── Recovery Passport ────────────────────────────────────────────────── -->
+      <section
+        class="rounded-[18px] border border-rule bg-paper px-6 py-6 mb-5"
+        :style="{ boxShadow: 'var(--shadow-sm)' }"
+      >
+        <div class="flex items-start gap-3 mb-5">
+          <!-- Key icon -->
+          <svg viewBox="0 0 40 40" width="32" height="32" class="shrink-0 mt-0.5" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="var(--color-rule-2)" stroke-width="1.5" />
+            <circle cx="15" cy="18" r="5" fill="none" stroke="var(--accent)" stroke-width="1.8" />
+            <line x1="19.5" y1="20.5" x2="27" y2="28" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" />
+            <line x1="24" y1="25" x2="26" y2="23" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+          <div>
+            <h2 class="font-serif font-normal text-[22px] tracking-[-0.015em] m-0 leading-tight">
+              Recovery passport
+            </h2>
+            <p class="text-[13.5px] text-ink-2 mt-1 m-0">
+              Scan this QR code on a new device to link your account.
+            </p>
+          </div>
+        </div>
+
+        <!-- QR code available -->
+        <div v-if="qrDataUrl" class="flex flex-col items-center gap-5">
+          <div
+            class="rounded-2xl overflow-hidden border border-rule p-3 bg-white"
+            style="width: fit-content"
+          >
+            <img :src="qrDataUrl" alt="Recovery QR code" width="280" height="280" class="block" />
+          </div>
+
+          <!-- Privacy notice -->
+          <div
+            class="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] text-ink-2 w-full"
+            style="border-color: var(--color-rule-2); background: var(--color-bg-tint)"
+          >
+            <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-px" style="color: var(--accent-deep)" aria-hidden="true">
+              <path d="M8 2L14.5 13.5H1.5L8 2Z" />
+              <line x1="8" y1="7" x2="8" y2="9.5" />
+              <circle cx="8" cy="11.5" r="0.5" fill="currentColor" />
+            </svg>
+            <span>Keep this private — anyone with this code can link your account to their device.</span>
+          </div>
+
+          <!-- Copy button + confirmation -->
+          <div class="flex items-center gap-3 flex-wrap self-start">
+            <button
+              type="button"
+              class="btn-ghost text-[13.5px]"
+              @click="copyCode"
+            >
+              Copy recovery code
+            </button>
+            <Transition
+              enter-from-class="opacity-0 translate-y-1"
+              leave-to-class="opacity-0"
+              enter-active-class="transition-[opacity,transform] duration-300 ease-out"
+              leave-active-class="transition-opacity duration-200 ease-in"
+            >
+              <span
+                v-if="codeCopied"
+                class="font-mono text-[11px] tracking-[0.14em] uppercase"
+                style="color: var(--color-ok)"
+              >
+                ✓ Copied
+              </span>
+            </Transition>
+          </div>
+        </div>
+
+        <!-- Passport not yet generated -->
+        <div
+          v-else
+          class="flex items-start gap-2.5 rounded-xl border px-4 py-3 text-[13px] text-ink-2"
+          style="border-color: var(--color-rule-2); background: var(--color-bg-tint)"
+        >
+          <svg viewBox="0 0 16 16" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="shrink-0 mt-px" style="color: var(--color-ink-3)" aria-hidden="true">
+            <circle cx="8" cy="8" r="6.5" />
+            <line x1="8" y1="5.5" x2="8" y2="8.5" />
+            <circle cx="8" cy="10.5" r="0.5" fill="currentColor" />
+          </svg>
+          <span>Complete your first voyage to generate your recovery passport.</span>
+        </div>
       </section>
 
       <!-- ── Danger zone ────────────────────────────────────────────────────── -->

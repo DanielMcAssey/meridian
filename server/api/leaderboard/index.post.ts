@@ -2,20 +2,19 @@ import { z } from 'zod'
 import { and, count, eq, sql } from 'drizzle-orm'
 import { VALID_DIFFICULTY_IDS, VALID_MODE_IDS, VALID_ROUND_COUNTS } from '~/config/game'
 import { maxPointsPerRound } from '~/utils/scoring'
+import { sanitizeName } from '~/utils/sanitizeName'
 import { scores, users } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
-
-// ── Rate limiting ─────────────────────────────────────────────────────────────
-// 10 submissions per IP per minute.
-// NOTE: reads x-forwarded-for which can be spoofed if not behind a trusted
-// reverse proxy (Nginx, Cloudflare, etc.) that strips and re-adds the header.
+import { getClientIp } from '~/server/utils/getClientIp'
 
 const isRateLimited = createRateLimiter(10)
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
 const bodySchema = z.object({
-  name:       z.string().min(1).max(28).trim(),
+  name:       z.string().min(1).max(28).trim()
+                .transform(sanitizeName)
+                .refine((n) => n.length > 0, { message: 'name is empty after sanitisation' }),
   score:      z.number().int().min(0),
   correct:    z.number().int().min(0),
   total:      z.number().int().min(1),
@@ -53,9 +52,7 @@ async function rankResponse(db: DB, filter: SQL | undefined, score: number) {
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default defineEventHandler(async (event) => {
-  const ip = (getRequestHeader(event, 'x-forwarded-for') ?? '').split(',')[0]?.trim()
-           || event.node.req.socket?.remoteAddress
-           || 'unknown'
+  const ip = getClientIp(event)
 
   if (isRateLimited(ip)) {
     throw createError({ statusCode: 429, message: 'Too many submissions — please wait a moment' })

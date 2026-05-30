@@ -20,9 +20,10 @@ const compassStyle = computed(() =>
     : { animation: `gentle-spin ${COMPASS_SPIN_SECS}s linear infinite` },
 )
 
-const name = ref(profile.name)
-const difficulty = ref<Difficulty>(settings.difficulty.value)
-const inputRef = ref<HTMLInputElement | null>(null)
+const name         = ref(profile.name)
+const difficulty   = ref<Difficulty>(settings.difficulty.value)
+const inputRef     = ref<HTMLInputElement | null>(null)
+const showLinkModal = ref(false)
 
 
 const adventurerIndex = ref(0)
@@ -216,10 +217,29 @@ function gamesFor(diff: Difficulty): string[] {
           </button>
         </form>
 
-        <p class="mt-7 text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">
-          Your name &amp; preferences are kept on this device only.
-        </p>
+        <div class="mt-6 flex items-center gap-4">
+          <p class="text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">
+            Your name &amp; preferences are kept on this device only.
+          </p>
+          <button
+            type="button"
+            class="shrink-0 text-[12.5px] text-ink-3 hover:text-ink-2 transition-colors cursor-pointer underline underline-offset-2 decoration-dotted"
+            @click="showLinkModal = true"
+          >
+            Link existing account
+          </button>
+        </div>
       </div>
     </div>
+
+    <!-- Link account modal -->
+    <Transition
+      enter-from-class="opacity-0"
+      leave-to-class="opacity-0"
+      enter-active-class="transition-opacity duration-200 ease-out"
+      leave-active-class="transition-opacity duration-150 ease-in"
+    >
+      <LinkAccountModal v-if="showLinkModal" @close="showLinkModal = false" />
+    </Transition>
   </main>
 </template>

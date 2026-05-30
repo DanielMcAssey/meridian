@@ -3,11 +3,7 @@ import type { Difficulty, GameMode, LeaderboardResponse, LeaderboardRow } from '
 import { VALID_DIFFICULTIES, VALID_MODES } from '~/config/game'
 import { scores } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
-
-// ── Rate limiting ─────────────────────────────────────────────────────────────
-// 60 reads per IP per minute — generous enough for normal browsing.
-// NOTE: reads x-forwarded-for which can be spoofed if not behind a trusted
-// reverse proxy (Nginx, Cloudflare, etc.) that strips and re-adds the header.
+import { getClientIp } from '~/server/utils/getClientIp'
 
 const isRateLimited = createRateLimiter(60)
 
@@ -24,9 +20,7 @@ function validMode(v: unknown): GameMode | undefined {
 // ── Handler ───────────────────────────────────────────────────────────────────
 
 export default defineEventHandler(async (event): Promise<LeaderboardResponse> => {
-  const ip = (getRequestHeader(event, 'x-forwarded-for') ?? '').split(',')[0]?.trim()
-           || event.node.req.socket?.remoteAddress
-           || 'unknown'
+  const ip = getClientIp(event)
 
   if (isRateLimited(ip)) {
     throw createError({ statusCode: 429, message: 'Too many requests — please wait a moment' })

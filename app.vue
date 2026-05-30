@@ -31,7 +31,19 @@ watch(() => route.path, (path) => {
 onMounted(() => {
   mounted.value = true
   atlas.load()
-  useUserId() // ensure every returning user gets a UUID on first load after migration
+
+  const userId       = useUserId()
+  const recoveryCode = useRecoveryCode()
+
+  // Migration: existing users without a recovery code get one generated on first load.
+  if (userId.value && !recoveryCode.value) {
+    $fetch<{ recoveryCode?: string }>('/api/account/init', {
+      method: 'POST',
+      body: { userId: userId.value },
+    }).then((res) => {
+      if (res?.recoveryCode) recoveryCode.value = res.recoveryCode
+    }).catch(() => { /* silent — will retry on next load */ })
+  }
 
   // When autoUpdate activates a new SW (skipWaiting → controllerchange),
   // reload immediately on safe pages; defer on /play and /results so we
