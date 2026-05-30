@@ -34,9 +34,12 @@ onMounted(() => {
 
   const userId       = useUserId()
   const recoveryCode = useRecoveryCode()
+  const profile      = useProfileStore()
 
-  // Migration: existing users without a recovery code get one generated on first load.
-  if (userId.value && !recoveryCode.value) {
+  // Migration: fetch a recovery code for existing users that don't have one yet.
+  // Only attempt when a name is set — that guarantees a DB row exists (created on
+  // first score submission).  New users get their code after their first game.
+  if (userId.value && !recoveryCode.value && profile.name) {
     $fetch<{ recoveryCode?: string }>('/api/account/init', {
       method: 'POST',
       body: { userId: userId.value },

@@ -217,18 +217,17 @@ function gamesFor(diff: Difficulty): string[] {
           </button>
         </form>
 
-        <div class="mt-6 flex items-center gap-4">
-          <p class="text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">
-            Your name &amp; preferences are kept on this device only.
-          </p>
+        <p class="mt-6 text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">
+          Your name &amp; preferences are kept on this device only.
+        </p>
+        <p class="mt-2 text-[12.5px] text-ink-3">
+          Have an existing account?
           <button
             type="button"
-            class="shrink-0 text-[12.5px] text-ink-3 hover:text-ink-2 transition-colors cursor-pointer underline underline-offset-2 decoration-dotted"
+            class="text-ink-2 underline underline-offset-2 cursor-pointer hover:text-ink transition-colors"
             @click="showLinkModal = true"
-          >
-            Link existing account
-          </button>
-        </div>
+          >Link it here</button>
+        </p>
       </div>
     </div>
 
