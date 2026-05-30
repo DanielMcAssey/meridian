@@ -5,7 +5,7 @@ import { DIFFICULTIES } from '~/config/game'
 const props = withDefaults(defineProps<{
   modelValue: Difficulty | 'any'
   allowAny?: boolean
-  /** When provided, appends "· N countries" to the header label. */
+  /** When provided, shows a country count inside each option. */
   countByDiff?: Record<Difficulty, number>
   label?: string
 }>(), {
@@ -21,6 +21,15 @@ const DIFF_COLOR: Record<Difficulty, string> = {
   expert: 'oklch(0.60 0.22 25)',
 }
 
+// Text colour on the coloured active pill — easy/medium are bright enough to need dark ink
+const DIFF_TEXT: Record<Difficulty | 'any', string> = {
+  any:    'var(--color-bg)',
+  easy:   'oklch(0.18 0.05 145)',
+  medium: 'oklch(0.22 0.06 90)',
+  hard:   'oklch(0.16 0.04 50)',
+  expert: 'oklch(0.98 0.005 80)',
+}
+
 const DIFF_LABEL: Record<Difficulty | 'any', string> = {
   any:    'Any',
   easy:   'Flagship',
@@ -33,59 +42,46 @@ const stops = computed((): Array<Difficulty | 'any'> =>
   props.allowAny ? ['any', ...DIFFICULTIES.map((d) => d.id)] : DIFFICULTIES.map((d) => d.id),
 )
 
-const maxVal    = computed(() => stops.value.length - 1)
-const sliderVal = computed(() => stops.value.indexOf(props.modelValue))
+const activeIndex = computed(() => stops.value.indexOf(props.modelValue))
 
-const activeColor = computed(() =>
-  props.modelValue === 'any' ? 'var(--color-ink)' : DIFF_COLOR[props.modelValue],
-)
-
-const trackStyle = computed(() => {
-  if (props.modelValue === 'any') return 'var(--color-rule)'
-  const pct = (sliderVal.value / maxVal.value) * 100
-  const col = DIFF_COLOR[props.modelValue]
-  return `linear-gradient(to right, ${col} 0%, ${col} ${pct}%, var(--color-rule) ${pct}%, var(--color-rule) 100%)`
-})
-
-const headerLabel = computed(() => {
-  const base = props.label ?? 'Difficulty'
-  if (props.countByDiff && props.modelValue !== 'any') {
-    return `${base} · ${props.countByDiff[props.modelValue as Difficulty]} countries`
-  }
-  return base
-})
-
-function onInput(e: Event) {
-  emit('update:modelValue', stops.value[Number((e.target as HTMLInputElement).value)]!)
+function activeBg(stop: Difficulty | 'any'): string {
+  return stop === 'any' ? 'var(--color-ink)' : DIFF_COLOR[stop]
 }
+
+const headerLabel = computed(() => props.label ?? 'Difficulty')
 </script>
 
 <template>
-  <div class="flex flex-col gap-2" :class="allowAny ? 'min-w-[260px]' : 'min-w-[220px]'">
+  <div class="flex flex-col gap-2">
     <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">
       {{ headerLabel }}
     </span>
-    <div class="relative pt-1">
-      <input
-        type="range"
-        :min="0"
-        :max="maxVal"
-        step="1"
-        :value="sliderVal"
-        :style="{ background: trackStyle }"
-        class="diff-slider w-full"
-        aria-label="Country obscurity"
-        @input="onInput"
-      />
-      <div class="flex justify-between mt-2">
+
+    <div class="flex gap-[3px] p-[3px] bg-paper border border-rule rounded-[14px]">
+      <button
+        v-for="(stop, i) in stops"
+        :key="stop"
+        type="button"
+        class="relative flex flex-col items-center justify-center gap-0.5 flex-1 px-1.5 sm:px-2.5 py-2
+               rounded-[10px] transition-[background,color,box-shadow,transform] duration-150
+               cursor-pointer text-center min-w-0 select-none"
+        :style="activeIndex === i
+          ? { background: activeBg(stop), color: DIFF_TEXT[stop], boxShadow: 'var(--shadow-sm)' }
+          : {}"
+        :class="activeIndex === i ? '' : 'text-ink-3 hover:text-ink-2 hover:bg-[var(--color-bg-tint)]'"
+        @click="emit('update:modelValue', stop)"
+      >
+        <span class="font-serif text-[13.5px] font-medium leading-tight tracking-[-0.01em] whitespace-nowrap">
+          {{ DIFF_LABEL[stop] }}
+        </span>
         <span
-          v-for="(stop, i) in stops"
-          :key="stop"
-          class="font-mono text-[9px] tracking-[0.1em] uppercase transition-colors duration-150 cursor-pointer select-none"
-          :style="sliderVal === i ? { color: activeColor } : { color: 'var(--color-ink-3)' }"
-          @click="emit('update:modelValue', stop)"
-        >{{ DIFF_LABEL[stop] }}</span>
-      </div>
+          v-if="countByDiff && stop !== 'any'"
+          class="font-mono text-[8.5px] tracking-[0.06em] uppercase leading-none transition-opacity duration-150"
+          :class="activeIndex === i ? 'opacity-70' : 'opacity-40'"
+        >
+          {{ countByDiff[stop as Difficulty] }}
+        </span>
+      </button>
     </div>
   </div>
 </template>
