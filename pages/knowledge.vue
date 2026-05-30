@@ -407,7 +407,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
                   </div>
                   <div>
                     <dt class="eyebrow mb-1 flex items-center gap-1">
-                      Difficulty
+                      Country Pool
                       <span
                         ref="tierTooltipAnchor"
                         class="inline-flex items-center cursor-pointer"

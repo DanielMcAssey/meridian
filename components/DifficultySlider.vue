@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { Difficulty } from '~/types/game'
-import { DIFFICULTIES } from '~/config/game'
+import { DIFFICULTIES, POOL_LABEL, POOL_TIERS } from '~/config/game'
 
 const props = withDefaults(defineProps<{
   modelValue: Difficulty | 'any'
@@ -30,12 +30,12 @@ const DIFF_TEXT: Record<Difficulty | 'any', string> = {
   expert: 'oklch(0.98 0.005 80)',
 }
 
-const DIFF_LABEL: Record<Difficulty | 'any', string> = {
-  any:    'Any',
-  easy:   'Flagship',
-  medium: 'Well-known',
-  hard:   'World',
-  expert: 'Obscure',
+// Tier dot colours — match the legend in the knowledge detail modal
+const TIER_DOT_COLOR: Record<number, string> = {
+  1: 'var(--color-ok)',
+  2: 'var(--accent)',
+  3: 'color-mix(in oklab, var(--color-bad) 40%, var(--accent) 60%)',
+  4: 'var(--color-bad)',
 }
 
 const stops = computed((): Array<Difficulty | 'any'> =>
@@ -46,6 +46,10 @@ const activeIndex = computed(() => stops.value.indexOf(props.modelValue))
 
 function activeBg(stop: Difficulty | 'any'): string {
   return stop === 'any' ? 'var(--color-ink)' : DIFF_COLOR[stop]
+}
+
+function tiersFor(stop: Difficulty | 'any'): number[] {
+  return stop === 'any' ? [] : POOL_TIERS[stop]
 }
 
 const headerLabel = computed(() => props.label ?? 'Difficulty')
@@ -62,7 +66,7 @@ const headerLabel = computed(() => props.label ?? 'Difficulty')
         v-for="(stop, i) in stops"
         :key="stop"
         type="button"
-        class="relative flex flex-col items-center justify-center gap-0.5 flex-1 px-1.5 sm:px-2.5 py-2
+        class="relative flex flex-col items-center justify-center gap-1 flex-1 px-2.5 sm:px-3.5 py-2.5
                rounded-[10px] transition-[background,color,box-shadow,transform] duration-150
                cursor-pointer text-center min-w-0 select-none"
         :style="activeIndex === i
@@ -71,9 +75,23 @@ const headerLabel = computed(() => props.label ?? 'Difficulty')
         :class="activeIndex === i ? '' : 'text-ink-3 hover:text-ink-2 hover:bg-[var(--color-bg-tint)]'"
         @click="emit('update:modelValue', stop)"
       >
-        <span class="font-serif text-[13.5px] font-medium leading-tight tracking-[-0.01em] whitespace-nowrap">
-          {{ DIFF_LABEL[stop] }}
+        <span class="font-sans text-[13px] font-medium leading-tight whitespace-nowrap">
+          {{ stop === 'any' ? 'Any' : POOL_LABEL[stop] }}
         </span>
+
+        <!-- Tier inclusion dots -->
+        <span v-if="tiersFor(stop).length" class="flex items-center gap-[3px]">
+          <span
+            v-for="tier in tiersFor(stop)"
+            :key="tier"
+            class="w-[5px] h-[5px] rounded-full shrink-0"
+            :style="{
+              background: activeIndex === i ? 'currentColor' : TIER_DOT_COLOR[tier],
+              opacity: activeIndex === i ? '0.5' : '1',
+            }"
+          />
+        </span>
+
         <span
           v-if="countByDiff && stop !== 'any'"
           class="font-mono text-[8.5px] tracking-[0.06em] uppercase leading-none transition-opacity duration-150"

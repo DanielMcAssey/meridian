@@ -37,6 +37,25 @@ export const DIFFICULTY_MULTIPLIER: Record<Difficulty, number> = Object.fromEntr
   DIFFICULTIES.map((d) => [d.id, d.multiplier]),
 ) as Record<Difficulty, number>
 
+/** Country-pool name shown in UI for each difficulty level. */
+export const POOL_LABEL: Record<Difficulty, string> = {
+  easy:   'Flagship',
+  medium: 'Well-known',
+  hard:   'Familiar',
+  expert: 'Obscure',
+}
+
+/**
+ * Country tiers (1–4) included in each difficulty pool.
+ * easy=tier≤1, medium=tier≤2, hard=tier≤3, expert=tier≥2 (excludes Flagship).
+ */
+export const POOL_TIERS: Record<Difficulty, number[]> = {
+  easy:   [1],
+  medium: [1, 2],
+  hard:   [1, 2, 3],
+  expert: [2, 3, 4],
+}
+
 // ── Game modes ────────────────────────────────────────────────────────────────
 
 export interface ModeConfig {

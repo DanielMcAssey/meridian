@@ -16,20 +16,52 @@ export const trophyColor = {
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import type { Difficulty, GameMode, LeaderboardResponse, TrophyKind } from '~/types/game'
-import { DIFFICULTIES, MODES, ROUND_COUNTS, modeName } from '~/config/game'
+import { DIFFICULTIES, MODES, POOL_LABEL, ROUND_COUNTS, VALID_ROUND_COUNTS, modeName } from '~/config/game'
 
 const playerName = useLocalStorage('geo.player.name', '')
 const userId     = useUserId()
 const settings   = useGameSettings()
 const session    = useSessionStore()
+const route      = useRoute()
+const router     = useRouter()
 
 // ── Filters ──────────────────────────────────────────────────────────────────
-// Default to the last session's settings so the board opens pre-filtered to
-// the game the player just finished.  Falls back to Grand Tour + their saved
-// difficulty when there is no active session.
-const filterMode       = ref<GameMode | 'any'>(session.hasSession ? session.mode       : 'mixed')
-const filterDifficulty = ref<Difficulty | 'any'>(session.hasSession ? session.difficulty : settings.difficulty.value)
-const filterRounds     = ref<number>(session.hasSession ? session.rounds.length         : settings.rounds.value)
+// Query params take priority (permalink support); fall back to last session or
+// saved settings when absent or invalid.
+
+function initMode(): GameMode | 'any' {
+  const q = route.query.mode
+  if (typeof q === 'string' && (q === 'any' || MODES.some((m) => m.id === q)))
+    return q as GameMode | 'any'
+  return session.hasSession ? session.mode : 'mixed'
+}
+
+function initDifficulty(): Difficulty | 'any' {
+  const q = route.query.difficulty
+  if (typeof q === 'string' && (q === 'any' || DIFFICULTIES.some((d) => d.id === q)))
+    return q as Difficulty | 'any'
+  return session.hasSession ? session.difficulty : settings.difficulty.value
+}
+
+function initRounds(): number {
+  const n = Number(route.query.rounds)
+  if (route.query.rounds !== undefined && (n === 0 || VALID_ROUND_COUNTS.has(n))) return n
+  return session.hasSession ? session.rounds.length : settings.rounds.value
+}
+
+const filterMode       = ref<GameMode | 'any'>(initMode())
+const filterDifficulty = ref<Difficulty | 'any'>(initDifficulty())
+const filterRounds     = ref<number>(initRounds())
+
+// Keep the URL in sync so filters are shareable as permalinks.
+watch([filterMode, filterDifficulty, filterRounds], () => {
+  if (!import.meta.client) return
+  const query: Record<string, string> = {}
+  if (filterMode.value !== 'any')       query.mode       = filterMode.value
+  if (filterDifficulty.value !== 'any') query.difficulty = filterDifficulty.value
+  if (filterRounds.value > 0)           query.rounds     = String(filterRounds.value)
+  router.replace({ query })
+})
 
 // Prepend the 'All modes' option to the config MODES list for the filter UI
 const FILTER_MODES = [
@@ -120,6 +152,7 @@ function trophyFor(rank: number): TrophyKind | null {
       />
       <DifficultySlider
         allow-any
+        label="Country Pool"
         :model-value="filterDifficulty"
         @update:model-value="filterDifficulty = $event as Difficulty | 'any'"
       />
@@ -163,7 +196,7 @@ function trophyFor(rank: number): TrophyKind | null {
         <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">#</span>
         <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Name</span>
         <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Game</span>
-        <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Difficulty</span>
+        <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Country Pool</span>
         <span class="hidden sm:block font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3">Correct</span>
         <span class="font-mono text-[10.5px] tracking-[0.16em] uppercase text-ink-3 text-right">Score</span>
       </li>
@@ -213,7 +246,7 @@ function trophyFor(rank: number): TrophyKind | null {
 
         <!-- Game + Difficulty — hidden on mobile -->
         <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2">{{ modeName(entry.mode) }}</span>
-        <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2 capitalize">{{ entry.difficulty }}</span>
+        <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2">{{ POOL_LABEL[entry.difficulty as Difficulty] }}</span>
 
         <!-- Correct — hidden on mobile -->
         <span class="hidden sm:block font-mono text-ink-2">{{ entry.correct }}/{{ entry.total }}</span>

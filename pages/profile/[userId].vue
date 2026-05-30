@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
-import { modeName } from '~/config/game'
+import { POOL_LABEL, modeName } from '~/config/game'
 
 definePageMeta({ ssr: false })
 
@@ -58,9 +58,6 @@ function accuracy(correct: number, total: number) {
   return `${Math.round((correct / total) * 100)}%`
 }
 
-const difficultyLabel: Record<string, string> = {
-  easy: 'Easy', medium: 'Medium', hard: 'Hard', expert: 'Expert',
-}
 </script>
 
 <template>
@@ -166,16 +163,16 @@ const difficultyLabel: Record<string, string> = {
             <!-- Favourite mode -->
             <div v-if="data.stats.favoriteMode" class="flex flex-col gap-1">
               <dt class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Favourite game</dt>
-              <dd class="font-mono text-[13px] leading-none text-ink-2 capitalize">
+              <dd class="font-mono text-[13px] leading-none text-ink-2">
                 {{ modeName(data.stats.favoriteMode) }}
               </dd>
             </div>
 
             <!-- Favourite difficulty -->
             <div v-if="data.stats.favoriteDifficulty" class="flex flex-col gap-1">
-              <dt class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Favourite difficulty</dt>
-              <dd class="font-mono text-[13px] leading-none text-ink-2 capitalize">
-                {{ difficultyLabel[data.stats.favoriteDifficulty] ?? data.stats.favoriteDifficulty }}
+              <dt class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Favourite pool</dt>
+              <dd class="font-mono text-[13px] leading-none text-ink-2">
+                {{ POOL_LABEL[data.stats.favoriteDifficulty as keyof typeof POOL_LABEL] ?? data.stats.favoriteDifficulty }}
               </dd>
             </div>
           </dl>
@@ -207,7 +204,7 @@ const difficultyLabel: Record<string, string> = {
             <li class="grid gap-3 px-5 py-2.5 bg-bg-tint border-b border-rule
                         grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto]">
               <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Game</span>
-              <span class="hidden sm:block font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Difficulty</span>
+              <span class="hidden sm:block font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Country Pool</span>
               <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3">Correct</span>
               <span class="font-mono text-[10px] tracking-[0.16em] uppercase text-ink-3 text-right">Score</span>
             </li>
@@ -219,8 +216,8 @@ const difficultyLabel: Record<string, string> = {
                      grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_1fr_auto_auto]"
             >
               <span class="font-mono text-[12.5px] text-ink-2">{{ modeName(s.mode) }}</span>
-              <span class="hidden sm:block font-mono text-[12.5px] text-ink-2 capitalize">
-                {{ difficultyLabel[s.difficulty] ?? s.difficulty }}
+              <span class="hidden sm:block font-mono text-[12.5px] text-ink-2">
+                {{ POOL_LABEL[s.difficulty as keyof typeof POOL_LABEL] ?? s.difficulty }}
               </span>
               <span class="font-mono text-ink-2">{{ s.correct }}/{{ s.total }}</span>
               <span class="font-mono font-semibold text-right text-ink">{{ s.score }}</span>
