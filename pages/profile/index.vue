@@ -2,7 +2,10 @@
 import QRCode from 'qrcode'
 import { MAX_NAME_LENGTH } from '~/config/game'
 
-definePageMeta({ ssr: false })
+definePageMeta({
+  ssr: false,
+  middleware: ['require-name'],
+})
 
 const profile      = useProfileStore()
 const recoveryCode = useRecoveryCode()
@@ -29,9 +32,7 @@ watch(recoveryUri, async (uri) => {
   })
 }, { immediate: true })
 
-onMounted(() => {
-  if (!profile.name) navigateTo('/')
-})
+
 
 function saveName() {
   if (sanitizeName(nameInput.value) === profile.name) return

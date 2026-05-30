@@ -154,7 +154,7 @@ The app must work well on mobile devices. All UI changes should be tested at mob
 
 ### PWA
 
-Configured in `nuxt.config.ts` via `@vite-pwa/nuxt`. All SVGs (country flags + silhouettes), JS/CSS bundles, and `data.json` are precached so the game works fully offline. The leaderboard API uses a `NetworkFirst` runtime strategy with a 4-second timeout.
+Configured in `nuxt.config.ts` via `@vite-pwa/nuxt`. JS/CSS bundles, icons, and other Vite-bundled assets are precached via `workbox.globPatterns`. `@vite-pwa/nuxt` scopes that glob to the Vite output directory and misses `public/` sub-directories, so `data.json`, the 199 flag SVGs (`public/flags/`), and the 242 silhouette SVGs (`public/maps/`) are added explicitly via `additionalManifestEntries` — flags and maps using content hashes computed at config-evaluation time so Workbox re-downloads them only when they actually change. All assets are available offline immediately after SW install (not just on first encounter). The leaderboard API uses a `NetworkFirst` runtime strategy with a 4-second timeout.
 
 ### Docker
 

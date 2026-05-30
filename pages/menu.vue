@@ -2,18 +2,18 @@
 import type { Difficulty, GameMode } from '~/types/game'
 import { DIFFICULTIES, DIFFICULTY_TIMER_SECS, MIXED_ROUND_TYPES, MODES, ROUND_COUNTS, type ModeConfig } from '~/config/game'
 
-const atlas      = useAtlasStore()
-const session    = useSessionStore()
-const settings   = useGameSettings()
-const playerName = useLocalStorage('geo.player.name', '')
+definePageMeta({
+  ssr: false,
+  middleware: ['require-name'],
+})
+
+const atlas    = useAtlasStore()
+const session  = useSessionStore()
+const settings = useGameSettings()
 
 // MODES[0] is always the Grand Tour (mixed); the rest are individual modes.
 const grandTour    = MODES[0]!
 const regularModes = MODES.slice(1)
-
-onMounted(() => {
-  if (!playerName.value) navigateTo('/')
-})
 
 function startGame(mode: GameMode) {
   const rounds = buildRounds(atlas.countries, mode, settings.rounds.value, settings.difficulty.value, atlas.languageNames)

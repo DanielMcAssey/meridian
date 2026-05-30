@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import type { RoundType } from '~/types/game'
 
+definePageMeta({
+  ssr: false,
+  middleware: ['require-finished'],
+})
+
 const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
 const { isPending, isPaused } = useLeaderboardMutation()
-
-onMounted(() => {
-  if (!session.hasFinished) navigateTo('/menu')
-})
 
 const total    = computed(() => session.results.length)
 const accuracy = computed(() =>

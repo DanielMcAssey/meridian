@@ -2,6 +2,11 @@
 import type { Country, RoundResult } from '~/types/game'
 import { DIFFICULTY_TIMER_SECS, ROUND_TIMER_DELAY_MS } from '~/config/game'
 
+definePageMeta({
+  ssr: false,
+  middleware: ['require-session'],
+})
+
 const session = useSessionStore()
 const settings = useGameSettings()
 const playerName = useLocalStorage('geo.player.name', '')
@@ -24,7 +29,6 @@ onBeforeRouteLeave((_to, _from, next) => {
 })
 
 onMounted(() => {
-  if (!session.hasSession) navigateTo('/menu')
   window.addEventListener('beforeunload', handleBeforeUnload)
 })
 

@@ -2,6 +2,11 @@
 import { ADVENTURERS, COMPASS_SPIN_SECS, DIFFICULTIES, MAX_NAME_LENGTH, MIXED_ROUND_TYPES, MODES } from '~/config/game'
 import type { Difficulty } from '~/types/game'
 
+definePageMeta({
+  ssr: false,
+  middleware: ['redirect-if-named'],
+})
+
 const profile  = useProfileStore()
 const settings = useGameSettings()
 const atlas    = useAtlasStore()
@@ -30,7 +35,6 @@ const adventurerIndex = ref(0)
 let adventurerTimer: ReturnType<typeof setInterval> | null = null
 
 onMounted(() => {
-  if (profile.name) { navigateTo('/menu'); return }
   inputRef.value?.focus()
   adventurerTimer = setInterval(() => {
     adventurerIndex.value = (adventurerIndex.value + 1) % ADVENTURERS.length
