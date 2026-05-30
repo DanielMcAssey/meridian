@@ -146,7 +146,8 @@ function handleLock(opt: Country | string | null, elapsedSec: number) {
 }
 
 const { submitScore } = useLeaderboardMutation()
-const userId = useUserId()
+const userId       = useUserId()
+const recoveryCode = useRecoveryCode()
 
 async function finishGame() {
   const score   = session.results.reduce((s, r) => s + r.points, 0)
@@ -160,14 +161,15 @@ async function finishGame() {
   // calls session.setRank().  If offline, it's queued in localStorage and
   // retried automatically when connectivity returns.
   submitScore({
-    name:      playerName.value,
+    name:         playerName.value,
     score,
     correct,
-    total:     session.rounds.length,
-    mode:      session.mode,
-    difficulty: session.difficulty,
-    userId:    userId.value,
-    gameToken: session.gameToken,
+    total:        session.rounds.length,
+    mode:         session.mode,
+    difficulty:   session.difficulty,
+    userId:       userId.value,
+    gameToken:    session.gameToken,
+    recoveryCode: recoveryCode.value || undefined,
   })
 
   navigateTo('/results')

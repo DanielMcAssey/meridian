@@ -11,6 +11,17 @@ export const users = sqliteTable('users', {
   linkLockedUntil: integer('link_locked_until'),
 })
 
+export const userStats = sqliteTable('user_stats', {
+  userId:             text('user_id').primaryKey().references(() => users.id),
+  totalGames:         integer('total_games').notNull().default(0),
+  totalCorrect:       integer('total_correct').notNull().default(0),
+  totalRounds:        integer('total_rounds').notNull().default(0),
+  bestScore:          integer('best_score').notNull().default(0),
+  favoriteMode:       text('favorite_mode'),
+  favoriteDifficulty: text('favorite_difficulty'),
+  updatedAt:          integer('updated_at').notNull().default(sql`(unixepoch())`),
+})
+
 export const scores = sqliteTable('scores', {
   id:         integer('id').primaryKey({ autoIncrement: true }),
   name:       text('name').notNull(),

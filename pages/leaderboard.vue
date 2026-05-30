@@ -195,14 +195,21 @@ function trophyFor(rank: number): TrophyKind | null {
         </span>
 
         <!-- Name -->
-        <span class="font-serif text-[19px] text-ink truncate">
+        <component
+          :is="entry.userId ? 'a' : 'span'"
+          :href="entry.userId ? `/profile/${entry.userId}` : undefined"
+          :target="entry.userId ? '_blank' : undefined"
+          :rel="entry.userId ? 'noopener noreferrer' : undefined"
+          class="font-serif text-[19px] text-ink truncate"
+          :class="{ 'hover:underline underline-offset-2 decoration-ink-3 cursor-pointer': entry.userId }"
+        >
           {{ entry.name }}
           <em
             v-if="entry.userId && entry.userId === userId"
             class="font-mono not-italic text-[13px] ml-2 tracking-[0.08em]"
             :style="{ color: 'var(--accent)' }"
           >(you)</em>
-        </span>
+        </component>
 
         <!-- Game + Difficulty — hidden on mobile -->
         <span class="hidden sm:block font-mono text-xs tracking-[0.04em] text-ink-2">{{ modeName(entry.mode) }}</span>

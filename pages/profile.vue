@@ -68,9 +68,24 @@ function deleteProfile() {
       >
         The <em class="italic" style="color: var(--accent-deep)">Traveller</em>
       </h1>
-      <p class="text-[15px] text-ink-2 mb-10">
+      <p class="text-[15px] text-ink-2 mb-6">
         Manage your identity in the manifest of explorers.
       </p>
+
+      <a
+        v-if="profile.userId"
+        :href="`/profile/${profile.userId}`"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="btn-ghost inline-flex items-center gap-2 text-[13.5px] mb-8"
+      >
+        <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M7 3H3a1 1 0 0 0-1 1v9a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1V9" />
+          <path d="M10 2h4v4" />
+          <line x1="14" y1="2" x2="7" y2="9" />
+        </svg>
+        View public profile
+      </a>
 
       <!-- ── Name section ───────────────────────────────────────────────────── -->
       <section
