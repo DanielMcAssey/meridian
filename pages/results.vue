@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { watch } from 'vue'
 import type { RoundType } from '~/types/game'
 
 definePageMeta({
@@ -9,6 +10,15 @@ definePageMeta({
 const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
 const { isPending, isPaused } = useLeaderboardMutation()
+const { launch: launchConfetti } = useConfetti()
+
+watch(
+  () => session.rank,
+  (rank) => {
+    if (rank === 1 || rank === 2 || rank === 3) launchConfetti(rank)
+  },
+  { immediate: true },
+)
 
 useSeoMeta({
   title: computed(() => `${session.finalScore} pts — Your Results`),
