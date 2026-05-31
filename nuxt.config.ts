@@ -127,10 +127,17 @@ export default defineNuxtConfig({
 
     workbox: {
       // ── Precache ────────────────────────────────────────────────────────
-      // JS/CSS bundles, data.json, HTML, fonts, AND all SVGs (flag images +
-      // the app icon).  The 179 flag SVGs are small individually and must be
-      // available offline so every quiz question can display its flag.
-      globPatterns: ['**/*.{js,css,html,json,ico,png,svg,woff,woff2,ttf}'],
+      // Static assets: HTML shell, JSON data, fonts, icons, and SVGs.
+      // JS and CSS chunks are intentionally excluded here — they are handled
+      // by the 'nuxt-chunks' CacheFirst runtime rule below.  Keeping them in
+      // the precache causes a race condition on SW updates: cleanupOutdatedCaches
+      // removes old chunk hashes before the page reloads, so any in-flight
+      // dynamic import of an old hash hits the network, Vercel's SPA fallback
+      // returns the HTML shell, and the browser errors "Expected a
+      // JavaScript module but the server responded with MIME type text/html".
+      // The runtime cache is never cleaned by cleanupOutdatedCaches, so old
+      // chunks survive the transition window until the page reloads.
+      globPatterns: ['**/*.{html,json,ico,png,svg,woff,woff2,ttf}'],
       cleanupOutdatedCaches: true,
 
       // Precache the app shell at "/" so navigateFallback can serve it for
@@ -150,6 +157,24 @@ export default defineNuxtConfig({
 
       // ── Runtime caching strategies ───────────────────────────────────────
       runtimeCaching: [
+        // Vite JS and CSS chunks — CacheFirst with a 30-day TTL.
+        // This cache is separate from the precache so cleanupOutdatedCaches
+        // never removes old chunk hashes; they survive across SW updates and
+        // remain fetchable during the brief window between a new SW activating
+        // and the page reloading with fresh HTML.
+        {
+          urlPattern: /\/_nuxt\/[^/]+\.(js|css)$/,
+          handler: 'CacheFirst' as const,
+          options: {
+            cacheName: 'nuxt-chunks',
+            expiration: {
+              maxEntries: 300,
+              maxAgeSeconds: 60 * 60 * 24 * 30, // 30 days
+            },
+            cacheableResponse: { statuses: [200] },
+          },
+        },
+
         // Atlas data — NetworkFirst so a new deploy always serves fresh data
         // once the SW updates and the page reloads.  Falls back to cache only
         // when the device is genuinely offline.  Kept as a runtime rule because
