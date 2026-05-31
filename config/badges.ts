@@ -29,7 +29,7 @@ const BADGE_DEFINITIONS: Record<string, Badge> = {
 const USER_BADGES: Record<string, string[]> = {
   'ea7e8303-4821-413e-9518-96789574963e': ['creator'],
   '5b370d76-c290-4e52-94b4-e9d9dbc4e7c4': ['pluto'],
-  '098b3a30-78aa-4adb-b23f-beb18eaa357a': ['friends'],
+  '55a74030-90a4-4dd3-94e0-2bd5a6398ce9': ['friends'],
   'cf22e901-82c8-4f10-9278-2834f3cf262f': ['friends'],
   'e35b2fd6-884e-4e05-a0f0-9131aa6411c5': ['friends'],
 }
