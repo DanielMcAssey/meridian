@@ -11,13 +11,14 @@
  */
 
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
+import type { AchievementDef } from '~/config/achievements'
 import type { LeaderboardEntry } from '~/types/game'
 
 export function useLeaderboardMutation() {
   const queryClient = useQueryClient()
   const session     = useSessionStore()
 
-  const mutation = useMutation<{ rank: number; total: number }, Error, LeaderboardEntry>({
+  const mutation = useMutation<{ rank: number; total: number; newAchievements?: AchievementDef[] }, Error, LeaderboardEntry>({
     mutationKey: ['leaderboard-post'],
 
     // mutationFn is intentionally omitted here; the default registered in the
@@ -26,7 +27,11 @@ export function useLeaderboardMutation() {
 
     onSuccess(data) {
       session.setRank({ rank: data.rank, total: data.total })
+      if (data.newAchievements?.length) {
+        session.setNewAchievements(data.newAchievements)
+      }
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] })
+      queryClient.invalidateQueries({ queryKey: ['profile'] })
     },
 
     onError(err) {

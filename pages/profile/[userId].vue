@@ -39,6 +39,14 @@ interface ProfileStats {
   favoriteMode:       string | null
   favoriteDifficulty: string | null
 }
+interface UnlockedAchievement {
+  id:          string
+  name:        string
+  description: string
+  icon:        string
+  category:    string
+  unlockedAt:  number
+}
 interface ProfileData {
   name:         string
   bio:          string | null
@@ -46,6 +54,7 @@ interface ProfileData {
   firstSeen:    number
   stats:        ProfileStats | null
   recentScores: RecentScore[]
+  achievements: UnlockedAchievement[]
 }
 
 const { data, isPending, isError } = useQuery<ProfileData>({
@@ -254,6 +263,37 @@ function accuracy(correct: number, total: number) {
               <span class="font-mono font-semibold text-right text-ink">{{ s.score }}</span>
             </li>
           </ol>
+        </section>
+
+        <!-- ── Achievements ────────────────────────────────────────────────── -->
+        <section
+          v-if="data.achievements.length > 0"
+          class="rounded-[18px] border border-rule bg-paper px-6 py-6 mb-5"
+          :style="{ boxShadow: 'var(--shadow-sm)' }"
+        >
+          <div class="flex items-baseline justify-between gap-3 mb-5">
+            <h2 class="font-serif font-normal text-[20px] tracking-[-0.015em] leading-tight m-0">
+              Achievements
+            </h2>
+            <span class="font-mono text-[11px] tracking-[0.1em] text-ink-3">
+              {{ data.achievements.length }}/20
+            </span>
+          </div>
+
+          <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none m-0 p-0">
+            <li
+              v-for="a in data.achievements"
+              :key="a.id"
+              class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3"
+            >
+              <span class="text-2xl leading-none shrink-0 mt-0.5" aria-hidden="true">{{ a.icon }}</span>
+              <div class="min-w-0">
+                <p class="font-semibold text-[13.5px] text-ink leading-tight m-0">{{ a.name }}</p>
+                <p class="text-[12px] text-ink-2 mt-0.5 leading-snug m-0">{{ a.description }}</p>
+                <p class="font-mono text-[10.5px] text-ink-3 mt-1.5 m-0">{{ formatDate(a.unlockedAt) }}</p>
+              </div>
+            </li>
+          </ul>
         </section>
 
       </template>

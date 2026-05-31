@@ -1,6 +1,7 @@
 import { defineStore, skipHydrate } from 'pinia'
 import { computed, ref } from 'vue'
 import type { Difficulty, GameMode, Round, RoundResult } from '~/types/game'
+import type { AchievementDef } from '~/config/achievements'
 
 export const useSessionStore = defineStore('session', () => {
   // skipHydrate: session state is created entirely client-side.
@@ -16,7 +17,8 @@ export const useSessionStore = defineStore('session', () => {
   const finalCorrect = skipHydrate(ref(0))
   const rank         = skipHydrate(ref<number | null>(null))
   const lbTotal      = skipHydrate(ref<number | null>(null))
-  const gameToken    = skipHydrate(ref<string>(''))
+  const gameToken       = skipHydrate(ref<string>(''))
+  const newAchievements = skipHydrate(ref<AchievementDef[]>([]))
 
   /**
    * True while the score has been submitted but the server hasn't responded
@@ -43,6 +45,7 @@ export const useSessionStore = defineStore('session', () => {
     rank.value = null
     lbTotal.value = null
     lbPending.value = false
+    newAchievements.value = []
     gameToken.value = crypto.randomUUID()
   }
 
@@ -77,6 +80,14 @@ export const useSessionStore = defineStore('session', () => {
     lbPending.value = false
   }
 
+  function setNewAchievements(list: AchievementDef[]) {
+    newAchievements.value = list
+  }
+
+  function clearNewAchievements() {
+    newAchievements.value = []
+  }
+
   return {
     rounds,
     idx,
@@ -89,6 +100,7 @@ export const useSessionStore = defineStore('session', () => {
     lbTotal,
     lbPending,
     gameToken,
+    newAchievements,
     hasSession,
     hasFinished,
     currentRound,
@@ -97,5 +109,7 @@ export const useSessionStore = defineStore('session', () => {
     advance,
     markFinished,
     setRank,
+    setNewAchievements,
+    clearNewAchievements,
   }
 })

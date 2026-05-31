@@ -1,10 +1,12 @@
 import { z } from 'zod'
 import { and, count, desc, eq, sql } from 'drizzle-orm'
 import { VALID_DIFFICULTY_IDS, VALID_MODE_IDS, VALID_ROUND_COUNTS } from '~/config/game'
+import { ACHIEVEMENT_MAP } from '~/config/achievements'
 import { maxPointsPerRound } from '~/utils/scoring'
-import { scores, userStats, users } from '~/server/db/schema'
+import { scores, userAchievements, userStats, users } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
 import { getClientIp } from '~/server/utils/getClientIp'
+import { checkAchievements } from '~/server/utils/checkAchievements'
 
 const isRateLimited = createRateLimiter(10)
 
@@ -134,5 +136,28 @@ export default defineEventHandler(async (event) => {
     .values(statsValues)
     .onConflictDoUpdate({ target: userStats.userId, set: statsValues })
 
-  return rankResponse(db, filter, body.score)
+  // ── Check achievements ──────────────────────────────────────────────────────
+  const [existingUnlocks, allUserScores] = await Promise.all([
+    db.select({ achievementId: userAchievements.achievementId })
+      .from(userAchievements)
+      .where(eq(userAchievements.userId, userId)),
+    db.select({ mode: scores.mode, difficulty: scores.difficulty, correct: scores.correct, total: scores.total })
+      .from(scores)
+      .where(eq(scores.userId, userId)),
+  ])
+
+  const alreadyUnlocked = new Set(existingUnlocks.map((r) => r.achievementId))
+  const newIds = checkAchievements(body, statsValues, alreadyUnlocked, allUserScores)
+
+  if (newIds.length > 0) {
+    await db.insert(userAchievements).values(
+      newIds.map((id) => ({ userId, achievementId: id, unlockedAt: now })),
+    )
+  }
+
+  const rank = await rankResponse(db, filter, body.score)
+  return {
+    ...rank,
+    newAchievements: newIds.map((id) => ACHIEVEMENT_MAP.get(id)!).filter(Boolean),
+  }
 })

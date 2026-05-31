@@ -1,7 +1,8 @@
 import { desc, eq } from 'drizzle-orm'
-import { scores, userStats, users } from '~/server/db/schema'
+import { scores, userAchievements, userStats, users } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
 import { getClientIp } from '~/server/utils/getClientIp'
+import { ACHIEVEMENT_MAP } from '~/config/achievements'
 import { z } from 'zod'
 
 const isRateLimited = createRateLimiter(60)
@@ -49,6 +50,21 @@ export default defineEventHandler(async (event) => {
     .orderBy(desc(scores.createdAt))
     .limit(10)
 
+  const unlockRows = await db.select({
+    achievementId: userAchievements.achievementId,
+    unlockedAt:    userAchievements.unlockedAt,
+  }).from(userAchievements)
+    .where(eq(userAchievements.userId, userId))
+    .orderBy(userAchievements.unlockedAt)
+
+  const achievements = unlockRows
+    .map((r) => {
+      const def = ACHIEVEMENT_MAP.get(r.achievementId)
+      if (!def) return null
+      return { ...def, unlockedAt: r.unlockedAt }
+    })
+    .filter(Boolean)
+
   return {
     name:         user.name,
     bio:          user.bio ?? null,
@@ -56,5 +72,6 @@ export default defineEventHandler(async (event) => {
     firstSeen:    user.firstSeen,
     stats:        stats ?? null,
     recentScores,
+    achievements,
   }
 })

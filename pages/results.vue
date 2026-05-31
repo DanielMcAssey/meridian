@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { watch } from 'vue'
+import type { AchievementDef } from '~/config/achievements'
 import type { RoundType } from '~/types/game'
 
 definePageMeta({
@@ -11,6 +12,19 @@ const session = useSessionStore()
 const playerName = useLocalStorage('geo.player.name', '')
 const { isPending, isPaused } = useLeaderboardMutation()
 const { launch: launchConfetti } = useConfetti()
+
+const achievementQueue = ref<AchievementDef[]>([])
+
+watch(() => session.newAchievements, (list) => {
+  if (list.length > 0) {
+    achievementQueue.value = [...list]
+    session.clearNewAchievements()
+  }
+}, { immediate: true })
+
+function onAchievementDismissed(id: string) {
+  achievementQueue.value = achievementQueue.value.filter((a) => a.id !== id)
+}
 
 watch(
   () => session.rank,
@@ -161,4 +175,6 @@ function playAgain() {
       <button class="btn-ghost" @click="navigateTo({ path: '/leaderboard', query: { mode: session.mode, difficulty: session.difficulty, rounds: String(session.results.length) } })">View leaderboard</button>
     </div>
   </main>
+
+  <AchievementToast :queue="achievementQueue" @dismissed="onAchievementDismissed" />
 </template>

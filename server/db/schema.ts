@@ -1,5 +1,5 @@
 import { sql } from 'drizzle-orm'
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { integer, primaryKey, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const users = sqliteTable('users', {
   id:              text('id').primaryKey(),
@@ -35,3 +35,9 @@ export const scores = sqliteTable('scores', {
   userId:     text('user_id').notNull().references(() => users.id),
   gameToken:  text('game_token').unique(),
 })
+
+export const userAchievements = sqliteTable('user_achievements', {
+  userId:        text('user_id').notNull().references(() => users.id),
+  achievementId: text('achievement_id').notNull(),
+  unlockedAt:    integer('unlocked_at').notNull().default(sql`(unixepoch())`),
+}, (t) => [primaryKey({ columns: [t.userId, t.achievementId] })])

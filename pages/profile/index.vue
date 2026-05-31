@@ -30,10 +30,24 @@ const identitySaved = ref(false)
 const identityError = ref('')
 const identitySaving = ref(false)
 
+interface UnlockedAchievement {
+  id:          string
+  name:        string
+  description: string
+  icon:        string
+  category:    string
+  unlockedAt:  number
+}
+interface OwnProfileData {
+  bio:          string | null
+  countryCode:  string | null
+  achievements: UnlockedAchievement[]
+}
+
 // Fetch current bio + countryCode from the server once the recovery code is available.
-const { data: serverProfile } = useQuery<{ bio: string | null; countryCode: string | null }>({
+const { data: serverProfile } = useQuery<OwnProfileData>({
   queryKey:  ['profile', profile.userId],
-  queryFn:   () => $fetch<{ bio: string | null; countryCode: string | null }>(`/api/profile/${profile.userId}` as string),
+  queryFn:   () => $fetch<OwnProfileData>(`/api/profile/${profile.userId}` as string),
   enabled:   computed(() => !!profile.userId && !!recoveryCode.value),
   staleTime: 1000 * 60 * 5,
   retry:     1,
@@ -124,6 +138,12 @@ function deleteProfile() {
   profile.deleteProfile()
   navigateTo('/')
 }
+
+function formatDate(unix: number) {
+  return new Date(unix * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
+}
+
+const achievements = computed(() => serverProfile.value?.achievements ?? [])
 </script>
 
 <template>
@@ -433,6 +453,51 @@ function deleteProfile() {
           </svg>
           <span>Complete your first voyage to generate your recovery passport.</span>
         </div>
+      </section>
+
+      <!-- ── Achievements ────────────────────────────────────────────────────── -->
+      <section
+        v-if="achievements.length > 0"
+        class="rounded-[18px] border border-rule bg-paper px-6 py-6 mb-5"
+        :style="{ boxShadow: 'var(--shadow-sm)' }"
+      >
+        <div class="flex items-start gap-3 mb-5">
+          <!-- Trophy icon -->
+          <svg viewBox="0 0 40 40" width="32" height="32" class="shrink-0 mt-0.5" aria-hidden="true">
+            <circle cx="20" cy="20" r="17" fill="none" stroke="var(--color-rule-2)" stroke-width="1.5" />
+            <path d="M14 11h12v9a6 6 0 0 1-12 0z" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" />
+            <path d="M14 15H10a3 3 0 0 0 4 5" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" />
+            <path d="M26 15h4a3 3 0 0 1-4 5" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" />
+            <line x1="20" y1="26" x2="20" y2="30" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" />
+            <line x1="16" y1="30" x2="24" y2="30" stroke="var(--accent)" stroke-width="1.6" stroke-linecap="round" />
+          </svg>
+          <div>
+            <div class="flex items-baseline gap-2">
+              <h2 class="font-serif font-normal text-[22px] tracking-[-0.015em] m-0 leading-tight">
+                Achievements
+              </h2>
+              <span class="font-mono text-[11px] tracking-[0.1em] text-ink-3">{{ achievements.length }}/20</span>
+            </div>
+            <p class="text-[13.5px] text-ink-2 mt-1 m-0">
+              Honours earned on your voyages.
+            </p>
+          </div>
+        </div>
+
+        <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none m-0 p-0">
+          <li
+            v-for="a in achievements"
+            :key="a.id"
+            class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3"
+          >
+            <span class="text-2xl leading-none shrink-0 mt-0.5" aria-hidden="true">{{ a.icon }}</span>
+            <div class="min-w-0">
+              <p class="font-semibold text-[13.5px] text-ink leading-tight m-0">{{ a.name }}</p>
+              <p class="text-[12px] text-ink-2 mt-0.5 leading-snug m-0">{{ a.description }}</p>
+              <p class="font-mono text-[10.5px] text-ink-3 mt-1.5 m-0">{{ formatDate(a.unlockedAt) }}</p>
+            </div>
+          </li>
+        </ul>
       </section>
 
       <!-- ── Danger zone ────────────────────────────────────────────────────── -->
