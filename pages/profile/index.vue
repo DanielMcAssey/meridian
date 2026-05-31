@@ -3,6 +3,7 @@ import QRCode from 'qrcode'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { MAX_BIO_LENGTH, MAX_NAME_LENGTH } from '~/config/game'
 import { ACHIEVEMENTS } from '~/config/achievements'
+import { getBadgesForUser } from '~/config/badges'
 
 definePageMeta({
   ssr: false,
@@ -14,6 +15,7 @@ useSeoMeta({ title: 'Your Profile' })
 const profile      = useProfileStore()
 const recoveryCode = useRecoveryCode()
 const atlas        = useAtlasStore()
+const ownBadges    = computed(() => getBadgesForUser(profile.userId))
 
 // ── Name ──────────────────────────────────────────────────────────────────────
 const nameInput   = ref(profile.name)
@@ -167,6 +169,10 @@ const unlockedMap   = computed(() => {
       <p class="text-[15px] text-ink-2 mb-6">
         Manage your identity in the manifest of explorers.
       </p>
+
+      <div v-if="ownBadges.length" class="mb-5 -mt-2">
+        <PlayerBadges :userId="profile.userId" />
+      </div>
 
       <a
         v-if="profile.userId"

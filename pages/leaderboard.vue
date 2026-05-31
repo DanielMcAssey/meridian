@@ -259,6 +259,7 @@ function trophyFor(rank: number): TrophyKind | null {
               :style="{ color: 'var(--accent)' }"
             >(you)</em>
           </component>
+          <PlayerBadges :userId="entry.userId" size="sm" />
         </div>
 
         <!-- Game + Difficulty — hidden on mobile -->

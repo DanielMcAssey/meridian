@@ -2,11 +2,13 @@
 import { useQuery } from '@tanstack/vue-query'
 import { POOL_LABEL, modeName } from '~/config/game'
 import { ACHIEVEMENTS } from '~/config/achievements'
+import { getBadgesForUser } from '~/config/badges'
 
 definePageMeta({ ssr: false })
 
-const route  = useRoute()
-const userId = route.params.userId as string
+const route      = useRoute()
+const userId     = route.params.userId as string
+const userBadges = getBadgesForUser(userId)
 
 // ── Online detection ──────────────────────────────────────────────────────────
 const isOnline = ref(import.meta.client ? navigator.onLine : true)
@@ -160,6 +162,9 @@ const unlockedMap = computed(() => {
           >
             {{ data.name }}
           </h1>
+        </div>
+        <div v-if="userBadges.length" class="mt-2 mb-1">
+          <PlayerBadges :userId="userId" />
         </div>
         <p v-if="data.bio" class="text-[15px] text-ink-2 mt-3 mb-1">{{ data.bio }}</p>
         <p class="text-[13.5px] text-ink-3 mb-8">
