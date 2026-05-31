@@ -260,7 +260,7 @@ function deleteProfile() {
             <div class="relative">
               <select
                 v-model="countryInput"
-                class="w-full appearance-none bg-transparent border-0 border-b-[1.5px] border-ink-2
+                class="w-full appearance-none bg-paper border-0 border-b-[1.5px] border-ink-2
                        text-[15px] text-ink py-2.5 pr-8 outline-none cursor-pointer
                        transition-[border-color] duration-200 focus:border-[var(--accent)]"
               >
