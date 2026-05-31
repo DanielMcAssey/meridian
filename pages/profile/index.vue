@@ -76,6 +76,10 @@ async function saveIdentity() {
   }
 }
 
+// If the recovery code isn't in localStorage yet (app.vue's init fired before
+// the first score was submitted), retry now that we're on the profile page.
+onMounted(() => { initRecoveryCode() })
+
 const recoveryUri = computed(() =>
   profile.userId && recoveryCode.value
     ? `meridian://link?uid=${profile.userId}&rc=${recoveryCode.value}`

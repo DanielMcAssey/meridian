@@ -36,21 +36,7 @@ onMounted(() => {
   mounted.value = true
   atlas.load()
 
-  const userId       = useUserId()
-  const recoveryCode = useRecoveryCode()
-  const profile      = useProfileStore()
-
-  // Migration: fetch a recovery code for existing users that don't have one yet.
-  // Only attempt when a name is set — that guarantees a DB row exists (created on
-  // first score submission).  New users get their code after their first game.
-  if (userId.value && !recoveryCode.value && profile.name) {
-    $fetch<{ recoveryCode?: string }>('/api/account/init', {
-      method: 'POST',
-      body: { userId: userId.value },
-    }).then((res) => {
-      if (res?.recoveryCode) recoveryCode.value = res.recoveryCode
-    }).catch(() => { /* silent — will retry on next load */ })
-  }
+  initRecoveryCode()
 
   // When autoUpdate activates a new SW (skipWaiting → controllerchange),
   // reload immediately on safe pages; defer on /play and /results so we
