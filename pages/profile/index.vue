@@ -500,7 +500,10 @@ const unlockedMap   = computed(() => {
             v-for="a in ACHIEVEMENTS"
             :key="a.id"
             class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3 transition-opacity"
-            :class="{ 'opacity-35': !unlockedMap.has(a.id) }"
+            :class="{
+              'opacity-35': !unlockedMap.has(a.id),
+              'achievement-prestige': a.category === 'prestige' && unlockedMap.has(a.id),
+            }"
           >
             <span class="text-2xl leading-none shrink-0 mt-0.5" aria-hidden="true">{{ a.icon }}</span>
             <div class="min-w-0">

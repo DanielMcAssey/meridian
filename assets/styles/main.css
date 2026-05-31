@@ -333,7 +333,42 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .sail-btn[data-diff="hard"]   .sail-waves-grp { animation: sail-wave-hard   1s   ease-in-out infinite; }
 .sail-btn[data-diff="expert"] .sail-waves-grp { animation: sail-wave-expert 0.7s ease-in-out infinite; }
 
+/* ── Prestige achievement cards — gold shimmer when unlocked ─────────────── */
+.achievement-prestige {
+  position: relative;
+  overflow: hidden;
+  border-color: oklch(68% 0.13 78) !important;
+  background-color: oklch(98.5% 0.012 75);
+}
+@media (prefers-color-scheme: dark) {
+  .achievement-prestige {
+    border-color: oklch(52% 0.10 72) !important;
+    background-color: oklch(24% 0.022 70);
+  }
+}
+.achievement-prestige::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -60%;
+  width: 60%;
+  height: 120%;
+  background: linear-gradient(to right, transparent, oklch(82% 0.22 82 / 0.55), transparent);
+  transform: skewX(-12deg) translateX(0);
+  pointer-events: none;
+  animation: prestige-shimmer 3s linear infinite;
+}
+@media (prefers-color-scheme: dark) {
+  .achievement-prestige::before {
+    background: linear-gradient(to right, transparent, oklch(72% 0.18 78 / 0.40), transparent);
+  }
+}
+
 /* ── Keyframe animations ─────────────────────────────────────────────────── */
+@keyframes prestige-shimmer {
+  0%   { transform: skewX(-12deg) translateX(0); }
+  100% { transform: skewX(-12deg) translateX(350%); }
+}
 @keyframes gentle-spin { to { transform: rotate(360deg); } }
 @keyframes spin         { to { transform: rotate(360deg); } }
 @keyframes pulse        { to { opacity: 0.6; } }
