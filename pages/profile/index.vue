@@ -45,7 +45,7 @@ watch(serverProfile, (data) => {
   bioInput.value     = data.bio     ?? ''
   countryInput.value = data.countryCode ?? ''
   identityInitialised.value = true
-})
+}, { immediate: true })
 
 const sortedCountries = computed(() =>
   [...atlas.countries].sort((a, b) => a.name.localeCompare(b.name)),
@@ -97,10 +97,16 @@ watch(recoveryUri, async (uri) => {
 
 
 
-function saveName() {
+async function saveName() {
   if (sanitizeName(nameInput.value) === profile.name) return
   if (!profile.setName(nameInput.value)) return
   nameInput.value = profile.name  // reflect any sanitization back into the field
+  if (profile.userId && recoveryCode.value) {
+    await $fetch('/api/profile/update', {
+      method: 'POST',
+      body: { userId: profile.userId, recoveryCode: recoveryCode.value, name: profile.name },
+    }).catch(() => { /* best-effort — name is already saved locally */ })
+  }
   nameSaved.value = true
   setTimeout(() => { nameSaved.value = false }, 2800)
 }

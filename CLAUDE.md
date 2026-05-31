@@ -26,25 +26,42 @@ All tunable constants belong in **`config/game.ts`** — never hardcoded inline 
 
 ## Architecture
 
-Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **client-side only** (`definePageMeta({ ssr: false })`). The server side is a thin **Nitro** API (leaderboard only).
+Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **client-side only** (`definePageMeta({ ssr: false })`). The server side is a thin **Nitro** API covering leaderboard, user registration, account recovery, and public profiles.
 
 ### Page flow
 
 ```
 / (index) → /menu → /play → /results → /leaderboard
+                                      ↘ /profile/[userId]  (public, opens in new tab)
+/profile  (own profile / settings)
 ```
 
-- `/menu` — player picks mode, difficulty, round count, enters name
+- `/` — name entry + difficulty picker for new users; also the re-registration landing for users whose localStorage was cleared
+- `/menu` — player picks mode, difficulty, round count
 - `/play` — active game loop; guards back to `/menu` if no session
 - `/results` — score summary + leaderboard rank
-- `/leaderboard` — all-time scores with mode/difficulty filters
+- `/leaderboard` — all-time scores with mode/difficulty/rounds filters; country flag shown next to player names
+- `/profile` — edit display name, bio, home country; view/copy recovery QR; danger zone
+- `/profile/[userId]` — public read-only profile; shows bio, country flag, voyage stats, recent games
+
+### Route middleware
+
+Named middleware files live in `middleware/`. All are plain `.ts` (not `.client.ts`) — they run client-side only because all pages are `ssr: false`.
+
+| File | Used by | Condition |
+|---|---|---|
+| `require-name` | `/menu`, `/profile` | Redirects to `/` if no name |
+| `require-session` | `/play` | Redirects to `/menu` if no active game |
+| `require-finished` | `/results` | Redirects to `/menu` if game not finished |
+| `redirect-if-named` | `/` | Redirects to `/menu` if name **and** userId both set |
 
 ### State management
 
-Two Pinia stores:
+Three Pinia stores:
 
 - **`useAtlasStore`** (`stores/atlas.ts`) — loads `public/data.json` once on first access. Holds the country list, SVG paths (`countryPaths`), flag paths (`flagPaths`), and silhouette paths (`shapePaths`). `countryPaths` only includes countries where `hasMapPath: true` — stub-path countries are omitted so they never render on the world map. The atlas is shared across all game pages.
 - **`useSessionStore`** (`stores/session.ts`) — tracks the in-progress game: round list, current index, results, final score, and leaderboard rank. `markFinished()` tallies score and sets `lbPending = true`; `setRank()` is called later by the leaderboard mutation's `onSuccess` handler.
+- **`useProfileStore`** (`stores/profile.ts`) — exposes `name` (`geo.player.name`) and `userId` (`geo.user.id`) from localStorage. `setName()` sanitizes before storing. `deleteProfile()` clears all `geo.*` localStorage keys.
 
 ### Game data (`public/data.json`)
 
@@ -122,21 +139,32 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 
 ### Leaderboard (server + offline)
 
-- **Server**: Nitro API at `GET/POST /api/leaderboard` and `GET /api/healthz`. Uses **Drizzle ORM** (`drizzle-orm@rc`) with **`@libsql/client`** (supports both local SQLite files and remote Turso). Schema is at `server/db/schema.ts` — two tables: `users` and `scores`. Local path: `NUXT_DB_PATH` (default `./data/leaderboard.db`); remote: `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN`.
+- **Server**: Nitro API at `GET/POST /api/leaderboard` and `GET /api/healthz`. Uses **Drizzle ORM** (`drizzle-orm@rc`) with **`@libsql/client`** (supports both local SQLite files and remote Turso). Schema is at `server/db/schema.ts` — three tables: `users`, `scores`, `user_stats`. Local path: `NUXT_DB_PATH` (default `./data/leaderboard.db`); remote: `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN`.
+- **Schema**: `users` holds `id`, `name`, `bio`, `country_code`, `recovery_code`, `first_seen`, `last_seen`, and brute-force lockout counters. `scores` holds game results with a `user_id` FK — it does **not** store `name` (name is fetched via `INNER JOIN users` so it always reflects the current display name). `user_stats` is a cached aggregate per user (total games, best score, favourite mode/difficulty) updated on every score submission.
 - **DB initialisation**: All init logic (client creation, WAL pragma, migration runner) lives in `server/utils/db.ts`. `getDb()` returns `Promise<DB>` and initialises lazily on first call, caching the promise on `globalThis.__meridianDbInit` so it survives Nitro HMR module re-evaluations without opening a second client. `server/plugins/database.ts` simply calls `await getDb()` to pre-warm the connection before the first request. Always `await getDb()` in handlers — never call it synchronously.
-- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change, run `npm run db:generate` — this calls `drizzle-kit generate` and then `scripts/gen-migration-list.mjs`, which auto-generates `server/db/migrations/list.ts` from all SQL files in that directory. `list.ts` is also regenerated automatically by `npm run build` (via a `prebuild` hook). The plugin reads from `list.ts` — a plain TS module bundled by any build tool. `import.meta.glob` (Vite-only) and `useStorage('assets:db_migrations')` (returns `[]` in Nitro's Rollup bundle) are **not** used. Applied migrations are tracked in a `_meridian_migrations` SQLite table.
+- **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change, run `npm run db:generate` — this calls `drizzle-kit generate` and then `scripts/gen-migration-list.mjs`, which auto-generates `server/db/migrations/list.ts` from all SQL files in that directory. `list.ts` is also regenerated automatically by `npm run build` (via a `prebuild` hook). Applied migrations are tracked in a `_meridian_migrations` SQLite table. Every migration directory should have both `migration.sql` and `snapshot.json` — a missing snapshot causes drizzle-kit to re-generate already-applied DDL on the next `db:generate` run.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
 - Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`. Mode and difficulty enums are derived from `VALID_MODE_IDS` / `VALID_DIFFICULTY_IDS` in `config/game.ts` — Zod stays in sync with config automatically.
-- The POST payload requires `userId` and `gameToken` (both UUIDs). `gameToken` is unique per game, checked for idempotency — duplicate submissions (offline retries, double-submit) skip the insert and return the existing rank. `userId` upserts a `users` row.
-- **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` (`CACHE_BUSTER = 'v3'`) and automatically retried on reconnect.
+- The POST payload requires `userId` and `gameToken` (both UUIDs). `gameToken` is unique per game, checked for idempotency — duplicate submissions (offline retries, double-submit) skip the insert and return the existing rank. `lastSeen` is updated on every submission; `name` is **not** updated here — name changes go through `POST /api/profile/update`.
+- **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` and automatically retried on reconnect.
 
 ### User identity
 
-Each device gets a stable UUID generated once by `useUserId()` (`composables/useUserId.ts`) and stored under `geo.user.id` in localStorage. It is initialised in `app.vue`'s `onMounted` so all returning users are migrated on their first load. The UUID is sent with every leaderboard POST and used to highlight the player's own rows on the leaderboard (replacing the old fragile name-match approach).
+User identity is **server-issued**. When a new player clicks "Set sail", `POST /api/account/register` creates a `users` row and returns `{ userId, recoveryCode }`. Both are stored in localStorage (`geo.user.id`, `geo.recovery.code`). `useUserId()` simply reads from localStorage — it never generates a UUID client-side.
+
+**Account API endpoints:**
+- `POST /api/account/register` — creates a new user; returns `userId` + `recoveryCode`. Called from the index page on first registration.
+- `POST /api/account/init` — **migration only** for accounts created before server-side registration was introduced. Generates and returns a `recoveryCode` for a `userId` that already exists in the DB but has no code. `useInitRecoveryCode()` calls this on mount (no-op if code already present or user has no DB row).
+- `POST /api/account/link` — verifies a `recoveryCode` for a given `userId`; used by `LinkAccountModal` to transfer an account to a new device.
+- `POST /api/profile/update` — updates any combination of `name`, `bio`, and `country_code` on the `users` row (all fields optional); authenticated via `userId` + `recoveryCode`. Called by both the name-save and identity-save flows on the profile page.
+
+**Recovery code authentication** is shared across `link` and `profile/update` via `server/utils/validateRecoveryCode.ts`. It uses timing-safe comparison and enforces a per-user brute-force lockout (10 failures → 1-hour lockout) tracked via `link_fail_count` / `link_locked_until` on the `users` row.
+
+The `userId` is sent with every leaderboard POST and used to highlight the player's own rows on the leaderboard. The leaderboard also displays the user's `country_code` as a flag icon beside their name.
 
 ### Settings persistence
 
-`useLocalStorage` (`composables/useLocalStorage.ts`) is a custom reactive localStorage binding with a module-level singleton registry — all components sharing a key get the same `Ref`. `useGameSettings` wraps the player's difficulty, round count, and timer preferences. localStorage keys are prefixed `geo.*`.
+`useLocalStorage` (`composables/useLocalStorage.ts`) is a custom reactive localStorage binding with a module-level singleton registry — all components sharing a key get the same `Ref`. Values are read **synchronously** from localStorage during setup (not in `onMounted`) so they are available immediately in route middleware, which runs before any component lifecycle hooks. The `watch` persists every change back to localStorage. `useGameSettings` wraps the player's difficulty, round count, and timer preferences. localStorage keys are prefixed `geo.*`.
 
 ### Styling
 

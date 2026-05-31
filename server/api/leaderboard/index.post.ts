@@ -2,7 +2,6 @@ import { z } from 'zod'
 import { and, count, desc, eq, sql } from 'drizzle-orm'
 import { VALID_DIFFICULTY_IDS, VALID_MODE_IDS, VALID_ROUND_COUNTS } from '~/config/game'
 import { maxPointsPerRound } from '~/utils/scoring'
-import { sanitizeName } from '~/utils/sanitizeName'
 import { scores, userStats, users } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
 import { getClientIp } from '~/server/utils/getClientIp'
@@ -12,9 +11,6 @@ const isRateLimited = createRateLimiter(10)
 // ── Validation ────────────────────────────────────────────────────────────────
 
 const bodySchema = z.object({
-  name:         z.string().min(1).max(28).trim()
-                  .transform(sanitizeName)
-                  .refine((n) => n.length > 0, { message: 'name is empty after sanitisation' }),
   score:        z.number().int().min(0),
   correct:      z.number().int().min(0),
   total:        z.number().int().min(1),
@@ -93,13 +89,11 @@ export default defineEventHandler(async (event) => {
     }
   }
 
-  // ── Upsert user row ─────────────────────────────────────────────────────────
-  await db.insert(users)
-    .values({ id: body.userId, name: body.name, firstSeen: now, lastSeen: now })
-    .onConflictDoUpdate({ target: users.id, set: { name: body.name, lastSeen: now } })
+  // ── Update last seen ────────────────────────────────────────────────────────
+  await db.update(users).set({ lastSeen: now }).where(eq(users.id, body.userId))
 
   // ── Insert score ────────────────────────────────────────────────────────────
-  const { userId, gameToken, recoveryCode: _rc, name: _name, ...scoreFields } = body
+  const { userId, gameToken, recoveryCode: _rc, ...scoreFields } = body
   await db.insert(scores).values({ ...scoreFields, userId, gameToken })
 
   // ── Upsert cached user stats ────────────────────────────────────────────────

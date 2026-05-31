@@ -49,7 +49,6 @@ export interface RoundResult {
 
 /** Payload sent to POST /api/leaderboard after a game ends. */
 export interface LeaderboardEntry {
-  name:          string
   score:         number
   correct:       number
   total:         number
@@ -65,7 +64,7 @@ export interface LeaderboardEntry {
 // The derived version string changes automatically when any field is added,
 // removed, or renamed, busting the persisted offline-mutation cache.
 const _leaderboardEntryShape: Record<keyof LeaderboardEntry, 1> = {
-  name: 1, score: 1, correct: 1, total: 1, mode: 1, difficulty: 1, userId: 1, gameToken: 1, recoveryCode: 1,
+  score: 1, correct: 1, total: 1, mode: 1, difficulty: 1, userId: 1, gameToken: 1, recoveryCode: 1,
 }
 export const LEADERBOARD_MUTATION_VERSION = Object.keys(_leaderboardEntryShape).sort().join('|')
 

@@ -9,7 +9,6 @@ definePageMeta({
 
 const session = useSessionStore()
 const settings = useGameSettings()
-const playerName = useLocalStorage('geo.player.name', '')
 
 useSeoMeta({
   title: computed(() => `${modeName(session.mode)} — Round ${session.idx + 1} of ${session.rounds.length}`),
@@ -157,6 +156,7 @@ const { submitScore } = useLeaderboardMutation()
 const userId       = useUserId()
 const recoveryCode = useRecoveryCode()
 
+
 async function finishGame() {
   const score   = session.results.reduce((s, r) => s + r.points, 0)
   const correct = session.results.filter((r) => r.correct).length
@@ -169,7 +169,6 @@ async function finishGame() {
   // calls session.setRank().  If offline, it's queued in localStorage and
   // retried automatically when connectivity returns.
   submitScore({
-    name:         playerName.value,
     score,
     correct,
     total:        session.rounds.length,
