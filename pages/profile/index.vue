@@ -2,6 +2,7 @@
 import QRCode from 'qrcode'
 import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { MAX_BIO_LENGTH, MAX_NAME_LENGTH } from '~/config/game'
+import { ACHIEVEMENTS } from '~/config/achievements'
 
 definePageMeta({
   ssr: false,
@@ -143,7 +144,12 @@ function formatDate(unix: number) {
   return new Date(unix * 1000).toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-const achievements = computed(() => serverProfile.value?.achievements ?? [])
+const achievements  = computed(() => serverProfile.value?.achievements ?? [])
+const unlockedMap   = computed(() => {
+  const map = new Map<string, number>()
+  for (const a of achievements.value) map.set(a.id, a.unlockedAt)
+  return map
+})
 </script>
 
 <template>
@@ -457,7 +463,6 @@ const achievements = computed(() => serverProfile.value?.achievements ?? [])
 
       <!-- ── Achievements ────────────────────────────────────────────────────── -->
       <section
-        v-if="achievements.length > 0"
         class="rounded-[18px] border border-rule bg-paper px-6 py-6 mb-5"
         :style="{ boxShadow: 'var(--shadow-sm)' }"
       >
@@ -476,7 +481,7 @@ const achievements = computed(() => serverProfile.value?.achievements ?? [])
               <h2 class="font-serif font-normal text-[22px] tracking-[-0.015em] m-0 leading-tight">
                 Achievements
               </h2>
-              <span class="font-mono text-[11px] tracking-[0.1em] text-ink-3">{{ achievements.length }}/20</span>
+              <span class="font-mono text-[11px] tracking-[0.1em] text-ink-3">{{ achievements.length }}/{{ ACHIEVEMENTS.length }}</span>
             </div>
             <p class="text-[13.5px] text-ink-2 mt-1 m-0">
               Honours earned on your voyages.
@@ -486,15 +491,18 @@ const achievements = computed(() => serverProfile.value?.achievements ?? [])
 
         <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none m-0 p-0">
           <li
-            v-for="a in achievements"
+            v-for="a in ACHIEVEMENTS"
             :key="a.id"
-            class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3"
+            class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3 transition-opacity"
+            :class="{ 'opacity-35': !unlockedMap.has(a.id) }"
           >
             <span class="text-2xl leading-none shrink-0 mt-0.5" aria-hidden="true">{{ a.icon }}</span>
             <div class="min-w-0">
               <p class="font-semibold text-[13.5px] text-ink leading-tight m-0">{{ a.name }}</p>
               <p class="text-[12px] text-ink-2 mt-0.5 leading-snug m-0">{{ a.description }}</p>
-              <p class="font-mono text-[10.5px] text-ink-3 mt-1.5 m-0">{{ formatDate(a.unlockedAt) }}</p>
+              <p v-if="unlockedMap.has(a.id)" class="font-mono text-[10.5px] text-ink-3 mt-1.5 m-0">
+                {{ formatDate(unlockedMap.get(a.id)!) }}
+              </p>
             </div>
           </li>
         </ul>

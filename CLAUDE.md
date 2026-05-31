@@ -22,6 +22,8 @@ Commits must follow Conventional Commits (enforced by commitlint). Types: `feat`
 
 All tunable constants belong in **`config/game.ts`** — never hardcoded inline in components, pages, or server routes. This includes scoring values, difficulty settings, round counts, timer durations, mode definitions, and any other value that could reasonably need updating without a code search. When adding a new configurable value, export it from `config/game.ts` and import it at the use site.
 
+Achievement definitions live in **`config/achievements.ts`** as a static `ACHIEVEMENTS` array (not in the database). Each entry has `id`, `name`, `description`, `icon` (emoji), and `category`. Add new achievements there and update the checking logic in `server/utils/checkAchievements.ts`.
+
 `DifficultyConfig` does **not** carry a static country-count estimate — counts are derived dynamically from atlas data via `pickPool(atlas.countries, difficulty).length` wherever they are displayed (index, menu).
 
 ## Architecture
@@ -41,8 +43,8 @@ Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **clie
 - `/play` — active game loop; guards back to `/menu` if no session
 - `/results` — score summary + leaderboard rank
 - `/leaderboard` — all-time scores with mode/difficulty/rounds filters; country flag shown next to player names
-- `/profile` — edit display name, bio, home country; view/copy recovery QR; danger zone
-- `/profile/[userId]` — public read-only profile; shows bio, country flag, voyage stats, recent games
+- `/profile` — edit display name, bio, home country; view/copy recovery QR; achievements grid; danger zone
+- `/profile/[userId]` — public read-only profile; shows bio, country flag, voyage stats, recent games, achievements grid
 
 ### Route middleware
 
@@ -60,7 +62,7 @@ Named middleware files live in `middleware/`. All are plain `.ts` (not `.client.
 Three Pinia stores:
 
 - **`useAtlasStore`** (`stores/atlas.ts`) — loads `public/data.json` once on first access. Holds the country list, SVG paths (`countryPaths`), flag paths (`flagPaths`), and silhouette paths (`shapePaths`). `countryPaths` only includes countries where `hasMapPath: true` — stub-path countries are omitted so they never render on the world map. The atlas is shared across all game pages.
-- **`useSessionStore`** (`stores/session.ts`) — tracks the in-progress game: round list, current index, results, final score, and leaderboard rank. `markFinished()` tallies score and sets `lbPending = true`; `setRank()` is called later by the leaderboard mutation's `onSuccess` handler.
+- **`useSessionStore`** (`stores/session.ts`) — tracks the in-progress game: round list, current index, results, final score, and leaderboard rank. `markFinished()` tallies score and sets `lbPending = true`; `setRank()` is called later by the leaderboard mutation's `onSuccess` handler. `newAchievements` holds any achievements unlocked by the last submission; `setNewAchievements()` / `clearNewAchievements()` are called by the mutation and the results page respectively.
 - **`useProfileStore`** (`stores/profile.ts`) — exposes `name` (`geo.player.name`) and `userId` (`geo.user.id`) from localStorage. `setName()` sanitizes before storing. `deleteProfile()` clears all `geo.*` localStorage keys.
 
 ### Game data (`public/data.json`)
@@ -123,6 +125,16 @@ The menu card for Grand Tour shows dynamic sub-tags that update as the player ch
 
 When a round is locked (answer picked or timer expired), a `RoundsFeedbackOverlay` component appears scoped to the **media section only** (flag image, world map, silhouette, or country/subdivision name card). The answer buttons remain visible with their green/red state. Each round component receives `correct: boolean | null` and `points: number | null` props from `play.vue`; `null` means the round is not yet locked.
 
+### Achievements
+
+20 achievements are defined statically in `config/achievements.ts` (`ACHIEVEMENTS` array, `ACHIEVEMENT_MAP` for O(1) lookup). Categories: `milestone`, `accuracy`, `score`, `difficulty`, `mode`, `career`, `combined`.
+
+**Server flow**: after every score insert + stats upsert in `POST /api/leaderboard`, `checkAchievements()` (`server/utils/checkAchievements.ts`) is called as a pure function — it receives the submission, the updated stats, a `Set` of already-unlocked IDs, and all of the user's score rows, and returns IDs of newly earned achievements. New unlocks are inserted into `user_achievements` and the enriched definitions are returned in the POST response as `newAchievements[]`.
+
+**Client flow**: `useLeaderboardMutation`'s `onSuccess` calls `session.setNewAchievements(data.newAchievements)`. The results page drains the queue via `<AchievementToast>` (`components/AchievementToast.vue`) — a fixed bottom-right toast that shows one achievement at a time, auto-dismissing after 4 s with a 300 ms gap between entries.
+
+**Profile display**: both `/profile` and `/profile/[userId]` show all 20 achievements in a 2-column grid. Unearned achievements are rendered at `opacity-35`; earned ones show their unlock date. The profile GET endpoint (`server/api/profile/[userId].get.ts`) joins `user_achievements` and enriches each row from `ACHIEVEMENT_MAP`.
+
 ### Scoring
 
 All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; imported explicitly in server routes). A difficulty multiplier is applied on top of the base calculation:
@@ -140,7 +152,7 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 ### Leaderboard (server + offline)
 
 - **Server**: Nitro API at `GET/POST /api/leaderboard` and `GET /api/healthz`. Uses **Drizzle ORM** (`drizzle-orm@rc`) with **`@libsql/client`** (supports both local SQLite files and remote Turso). Schema is at `server/db/schema.ts` — three tables: `users`, `scores`, `user_stats`. Local path: `NUXT_DB_PATH` (default `./data/leaderboard.db`); remote: `NUXT_TURSO_DATABASE_URL` + `NUXT_TURSO_AUTH_TOKEN`.
-- **Schema**: `users` holds `id`, `name`, `bio`, `country_code`, `recovery_code`, `first_seen`, `last_seen`, and brute-force lockout counters. `scores` holds game results with a `user_id` FK — it does **not** store `name` (name is fetched via `INNER JOIN users` so it always reflects the current display name). `user_stats` is a cached aggregate per user (total games, best score, favourite mode/difficulty) updated on every score submission.
+- **Schema**: `users` holds `id`, `name`, `bio`, `country_code`, `recovery_code`, `first_seen`, `last_seen`, and brute-force lockout counters. `scores` holds game results with a `user_id` FK — it does **not** store `name` (name is fetched via `INNER JOIN users` so it always reflects the current display name). `user_stats` is a cached aggregate per user (total games, best score, favourite mode/difficulty) updated on every score submission. `user_achievements` is a join table (`user_id`, `achievement_id`, `unlocked_at`) — achievement definitions are static in `config/achievements.ts`, not stored in the DB.
 - **DB initialisation**: All init logic (client creation, WAL pragma, migration runner) lives in `server/utils/db.ts`. `getDb()` returns `Promise<DB>` and initialises lazily on first call, caching the promise on `globalThis.__meridianDbInit` so it survives Nitro HMR module re-evaluations without opening a second client. `server/plugins/database.ts` simply calls `await getDb()` to pre-warm the connection before the first request. Always `await getDb()` in handlers — never call it synchronously.
 - **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change, run `npm run db:generate` — this calls `drizzle-kit generate` and then `scripts/gen-migration-list.mjs`, which auto-generates `server/db/migrations/list.ts` from all SQL files in that directory. `list.ts` is also regenerated automatically by `npm run build` (via a `prebuild` hook). Applied migrations are tracked in a `_meridian_migrations` SQLite table. Every migration directory should have both `migration.sql` and `snapshot.json` — a missing snapshot causes drizzle-kit to re-generate already-applied DDL on the next `db:generate` run.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.

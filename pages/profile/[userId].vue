@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import { POOL_LABEL, modeName } from '~/config/game'
+import { ACHIEVEMENTS } from '~/config/achievements'
 
 definePageMeta({ ssr: false })
 
@@ -97,6 +98,12 @@ function accuracy(correct: number, total: number) {
   if (!total) return '—'
   return `${Math.round((correct / total) * 100)}%`
 }
+
+const unlockedMap = computed(() => {
+  const map = new Map<string, number>()
+  for (const a of (data.value?.achievements ?? [])) map.set(a.id, a.unlockedAt)
+  return map
+})
 </script>
 
 <template>
@@ -267,7 +274,6 @@ function accuracy(correct: number, total: number) {
 
         <!-- ── Achievements ────────────────────────────────────────────────── -->
         <section
-          v-if="data.achievements.length > 0"
           class="rounded-[18px] border border-rule bg-paper px-6 py-6 mb-5"
           :style="{ boxShadow: 'var(--shadow-sm)' }"
         >
@@ -276,21 +282,24 @@ function accuracy(correct: number, total: number) {
               Achievements
             </h2>
             <span class="font-mono text-[11px] tracking-[0.1em] text-ink-3">
-              {{ data.achievements.length }}/20
+              {{ data.achievements.length }}/{{ ACHIEVEMENTS.length }}
             </span>
           </div>
 
           <ul class="grid grid-cols-1 sm:grid-cols-2 gap-3 list-none m-0 p-0">
             <li
-              v-for="a in data.achievements"
+              v-for="a in ACHIEVEMENTS"
               :key="a.id"
-              class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3"
+              class="flex items-start gap-3 rounded-xl border border-rule px-4 py-3 transition-opacity"
+              :class="{ 'opacity-35': !unlockedMap.has(a.id) }"
             >
               <span class="text-2xl leading-none shrink-0 mt-0.5" aria-hidden="true">{{ a.icon }}</span>
               <div class="min-w-0">
                 <p class="font-semibold text-[13.5px] text-ink leading-tight m-0">{{ a.name }}</p>
                 <p class="text-[12px] text-ink-2 mt-0.5 leading-snug m-0">{{ a.description }}</p>
-                <p class="font-mono text-[10.5px] text-ink-3 mt-1.5 m-0">{{ formatDate(a.unlockedAt) }}</p>
+                <p v-if="unlockedMap.has(a.id)" class="font-mono text-[10.5px] text-ink-3 mt-1.5 m-0">
+                  {{ formatDate(unlockedMap.get(a.id)!) }}
+                </p>
               </div>
             </li>
           </ul>
