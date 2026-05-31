@@ -22,8 +22,9 @@ const nameInput   = ref(profile.name)
 const nameSaved   = ref(false)
 const showDelete  = ref(false)
 const confirmText = ref('')
-const qrDataUrl   = ref('')
-const codeCopied  = ref(false)
+const qrDataUrl      = ref('')
+const codeCopied     = ref(false)
+const showLinkModal  = ref(false)
 
 // ── Public identity ───────────────────────────────────────────────────────────
 const bioInput      = ref('')
@@ -465,7 +466,29 @@ const unlockedMap   = computed(() => {
           </svg>
           <span>Complete your first voyage to generate your recovery passport.</span>
         </div>
+
+        <!-- Link a different account -->
+        <div class="border-t border-rule mt-5 pt-5">
+          <p class="text-[13px] text-ink-2 m-0">
+            Need to switch to a different account?
+            <button
+              type="button"
+              class="text-ink-2 underline underline-offset-2 cursor-pointer hover:text-ink transition-colors"
+              @click="showLinkModal = true"
+            >Link it here</button>
+          </p>
+        </div>
       </section>
+
+      <!-- Link account modal (accessible from profile page to allow account switching) -->
+      <Transition
+        enter-from-class="opacity-0"
+        leave-to-class="opacity-0"
+        enter-active-class="transition-opacity duration-200 ease-out"
+        leave-active-class="transition-opacity duration-150 ease-in"
+      >
+        <LinkAccountModal v-if="showLinkModal" @close="showLinkModal = false" />
+      </Transition>
 
       <!-- ── Achievements ────────────────────────────────────────────────────── -->
       <section

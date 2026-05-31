@@ -219,7 +219,7 @@ function gamesFor(diff: Difficulty): string[] {
             </div>
           </div>
 
-          <button type="submit" class="sail-btn" :data-diff="difficulty" :disabled="!name.trim() || submitting">
+          <button type="submit" class="sail-btn" :data-diff="difficulty" :disabled="!name.trim() || submitting || showLinkModal">
             <!-- Boat + wave scene -->
             <svg class="sail-scene" viewBox="0 0 36 28" aria-hidden="true" fill="none">
               <!-- Waves — bob on hover -->

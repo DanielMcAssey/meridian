@@ -96,6 +96,10 @@ async function handleCode(raw: string) {
     recoveryCode.value = parsed.rc
     profile.setName(res.name)
 
+    // Discard any queued offline mutations baked with the previous identity so
+    // they don't replay against the wrong account after the switch.
+    try { localStorage.removeItem('geo.tq-cache') } catch { /* private mode */ }
+
     navigateTo('/menu')
     emit('close')
   } catch (err: unknown) {
