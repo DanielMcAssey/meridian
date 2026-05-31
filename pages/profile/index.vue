@@ -53,7 +53,8 @@ const { data: serverProfile } = useQuery<OwnProfileData>({
   queryKey:  ['profile', profile.userId],
   queryFn:   () => $fetch<OwnProfileData>(`/api/profile/${profile.userId}` as string),
   enabled:   computed(() => !!profile.userId && !!recoveryCode.value),
-  staleTime: 1000 * 60 * 5,
+  staleTime: 0,
+  gcTime:    1000 * 60 * 60 * 24,
   retry:     1,
 })
 

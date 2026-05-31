@@ -64,9 +64,8 @@ const { data, isPending, isError } = useQuery<ProfileData>({
   queryKey:  ['profile', userId],
   queryFn:   () => $fetch<ProfileData>(`/api/profile/${userId}`),
   enabled:   isOnline,
-  staleTime: 1000 * 60 * 2,
+  staleTime: 0,
   retry:     1,
-  networkMode: 'offlineFirst',
 })
 
 const profileTitle = computed(() =>
