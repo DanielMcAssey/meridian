@@ -32,11 +32,11 @@ watch(() => route.path, (path) => {
   if (swUpdatePending && !SW_RELOAD_PROTECTED.has(path)) window.location.reload()
 })
 
+useInitRecoveryCode()
+
 onMounted(() => {
   mounted.value = true
   atlas.load()
-
-  initRecoveryCode()
 
   // When autoUpdate activates a new SW (skipWaiting → controllerchange),
   // reload immediately on safe pages; defer on /play and /results so we

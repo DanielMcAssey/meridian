@@ -1,14 +1,10 @@
 import type { Ref } from 'vue'
 
 /**
- * Returns a stable per-device UUID, generated once and persisted to
- * localStorage under 'geo.user.id'.  All callers share the same Ref via
- * the useLocalStorage singleton registry.
+ * Returns the device's stable user ID stored in localStorage.
+ * The ID is issued by the server on first registration — this composable
+ * only reads and exposes it; it never generates one client-side.
  */
 export function useUserId(): Ref<string> {
-  const id = useLocalStorage('geo.user.id', '')
-  if (import.meta.client && !id.value) {
-    id.value = crypto.randomUUID()
-  }
-  return id as Ref<string>
+  return useLocalStorage('geo.user.id', '') as Ref<string>
 }

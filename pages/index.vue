@@ -45,9 +45,31 @@ onUnmounted(() => {
   if (adventurerTimer) clearInterval(adventurerTimer)
 })
 
-function submit() {
+const submitting  = ref(false)
+const submitError = ref('')
+
+async function submit() {
   if (!profile.setName(name.value)) return
   name.value = profile.name  // reflect sanitization back into the field
+
+  if (!profile.userId) {
+    submitting.value  = true
+    submitError.value = ''
+    try {
+      const res = await $fetch<{ userId: string; recoveryCode: string }>('/api/account/register', {
+        method: 'POST',
+        body: { name: profile.name },
+      })
+      useUserId().value      = res.userId
+      useRecoveryCode().value = res.recoveryCode
+    } catch {
+      submitError.value = 'Could not register — please check your connection and try again.'
+      submitting.value  = false
+      return
+    }
+    submitting.value = false
+  }
+
   settings.difficulty.value = difficulty.value
   navigateTo('/menu')
 }
@@ -197,7 +219,7 @@ function gamesFor(diff: Difficulty): string[] {
             </div>
           </div>
 
-          <button type="submit" class="sail-btn" :data-diff="difficulty" :disabled="!name.trim()">
+          <button type="submit" class="sail-btn" :data-diff="difficulty" :disabled="!name.trim() || submitting">
             <!-- Boat + wave scene -->
             <svg class="sail-scene" viewBox="0 0 36 28" aria-hidden="true" fill="none">
               <!-- Waves — bob on hover -->
@@ -217,8 +239,9 @@ function gamesFor(diff: Difficulty): string[] {
                 <path d="M18 3 L23 5.5 L18 8 Z"/>
               </g>
             </svg>
-            Set sail →
+            {{ submitting ? 'Registering…' : 'Set sail →' }}
           </button>
+          <p v-if="submitError" class="text-[13px]" style="color: var(--color-bad)">{{ submitError }}</p>
         </form>
 
         <p class="mt-6 text-[12.5px] text-ink-3 font-mono tracking-[0.04em]">

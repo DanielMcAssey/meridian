@@ -76,9 +76,7 @@ async function saveIdentity() {
   }
 }
 
-// If the recovery code isn't in localStorage yet (app.vue's init fired before
-// the first score was submitted), retry now that we're on the profile page.
-onMounted(() => { initRecoveryCode() })
+useInitRecoveryCode()
 
 const recoveryUri = computed(() =>
   profile.userId && recoveryCode.value
