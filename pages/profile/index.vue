@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import QRCode from 'qrcode'
-import { useQuery } from '@tanstack/vue-query'
+import { useQuery, useQueryClient } from '@tanstack/vue-query'
 import { MAX_BIO_LENGTH, MAX_NAME_LENGTH } from '~/config/game'
 
 definePageMeta({
@@ -25,6 +25,7 @@ const codeCopied  = ref(false)
 // ── Public identity ───────────────────────────────────────────────────────────
 const bioInput      = ref('')
 const countryInput  = ref('')
+const queryClient   = useQueryClient()
 const identitySaved = ref(false)
 const identityError = ref('')
 const identitySaving = ref(false)
@@ -64,6 +65,7 @@ async function saveIdentity() {
         countryCode:  countryInput.value   || null,
       },
     })
+    queryClient.invalidateQueries({ queryKey: ['profile', profile.userId] })
     identitySaved.value = true
     setTimeout(() => { identitySaved.value = false }, 2800)
   }

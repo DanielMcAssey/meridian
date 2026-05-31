@@ -12,7 +12,7 @@ const bodySchema = z.object({
   userId:       z.string().uuid(),
   recoveryCode: z.string().uuid(),
   bio:          z.string().max(MAX_BIO_LENGTH).nullable(),
-  countryCode:  z.string().regex(/^[A-Z]{2}$/).nullable(),
+  countryCode:  z.string().regex(/^[a-zA-Z]{2}$/).transform(v => v.toLowerCase()).nullable(),
 })
 
 export default defineEventHandler(async (event) => {
