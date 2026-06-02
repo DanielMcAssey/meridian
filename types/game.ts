@@ -21,6 +21,16 @@ export interface Country {
   subdivisions: Subdivision[]  // top-level administrative divisions
   hasShape:     boolean        // silhouette SVG is available (shape != null in data.json)
   hasMapPath:   boolean        // country has a real visible path on the world map SVG
+  wikipedia?:   string
+  currency?:    Currency
+  population?:  number
+  area?:        number         // km²
+}
+
+export interface Currency {
+  name:    string
+  symbol?: string
+  code?:   string
 }
 
 export interface Round {

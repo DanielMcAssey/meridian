@@ -24,6 +24,7 @@ const scripts = [
   'add-missing-countries.mjs',
   'add-capitals.mjs',
   'add-languages.mjs',
+  'add-wikidata.mjs',
   ...(!noSubdivisions ? ['add-subdivisions.mjs'] : []),
 ]
 

@@ -109,6 +109,14 @@ function langName(code: string): string {
   return atlas.languageNames[code] ?? code.toUpperCase()
 }
 
+function fmtNumber(n: number): string {
+  return n.toLocaleString('en-US')
+}
+
+function fmtArea(km2: number): string {
+  return `${km2.toLocaleString('en-US')} km²`
+}
+
 function subdivisionCatPlural(cat: string): string {
   const words = cat.toLowerCase().split(' ')
   const last = words[words.length - 1]!
@@ -410,6 +418,23 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
                     <dt class="eyebrow mb-1">ISO Code</dt>
                     <dd class="font-mono text-[13px] uppercase tracking-[0.1em] text-ink">{{ selected.code }}</dd>
                   </div>
+                  <div v-if="selected.population">
+                    <dt class="eyebrow mb-1">Population</dt>
+                    <dd class="text-[14px] font-medium text-ink">{{ fmtNumber(selected.population) }}</dd>
+                  </div>
+                  <div v-if="selected.area">
+                    <dt class="eyebrow mb-1">Area</dt>
+                    <dd class="text-[14px] font-medium text-ink">{{ fmtArea(selected.area) }}</dd>
+                  </div>
+                  <div v-if="selected.currency">
+                    <dt class="eyebrow mb-1">Currency</dt>
+                    <dd class="text-[14px] font-medium text-ink leading-snug">
+                      {{ selected.currency.name }}
+                      <span v-if="selected.currency.code || selected.currency.symbol" class="block text-[12px] font-normal text-ink-3 mt-0.5">
+                        {{ [selected.currency.code, selected.currency.symbol].filter(Boolean).join(' · ') }}
+                      </span>
+                    </dd>
+                  </div>
                   <div>
                     <dt class="eyebrow mb-1 flex items-center gap-1">
                       Country Pool
@@ -461,6 +486,22 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
                       {{ sub.name }}<span v-if="i < selected.subdivisions.length - 1" class="text-ink-3"> · </span>
                     </template>
                   </p>
+                </div>
+
+                <!-- Wikipedia link -->
+                <div v-if="selected.wikipedia">
+                  <h3 class="eyebrow mb-2">Learn More</h3>
+                  <a
+                    :href="selected.wikipedia"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex items-center gap-1.5 text-[13px] text-accent hover:underline"
+                  >
+                    Wikipedia article
+                    <svg viewBox="0 0 12 12" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M2 10L10 2M5 2h5v5" />
+                    </svg>
+                  </a>
                 </div>
 
               </div>
