@@ -1,6 +1,6 @@
 import { defineStore, skipHydrate } from 'pinia'
 import { computed, ref } from 'vue'
-import type { Country, Subdivision } from '~/types/game'
+import type { Country, Currency, Subdivision } from '~/types/game'
 
 interface AtlasData {
   viewBox: string
@@ -12,6 +12,10 @@ interface AtlasData {
       hasMapPath:    boolean
       langs?:        string[]
       subdivisions?: Subdivision[]
+      wikipedia?:    string
+      currency?:     Currency
+      population?:   number
+      area?:         number
     }
   >
 }
@@ -62,6 +66,10 @@ export const useAtlasStore = defineStore('atlas', () => {
         subdivisions: c.subdivisions ?? [],
         hasShape:     !!c.shape,
         hasMapPath:   c.hasMapPath,
+        wikipedia:  c.wikipedia,
+        currency:   c.currency,
+        population: c.population,
+        area:       c.area,
       }))
 
       const paths:  Record<string, string> = {}
