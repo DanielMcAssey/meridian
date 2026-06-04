@@ -1,8 +1,9 @@
 /**
  * Fetches country data from the WikiData API and stamps each country in data.json
  * with: wikipedia URL, currency (name/symbol/code), population, area, and langs.
- * langs are only updated when WikiData codes exist in datasources/all-languages.json.
- * public/languages.json is managed by add-languages.mjs, not this script.
+ * langs are merged: CSV-derived langs (from add-languages.mjs) come first; Wikidata adds any
+ * additional official-language codes known to all-languages.json.
+ * public/languages.json is regenerated at the end to capture all langs now in data.json.
  *
  * Reads datasources/country-data.csv for WikiData Q-IDs.
  *
@@ -264,14 +265,18 @@ for (const country of data.countries) {
   }
 
   if (facts.langQids?.length) {
-    const isoCodes = [...new Set(
+    const wikidataCodes = [...new Set(
       facts.langQids
         .map(qid => langEntityMap.get(qid)?.isoCode)
         .filter(code => code && langDefs[code])  // only codes known to all-languages.json
     )]
-    if (isoCodes.length) {
-      country.langs = isoCodes
-      country.lang  = isoCodes[0]
+    if (wikidataCodes.length) {
+      // Merge: CSV-derived langs (already in country.langs) come first; Wikidata adds any new ones.
+      const existing = country.langs ?? []
+      const existingSet = new Set(existing)
+      const merged = [...existing, ...wikidataCodes.filter(c => !existingSet.has(c))]
+      country.langs = merged
+      country.lang  = merged[0]
     }
   }
 
@@ -281,3 +286,12 @@ for (const country of data.countries) {
 writeFileSync(DATA_PATH, JSON.stringify(data), 'utf8')
 console.log(`Stamped ${stamped}/${data.countries.length} countries.`)
 if (missing.length) console.warn('No WikiData entry for:', missing.join(', '))
+
+// Regenerate public/languages.json from all langs now present in data.json
+const LANGS_OUT_PATH = join(ROOT, 'public', 'languages.json')
+const usedCodes = new Set(data.countries.flatMap(c => c.langs ?? []))
+const langMap   = Object.fromEntries(
+  [...usedCodes].sort().map(code => [code, langDefs[code]?.name ?? code]),
+)
+writeFileSync(LANGS_OUT_PATH, JSON.stringify(langMap), 'utf8')
+console.log(`Wrote public/languages.json with ${usedCodes.size} language entries.`)
