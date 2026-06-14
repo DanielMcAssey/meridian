@@ -180,8 +180,8 @@ export const ADVENTURERS = [
 // Defines which round types are included in 'mixed' mode at each difficulty.
 // Higher difficulties include all lower-tier types plus their own.
 export const MIXED_ROUND_TYPES: Record<Difficulty, RoundType[]> = {
-  easy:   ['region'],
-  medium: ['region', 'flag', 'pin'],
-  hard:   ['region', 'flag', 'pin', 'cart', 'capital'],
-  expert: ['region', 'flag', 'pin', 'cart', 'capital', 'shape', 'language', 'province'],
+  easy:   ['region', 'language'],
+  medium: ['region', 'language', 'flag', 'pin'],
+  hard:   ['region', 'language', 'flag', 'pin', 'cart', 'capital'],
+  expert: ['region', 'language', 'flag', 'pin', 'cart', 'capital', 'shape', 'province'],
 }
