@@ -128,6 +128,17 @@ export const DIFFICULTY_TIER_WEIGHTS: Record<Difficulty, Record<number, number>>
   expert: { 1: 1, 2: 2, 3: 3, 4: 5 },
 }
 
+// ── Distractor nearness ───────────────────────────────────────────────────────
+// For multiple-choice rounds, distractors are sampled from the K geographically
+// nearest candidates to the answer. Smaller K → closer (harder) options.
+// Harder difficulties tighten the window so wrong answers are more confusable.
+export const DISTRACTOR_NEARNESS: Record<Difficulty, number> = {
+  easy:   40,   // wide band — options spread across the region/world
+  medium: 20,
+  hard:   10,
+  expert:  6,   // nearest neighbours only — hardest to distinguish
+}
+
 // ── Map display ───────────────────────────────────────────────────────────────
 /** How far to zoom in on the pin in Pin Drop rounds (multiplier over the full map).
  *  3 = shows ~⅓ of the world width, giving clear regional context. */

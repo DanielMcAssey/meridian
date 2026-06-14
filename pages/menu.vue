@@ -49,10 +49,10 @@ function diffLabel(m: ModeConfig): string {
 // ── Grand Tour dynamic tags ───────────────────────────────────────────────────
 
 const GRAND_TOUR_TAGS: Record<Difficulty, string[]> = {
-  easy:   ['Continental'],
-  medium: ['Continental', 'Vexillology', 'Pin Drops'],
-  hard:   ['Continental', 'Vexillology', 'Pin Drops', 'Charting', 'Civics'],
-  expert: ['Continental', 'Vexillology', 'Pin Drops', 'Charting', 'Civics', 'Silhouette', 'Linguistics', 'Sovereignty'],
+  easy:   ['Continental', 'Linguistics'],
+  medium: ['Continental', 'Linguistics', 'Vexillology', 'Pin Drops'],
+  hard:   ['Continental', 'Linguistics', 'Vexillology', 'Pin Drops', 'Charting', 'Civics'],
+  expert: ['Continental', 'Linguistics', 'Vexillology', 'Pin Drops', 'Charting', 'Civics', 'Silhouette', 'Sovereignty'],
 }
 
 const grandTourTags = computed(() => GRAND_TOUR_TAGS[settings.difficulty.value])
