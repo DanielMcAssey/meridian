@@ -1,5 +1,5 @@
 import type { Country, Difficulty, GameMode, Round, RoundType } from '~/types/game'
-import { DIFFICULTY_TIER_WEIGHTS, MIXED_ROUND_TYPES } from '~/config/game'
+import { DIFFICULTY_TIER_WEIGHTS, DISTRACTOR_NEARNESS, MIXED_ROUND_TYPES } from '~/config/game'
 
 export function shuffle<T>(arr: T[]): T[] {
   const a = arr.slice()
@@ -19,11 +19,26 @@ export function pickPool(countries: Country[], difficulty: Difficulty): Country[
   return countries.filter((c) => c.tier >= 2) // expert: excludes tier-1 (easy) countries
 }
 
-function pickDistractors(answer: Country, pool: Country[], n: number): Country[] {
-  const sameRegion = pool.filter((c) => c.code !== answer.code && c.region === answer.region)
-  const others = pool.filter((c) => c.code !== answer.code && c.region !== answer.region)
-  const picked = shuffle(sameRegion).slice(0, n)
-  if (picked.length < n) picked.push(...shuffle(others).slice(0, n - picked.length))
+// Cheap equirectangular distance proxy — good enough for ranking neighbours.
+function geoDist(a: Country, b: Country): number {
+  const dLat = a.lat - b.lat
+  const dLng = (a.lng - b.lng) * Math.cos((a.lat + b.lat) / 2 * Math.PI / 180)
+  return dLat * dLat + dLng * dLng   // squared; ordering is all that matters
+}
+
+// Distractors are sampled from the K geographically nearest candidates to the
+// answer (K = DISTRACTOR_NEARNESS[difficulty]). Smaller K → closer (harder)
+// options. This keeps wrong answers confusable and scales that by difficulty.
+function pickDistractors(
+  answer: Country, pool: Country[], n: number, difficulty: Difficulty,
+): Country[] {
+  const ranked = pool
+    .filter((c) => c.code !== answer.code)
+    .sort((a, b) => geoDist(answer, a) - geoDist(answer, b))
+  const k = Math.max(n, DISTRACTOR_NEARNESS[difficulty])
+  const picked = shuffle(ranked.slice(0, k)).slice(0, n)
+  // Safety net for tiny pools: top up from the remaining ranked candidates.
+  if (picked.length < n) picked.push(...ranked.slice(k, k + (n - picked.length)))
   return picked
 }
 
@@ -34,6 +49,7 @@ function pickLanguageOptions(
   answer: Country,
   pool: Country[],
   languageNames: Record<string, string>,
+  difficulty: Difficulty,
 ): { langOptions: string[]; answerLang: string } | null {
   const validCodes = answer.langs.filter((l) => languageNames[l])
   if (!validCodes.length) return null
@@ -42,9 +58,23 @@ function pickLanguageOptions(
   const answerLang = languageNames[answerCode]!
   const excluded   = new Set(answer.langs)
 
-  const candidateCodes = [...new Set(
-    pool.flatMap((c) => c.langs.filter((l) => !excluded.has(l) && languageNames[l])),
-  )]
+  // Rank candidate languages by the distance of the nearest pool country that
+  // speaks them, then keep only the nearest K so distractors come from nearby
+  // countries — tighter (nearer) at higher difficulties, matching pickDistractors.
+  const nearestDist = new Map<string, number>()
+  for (const c of pool) {
+    if (c.code === answer.code) continue
+    const d = geoDist(answer, c)
+    for (const l of c.langs) {
+      if (excluded.has(l) || !languageNames[l]) continue
+      const prev = nearestDist.get(l)
+      if (prev === undefined || d < prev) nearestDist.set(l, d)
+    }
+  }
+  const k = Math.max(3, DISTRACTOR_NEARNESS[difficulty])
+  const candidateCodes = [...nearestDist.keys()]
+    .sort((a, b) => nearestDist.get(a)! - nearestDist.get(b)!)
+    .slice(0, k)
 
   const distractors: string[] = []
   const usedNames = new Set([answerLang])
@@ -127,7 +157,7 @@ export function buildRounds(
     }
 
     if (roundType === 'language') {
-      const lang = pickLanguageOptions(answer, widerPool, languageNames)
+      const lang = pickLanguageOptions(answer, widerPool, languageNames, difficulty)
       if (lang) return { type: roundType, answer, options: [], ...lang }
       roundType = 'flag'  // fallback for countries without language data
     }
@@ -136,7 +166,7 @@ export function buildRounds(
       const subs = answer.subdivisions
       if (subs.length > 0) {
         const sub = subs[Math.floor(Math.random() * subs.length)]!
-        const options = shuffle([answer, ...pickDistractors(answer, widerPool, 3)])
+        const options = shuffle([answer, ...pickDistractors(answer, widerPool, 3, difficulty)])
         return { type: roundType, answer, options, subdivisionName: sub.name, subdivisionCat: sub.cat }
       }
       roundType = 'flag'  // fallback for countries without subdivision data
@@ -145,7 +175,7 @@ export function buildRounds(
     const options =
       roundType === 'region'
         ? pickRegionOptions(answer, countries)
-        : shuffle([answer, ...pickDistractors(answer, widerPool, 3)])
+        : shuffle([answer, ...pickDistractors(answer, widerPool, 3, difficulty)])
     return { type: roundType, answer, options }
   })
 
