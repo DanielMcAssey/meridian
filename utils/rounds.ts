@@ -91,11 +91,20 @@ function pickLanguageOptions(
   return { langOptions: shuffle([answerLang, ...distractors]), answerLang }
 }
 
+// All continents that count as correct for a country — its primary region plus
+// any extra accepted continents for transcontinental countries (e.g. Cyprus).
+export function acceptedRegions(c: Country): string[] {
+  return c.altRegions?.length ? [c.region, ...c.altRegions] : [c.region]
+}
+
 // For region rounds: pick one representative country from each of 3 other regions.
-// Returns the 4 options (answer + 3 region reps) already shuffled.
+// Returns the 4 options (answer + 3 region reps) already shuffled. Every continent
+// the answer accepts is excluded from the distractor pool, so exactly one option
+// (the answer itself, labelled with its primary region) is ever correct.
 function pickRegionOptions(answer: Country, allCountries: Country[]): Country[] {
+  const accepted = new Set(acceptedRegions(answer))
   const otherRegions = [...new Set(allCountries.map((c) => c.region))].filter(
-    (r) => r !== answer.region,
+    (r) => !accepted.has(r),
   )
   const reps = shuffle(otherRegions)
     .slice(0, 3)

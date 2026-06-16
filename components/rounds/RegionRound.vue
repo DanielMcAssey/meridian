@@ -13,10 +13,16 @@ const props = defineProps<{
 const emit = defineEmits<{ pick: [country: Country] }>()
 
 function optClass(opt: Country): string {
-  return calcOptClass(opt.region === props.round.answer.region, props.picked?.code === opt.code, props.locked)
+  return calcOptClass(acceptedRegions(props.round.answer).includes(opt.region), props.picked?.code === opt.code, props.locked)
 }
 
-const label = computed(() => `It belongs to ${props.round.answer.region}`)
+const label = computed(() => {
+  const regions = acceptedRegions(props.round.answer)
+  const list = regions.length > 1
+    ? `${regions.slice(0, -1).join(', ')} & ${regions.at(-1)}`
+    : regions[0]
+  return `It belongs to ${list}`
+})
 </script>
 
 <template>

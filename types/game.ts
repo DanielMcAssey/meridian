@@ -16,6 +16,7 @@ export interface Country {
   svgCx:        number
   svgCy:        number
   region:       string
+  altRegions?:  string[]       // extra accepted continents for transcontinental countries (e.g. Cyprus: Europe + Asia)
   tier:         number
   langs:        string[]       // ISO 639-1 alpha-2 codes of official languages
   subdivisions: Subdivision[]  // top-level administrative divisions

@@ -10,6 +10,7 @@ interface AtlasData {
       path:          string
       shape:         string | null
       hasMapPath:    boolean
+      altRegions?:   string[]
       langs?:        string[]
       subdivisions?: Subdivision[]
       wikipedia?:    string
@@ -61,6 +62,7 @@ export const useAtlasStore = defineStore('atlas', () => {
         svgCx:   c.svgCx,
         svgCy:   c.svgCy,
         region:  c.region,
+        altRegions: c.altRegions,
         tier:    c.tier,
         langs:        c.langs ?? [],
         subdivisions: c.subdivisions ?? [],

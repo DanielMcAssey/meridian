@@ -4,9 +4,10 @@
  *
  * Order:
  *   1. add-missing-countries  — insert any new sovereign states from CSV
- *   2. add-capitals           — stamp capital cities from CSV
- *   3. add-languages          — stamp langs arrays + regenerate public/languages.json
- *   4. add-subdivisions       — fetch ISO 3166-2 data and stamp subdivisions
+ *   2. add-alt-regions        — stamp altRegions on transcontinental countries
+ *   3. add-capitals           — stamp capital cities from CSV
+ *   4. add-languages          — stamp langs arrays + regenerate public/languages.json
+ *   5. add-subdivisions       — fetch ISO 3166-2 data and stamp subdivisions
  *                               (requires network; pass --no-subdivisions to skip)
  *
  * Usage:
@@ -22,6 +23,7 @@ const noSubdivisions  = process.argv.includes('--no-subdivisions')
 
 const scripts = [
   'add-missing-countries.mjs',
+  'add-alt-regions.mjs',
   'add-capitals.mjs',
   'add-languages.mjs',
   'add-wikidata.mjs',

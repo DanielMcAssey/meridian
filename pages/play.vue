@@ -119,7 +119,7 @@ function handleLock(opt: Country | string | null, elapsedSec: number) {
   if (round.type === 'language') {
     correct = typeof opt === 'string' && opt === round.answerLang
   } else if (round.type === 'region') {
-    correct = typeof opt === 'object' && opt !== null && opt.region === round.answer.region
+    correct = typeof opt === 'object' && opt !== null && acceptedRegions(round.answer).includes(opt.region)
   } else {
     correct = typeof opt === 'object' && opt !== null && opt.code === round.answer.code
   }
@@ -192,7 +192,7 @@ const isCorrect     = computed(() => {
   if (!round) return false
   if (round.type === 'language') return pickedLang.value !== null && pickedLang.value === round.answerLang
   if (!picked.value) return false
-  if (round.type === 'region') return picked.value.region === round.answer.region
+  if (round.type === 'region') return acceptedRegions(round.answer).includes(picked.value.region)
   return picked.value.code === round.answer.code
 })
 const lastResult    = computed(() => locked.value && session.results.length > 0 ? session.results[session.results.length - 1] : null)
