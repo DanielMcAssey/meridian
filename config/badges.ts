@@ -34,6 +34,7 @@ const USER_BADGES: Record<string, string[]> = {
   'e35b2fd6-884e-4e05-a0f0-9131aa6411c5': ['friends'],
   '04644558-cf9a-4e96-a9e7-372af481e26c': ['friends'],
   'd7880b2c-0b90-4b19-a014-b769221f78f9': ['friends'],
+  'a8b06d25-30a2-402b-8943-958f236702ee': ['friends'],
 }
 
 export function getBadgesForUser(userId: string | null | undefined): Badge[] {
