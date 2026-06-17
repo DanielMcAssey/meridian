@@ -35,13 +35,13 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'hard_carry',          name: 'Hard Carry',              description: 'Get 100% accuracy on a Familiar-pool game.',                       icon: '🎖️', category: 'combined'   },
   { id: 'globe_scholar',       name: 'Globe Scholar',           description: 'Complete 10 games across 5 or more different modes.',              icon: '📚', category: 'combined'   },
   // Mastery — perfect runs on the Obscure country pool, 20 rounds, timer on, all correct.
+  { id: 'perfect_region',   name: 'Continental Command',   description: 'Get a perfect score in The Continental — 20 rounds, Obscure pool, timer on.',      icon: '🌍', category: 'mastery' },
+  { id: 'perfect_language', name: 'Supreme Linguist',      description: 'Get a perfect score in The Linguist — 20 rounds, Obscure pool, timer on.',         icon: '🗣️', category: 'mastery' },
   { id: 'perfect_banner',   name: 'Master Vexillologist',  description: 'Get a perfect score in The Banner Game — 20 rounds, Obscure pool, timer on.',      icon: '🏴', category: 'mastery' },
   { id: 'perfect_pin',      name: 'Eagle-Eyed Navigator',  description: 'Get a perfect score in The Pin Drop — 20 rounds, Obscure pool, timer on.',         icon: '📍', category: 'mastery' },
   { id: 'perfect_cart',     name: 'Flawless Cartographer', description: 'Get a perfect score in The Cartographer — 20 rounds, Obscure pool, timer on.',     icon: '🗺️', category: 'mastery' },
-  { id: 'perfect_shape',    name: 'Shadow Reader',         description: 'Get a perfect score in The Silhouette — 20 rounds, Obscure pool, timer on.',       icon: '🌑', category: 'mastery' },
   { id: 'perfect_capital',  name: 'Capital Mastermind',    description: 'Get a perfect score in The Capital Cities — 20 rounds, Obscure pool, timer on.',   icon: '🏛️', category: 'mastery' },
-  { id: 'perfect_region',   name: 'Continental Command',   description: 'Get a perfect score in The Continental — 20 rounds, Obscure pool, timer on.',      icon: '🌍', category: 'mastery' },
-  { id: 'perfect_language', name: 'Supreme Linguist',      description: 'Get a perfect score in The Linguist — 20 rounds, Obscure pool, timer on.',         icon: '🗣️', category: 'mastery' },
+  { id: 'perfect_shape',    name: 'Shadow Reader',         description: 'Get a perfect score in The Silhouette — 20 rounds, Obscure pool, timer on.',       icon: '🌑', category: 'mastery' },
   { id: 'perfect_province', name: 'Sovereign Surveyor',    description: 'Get a perfect score in The Province — 20 rounds, Obscure pool, timer on.',         icon: '📋', category: 'mastery' },
   // Leaderboard — reach the very top of a time-windowed leaderboard.
   { id: 'weekly_champion',  name: 'Champion of the Week',  description: 'Reach #1 on the weekly leaderboard.',                                              icon: '🥇', category: 'leaderboard' },
