@@ -397,13 +397,13 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
               <div class="flex sm:flex-col gap-3 sm:w-48 shrink-0">
                 <!-- Flag -->
                 <div
-                  class="flex-1 sm:flex-none border border-rule rounded-xl overflow-hidden bg-bg-tint"
-                  style="aspect-ratio:3/2"
+                  class="flex-1 sm:flex-none flex items-center justify-center
+                         border border-rule rounded-xl overflow-hidden bg-bg-tint"
                 >
                   <FlagImage
                     :code="selected.code"
                     :alt="`Flag of ${selected.name}`"
-                    class="w-full h-full object-contain"
+                    class="w-full block max-h-48 object-contain"
                   />
                 </div>
 
