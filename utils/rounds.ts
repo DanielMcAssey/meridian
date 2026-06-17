@@ -144,12 +144,14 @@ export function buildRounds(
   const shapePool    = pool.filter((c) => c.hasShape)
   const mapPool      = pool.filter((c) => c.hasMapPath)
   const flagPool     = pool.filter((c) => c.hasFlag)
+  const capitalPool  = pool.filter((c) => !!c.capital)
   const answerPool   = mode === 'language' ? langPool
                      : mode === 'province' ? provincePool
                      : mode === 'shape'    ? shapePool
                      : mode === 'pin'      ? mapPool
                      : mode === 'cart'     ? mapPool
                      : mode === 'flag'     ? flagPool
+                     : mode === 'capital'  ? capitalPool
                      : pool
   const answers = weightedSample(answerPool, count, difficulty)
 
@@ -193,7 +195,12 @@ export function buildRounds(
     const options =
       roundType === 'region'
         ? pickRegionOptions(answer, countries)
-        : shuffle([answer, ...pickDistractors(answer, widerPool, 3, difficulty)])
+        : shuffle([answer, ...pickDistractors(
+            answer,
+            roundType === 'capital' ? widerPool.filter((c) => !!c.capital) : widerPool,
+            3,
+            difficulty,
+          )])
     return { type: roundType, answer, options }
   })
 
