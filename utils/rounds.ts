@@ -143,13 +143,22 @@ export function buildRounds(
   const provincePool = pool.filter((c) => c.subdivisions.length > 0)
   const shapePool    = pool.filter((c) => c.hasShape)
   const mapPool      = pool.filter((c) => c.hasMapPath)
+  const flagPool     = pool.filter((c) => c.hasFlag)
   const answerPool   = mode === 'language' ? langPool
                      : mode === 'province' ? provincePool
                      : mode === 'shape'    ? shapePool
                      : mode === 'pin'      ? mapPool
                      : mode === 'cart'     ? mapPool
+                     : mode === 'flag'     ? flagPool
                      : pool
   const answers = weightedSample(answerPool, count, difficulty)
+
+  // Universal fallback when a country lacks the data for its assigned round
+  // type. Prefer 'flag', but a territory that borrows another country's flag
+  // (hasFlag === false) would make a banner round ambiguous, so fall back to
+  // 'capital' (or 'region' as a last resort) instead.
+  const flagFallback = (answer: Country): RoundType =>
+    answer.hasFlag ? 'flag' : answer.capital ? 'capital' : 'region'
 
   const rounds = answers.map((answer, i) => {
     let roundType: RoundType = mode as RoundType
@@ -159,16 +168,16 @@ export function buildRounds(
     }
 
     if (roundType === 'shape' && !answer.hasShape) {
-      roundType = 'flag'  // fallback for countries without a silhouette SVG
+      roundType = flagFallback(answer)  // fallback for countries without a silhouette SVG
     }
     if ((roundType === 'pin' || roundType === 'cart') && !answer.hasMapPath) {
-      roundType = 'flag'  // fallback for countries not visible on the world map
+      roundType = flagFallback(answer)  // fallback for countries not visible on the world map
     }
 
     if (roundType === 'language') {
       const lang = pickLanguageOptions(answer, widerPool, languageNames, difficulty)
       if (lang) return { type: roundType, answer, options: [], ...lang }
-      roundType = 'flag'  // fallback for countries without language data
+      roundType = flagFallback(answer)  // fallback for countries without language data
     }
 
     if (roundType === 'province') {
@@ -178,7 +187,7 @@ export function buildRounds(
         const options = shuffle([answer, ...pickDistractors(answer, widerPool, 3, difficulty)])
         return { type: roundType, answer, options, subdivisionName: sub.name, subdivisionCat: sub.cat }
       }
-      roundType = 'flag'  // fallback for countries without subdivision data
+      roundType = flagFallback(answer)  // fallback for countries without subdivision data
     }
 
     const options =

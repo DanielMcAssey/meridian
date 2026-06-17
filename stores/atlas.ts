@@ -9,6 +9,7 @@ interface AtlasData {
       flag:          string
       path:          string
       shape:         string | null
+      hasFlag?:      boolean
       hasMapPath:    boolean
       altRegions?:   string[]
       langs?:        string[]
@@ -56,6 +57,7 @@ export const useAtlasStore = defineStore('atlas', () => {
       countries.value = data.countries.map((c) => ({
         code:    c.code,
         name:    c.name,
+        type:    c.type ?? 'country',
         capital: c.capital,
         lat:     c.lat,
         lng:     c.lng,
@@ -67,6 +69,7 @@ export const useAtlasStore = defineStore('atlas', () => {
         langs:        c.langs ?? [],
         subdivisions: c.subdivisions ?? [],
         hasShape:     !!c.shape,
+        hasFlag:      c.hasFlag ?? true,
         hasMapPath:   c.hasMapPath,
         wikipedia:  c.wikipedia,
         currency:   c.currency,

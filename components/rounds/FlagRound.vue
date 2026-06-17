@@ -28,11 +28,11 @@ const imageAlt = computed(() =>
       style="background: repeating-linear-gradient(45deg, var(--color-bg-tint) 0 12px, var(--color-paper) 12px 24px)"
     >
       <div
-        class="w-full max-w-[min(520px,100%)] aspect-[3/2]
+        class="w-full max-w-[min(520px,100%)]
                bg-paper rounded-md overflow-hidden flex items-center justify-center"
         style="box-shadow: 0 16px 40px -16px rgba(20,15,10,0.35), 0 1px 0 rgba(20,15,10,0.06)"
       >
-        <FlagImage :code="round.answer.code" :alt="imageAlt" class="w-full h-full block object-contain select-none" />
+        <FlagImage :code="round.answer.code" :alt="imageAlt" class="w-full block max-h-[60vh] object-contain select-none" />
       </div>
       <RoundsFeedbackOverlay
         v-if="correct !== null"

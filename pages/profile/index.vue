@@ -316,8 +316,8 @@ const unlockedMap   = computed(() => {
               </svg>
             </div>
             <div v-if="countryInput" class="flex items-center gap-2">
-              <img
-                :src="`/flags/${countryInput.toLowerCase()}.svg`"
+              <FlagImage
+                :code="countryInput.toLowerCase()"
                 :alt="countryInput"
                 width="28"
                 height="20"

@@ -136,7 +136,7 @@ for (const row of csvRows) {
     svgCy,
     region,
     tier:         4,
-    flag:         `flags/${code}.svg`,
+    flag:         `flags/countries/${code}.svg`,
     path:         tinyPath(svgCx, svgCy),
     capital,
     shape:        `maps/${code}.svg`,
@@ -148,7 +148,7 @@ for (const row of csvRows) {
   added++
   existing.add(code)
 
-  const missingFlag  = !existsSync(join(ROOT, 'public', 'flags', `${code}.svg`))
+  const missingFlag  = !existsSync(join(ROOT, 'public', 'flags', 'countries', `${code}.svg`))
   const missingShape = !existsSync(join(ROOT, 'public', 'maps',  `${code}.svg`))
   if (missingFlag || missingShape) {
     needsAssets.push({ code, missingFlag, missingShape })

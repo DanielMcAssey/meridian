@@ -256,9 +256,9 @@ function trophyFor(rank: number): TrophyKind | null {
 
         <!-- Name -->
         <div class="flex items-center gap-2 min-w-0">
-          <img
+          <FlagImage
             v-if="entry.countryCode"
-            :src="`/flags/${entry.countryCode.toLowerCase()}.svg`"
+            :code="entry.countryCode.toLowerCase()"
             :alt="entry.countryCode"
             width="20"
             height="14"

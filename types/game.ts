@@ -7,9 +7,12 @@ export interface Subdivision {
   cat:  string  // raw category e.g. "STATE", "PROVINCE", "CANTON"
 }
 
+export type CountryType = 'country' | 'territory'
+
 export interface Country {
   code:         string
   name:         string
+  type:         CountryType  // sovereign country vs. dependent territory (from attribution.json)
   capital:      string
   lat:          number
   lng:          number
@@ -21,6 +24,7 @@ export interface Country {
   langs:        string[]       // ISO 639-1 alpha-2 codes of official languages
   subdivisions: Subdivision[]  // top-level administrative divisions
   hasShape:     boolean        // silhouette SVG is available (shape != null in data.json)
+  hasFlag:      boolean        // entry has its own flag (false for territories that borrow a country's flag) — excluded from banner rounds
   hasMapPath:   boolean        // country has a real visible path on the world map SVG
   wikipedia?:   string
   currency?:    Currency

@@ -147,9 +147,9 @@ const unlockedMap = computed(() => {
         <!-- Header -->
         <span class="eyebrow">Traveller's Log</span>
         <div class="flex items-center gap-3 mt-3 mb-1 flex-wrap">
-          <img
+          <FlagImage
             v-if="data.countryCode"
-            :src="`/flags/${data.countryCode.toLowerCase()}.svg`"
+            :code="data.countryCode.toLowerCase()"
             :alt="data.countryCode"
             width="36"
             height="26"

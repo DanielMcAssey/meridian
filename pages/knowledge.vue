@@ -15,8 +15,15 @@ const TIER_LABELS = ['', 'Flagship', 'Well-known', 'Familiar', 'Obscure'] as con
 
 // ── Filters ───────────────────────────────────────────────────────────────────
 const search       = ref('')
+const typeFilter   = ref<'all' | 'country' | 'territory'>('all')
 const regionFilter = ref('all')
 const tierFilter   = ref(0)
+
+const typeOptions = [
+  { id: 'all',       label: 'All' },
+  { id: 'country',   label: 'Countries' },
+  { id: 'territory', label: 'Territories' },
+]
 
 const regionOptions = computed(() => [
   { id: 'all', label: 'All regions' },
@@ -30,6 +37,8 @@ const tierOptions = [
 
 const filtered = computed(() => {
   let list = atlas.countries
+  if (typeFilter.value !== 'all')
+    list = list.filter((c) => c.type === typeFilter.value)
   if (regionFilter.value !== 'all')
     list = list.filter((c) => c.region === regionFilter.value)
   if (tierFilter.value > 0)
@@ -128,6 +137,14 @@ function subdivisionCatPlural(cat: string): string {
 
 const total = computed(() => atlas.countries.length)
 
+// Result-count noun adapts to the active type filter.
+const resultNoun = computed(() => {
+  const one = filtered.value.length === 1
+  if (typeFilter.value === 'territory') return one ? 'territory' : 'territories'
+  if (typeFilter.value === 'country')   return one ? 'country'   : 'countries'
+  return one ? 'place' : 'places'
+})
+
 // ── Tier legend tooltip ────────────────────────────────────────────────────────
 const tierTooltipVisible   = ref(false)
 const tierTooltipAnchor    = ref<HTMLElement | null>(null)
@@ -178,7 +195,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
         The Knowledge
       </h1>
       <p class="text-ink-2 text-[15px] leading-relaxed">
-        Browse all {{ total }} countries — flags, outlines, capitals, languages, and more.
+        Browse all {{ total }} countries &amp; territories — flags, outlines, capitals, languages, and more.
         Click any entry to study the details.
       </p>
     </div>
@@ -205,8 +222,14 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
         />
       </div>
 
-      <!-- Region + Tier pill groups -->
+      <!-- Type + Region + Tier pill groups -->
       <div class="flex flex-wrap gap-5 items-start">
+        <FilterPillGroup
+          label="Type"
+          :options="typeOptions"
+          :model-value="typeFilter"
+          @update:model-value="typeFilter = $event as 'all' | 'country' | 'territory'"
+        />
         <FilterPillGroup
           label="Region"
           :options="regionOptions"
@@ -224,7 +247,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
 
     <!-- Result count -->
     <p class="eyebrow mb-5">
-      {{ filtered.length }} {{ filtered.length === 1 ? 'country' : 'countries' }}
+      {{ filtered.length }} {{ resultNoun }}
       <span v-if="filtered.length < total" class="opacity-60">· filtered</span>
     </p>
 
@@ -274,7 +297,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
 
     <!-- Empty state -->
     <div v-else class="py-24 text-center">
-      <p class="font-serif italic text-2xl text-ink-2 mb-1">No countries found</p>
+      <p class="font-serif italic text-2xl text-ink-2 mb-1">Nothing found</p>
       <p class="text-sm text-ink-3">Try adjusting your search or filters.</p>
     </div>
   </main>
@@ -380,7 +403,7 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
                   <FlagImage
                     :code="selected.code"
                     :alt="`Flag of ${selected.name}`"
-                    class="w-full h-full object-cover"
+                    class="w-full h-full object-contain"
                   />
                 </div>
 
@@ -417,6 +440,10 @@ onUnmounted(() => document.removeEventListener('click', closeTierTooltip))
                   <div>
                     <dt class="eyebrow mb-1">ISO Code</dt>
                     <dd class="font-mono text-[13px] uppercase tracking-[0.1em] text-ink">{{ selected.code }}</dd>
+                  </div>
+                  <div>
+                    <dt class="eyebrow mb-1">Type</dt>
+                    <dd class="text-[14px] font-medium text-ink capitalize">{{ selected.type }}</dd>
                   </div>
                   <div v-if="selected.population">
                     <dt class="eyebrow mb-1">Population</dt>
