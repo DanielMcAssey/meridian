@@ -3,7 +3,7 @@ export interface AchievementDef {
   name:        string
   description: string
   icon:        string
-  category:    'milestone' | 'accuracy' | 'score' | 'difficulty' | 'mode' | 'career' | 'combined' | 'mastery' | 'prestige'
+  category:    'milestone' | 'accuracy' | 'score' | 'difficulty' | 'mode' | 'career' | 'combined' | 'mastery' | 'leaderboard' | 'prestige'
 }
 
 export const ACHIEVEMENTS: AchievementDef[] = [
@@ -43,6 +43,9 @@ export const ACHIEVEMENTS: AchievementDef[] = [
   { id: 'perfect_region',   name: 'Continental Command',   description: 'Get a perfect score in The Continental — 20 rounds, Obscure pool, timer on.',      icon: '🌍', category: 'mastery' },
   { id: 'perfect_language', name: 'Supreme Linguist',      description: 'Get a perfect score in The Linguist — 20 rounds, Obscure pool, timer on.',         icon: '🗣️', category: 'mastery' },
   { id: 'perfect_province', name: 'Sovereign Surveyor',    description: 'Get a perfect score in The Province — 20 rounds, Obscure pool, timer on.',         icon: '📋', category: 'mastery' },
+  // Leaderboard — reach the very top of a time-windowed leaderboard.
+  { id: 'weekly_champion',  name: 'Champion of the Week',  description: 'Reach #1 on the weekly leaderboard.',                                              icon: '🥇', category: 'leaderboard' },
+  { id: 'monthly_champion', name: 'Sovereign of the Month', description: 'Reach #1 on the monthly leaderboard.',                                            icon: '🏵️', category: 'leaderboard' },
   // Prestige — meta-achievements awarded for completing entire achievement sets.
   { id: 'meridian_conqueror', name: 'Meridian Conqueror', description: 'Earn all 8 Mastery achievements — a flawless Obscure-pool run across every game mode.',                icon: '🌐', category: 'prestige' },
   { id: 'true_meridian',      name: 'True Meridian',      description: 'Unlock every other achievement.',                                                                        icon: '✨', category: 'prestige' },

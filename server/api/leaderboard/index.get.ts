@@ -1,6 +1,7 @@
-import { and, desc, eq } from 'drizzle-orm'
+import { and, desc, eq, gte } from 'drizzle-orm'
 import type { Difficulty, GameMode, LeaderboardResponse, LeaderboardRow } from '~/types/game'
-import { VALID_DIFFICULTIES, VALID_MODES } from '~/config/game'
+import type { LeaderboardPeriod } from '~/config/game'
+import { VALID_DIFFICULTIES, VALID_MODES, VALID_PERIODS, periodCutoff } from '~/config/game'
 import { scores, users } from '~/server/db/schema'
 import { createRateLimiter } from '~/server/utils/rateLimit'
 import { getClientIp } from '~/server/utils/getClientIp'
@@ -15,6 +16,10 @@ function validDifficulty(v: unknown): Difficulty | undefined {
 
 function validMode(v: unknown): GameMode | undefined {
   return typeof v === 'string' && VALID_MODES.has(v) ? (v as GameMode) : undefined
+}
+
+function validPeriod(v: unknown): LeaderboardPeriod {
+  return typeof v === 'string' && VALID_PERIODS.has(v) ? (v as LeaderboardPeriod) : 'all'
 }
 
 // ── Handler ───────────────────────────────────────────────────────────────────
@@ -32,6 +37,7 @@ export default defineEventHandler(async (event): Promise<LeaderboardResponse> =>
   const mode       = validMode(query.mode)
   const totalRaw   = typeof query.total === 'string' ? Number(query.total) : NaN
   const total      = !isNaN(totalRaw) && totalRaw > 0 ? totalRaw : undefined
+  const cutoff     = periodCutoff(validPeriod(query.period))
 
   const db = await getDb()
 
@@ -55,6 +61,7 @@ export default defineEventHandler(async (event): Promise<LeaderboardResponse> =>
       difficulty !== undefined ? eq(scores.difficulty, difficulty) : undefined,
       mode       !== undefined ? eq(scores.mode,       mode)       : undefined,
       total      !== undefined ? eq(scores.total,      total)      : undefined,
+      cutoff     !== undefined ? gte(scores.createdAt,  cutoff)     : undefined,
     ))
     .orderBy(desc(scores.score), desc(scores.createdAt))
     .limit(limit + 1) satisfies LeaderboardRow[]

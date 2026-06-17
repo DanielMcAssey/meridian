@@ -23,6 +23,13 @@ interface ScoreRow {
   total:      number
 }
 
+interface LeaderboardContext {
+  // True when this submission sits at rank #1 of the current calendar week / month
+  // leaderboard (no other score in the window is strictly higher).
+  weeklyTop:  boolean
+  monthlyTop: boolean
+}
+
 const ALL_MODES = new Set(['flag', 'pin', 'cart', 'shape', 'capital', 'region', 'language', 'province', 'mixed'])
 
 // Points per correct answer on Expert without a timer — used to detect timer use.
@@ -47,6 +54,7 @@ export function checkAchievements(
   stats:           Stats,
   alreadyUnlocked: Set<string>,
   allScores:       ScoreRow[],
+  leaderboard:     LeaderboardContext,
 ): string[] {
   const earned: string[] = []
 
@@ -114,6 +122,10 @@ export function checkAchievements(
   check('perfect_region',   isMastery('region'))
   check('perfect_language', isMastery('language'))
   check('perfect_province', isMastery('province'))
+
+  // ── Leaderboard — reach #1 on the weekly / monthly board ──────────────────────
+  check('weekly_champion',  leaderboard.weeklyTop)
+  check('monthly_champion', leaderboard.monthlyTop)
 
   // ── Prestige — awarded after checking all non-prestige achievements ───────────
   const earnedSet = new Set(earned)

@@ -16,7 +16,8 @@ export const trophyColor = {
 <script setup lang="ts">
 import { useQuery } from '@tanstack/vue-query'
 import type { Difficulty, GameMode, LeaderboardResponse, TrophyKind } from '~/types/game'
-import { DIFFICULTIES, MODES, POOL_LABEL, ROUND_COUNTS, VALID_ROUND_COUNTS, modeName } from '~/config/game'
+import type { LeaderboardPeriod } from '~/config/game'
+import { DIFFICULTIES, LEADERBOARD_PERIODS, MODES, POOL_LABEL, ROUND_COUNTS, VALID_PERIODS, VALID_ROUND_COUNTS, modeName } from '~/config/game'
 
 useSeoMeta({
   title: 'Leaderboard',
@@ -56,17 +57,25 @@ function initRounds(): number {
   return 0
 }
 
+function initPeriod(): LeaderboardPeriod {
+  const q = route.query.period
+  if (typeof q === 'string' && VALID_PERIODS.has(q)) return q as LeaderboardPeriod
+  return 'week'
+}
+
 const filterMode       = ref<GameMode | 'any'>(initMode())
 const filterDifficulty = ref<Difficulty | 'any'>(initDifficulty())
 const filterRounds     = ref<number>(initRounds())
+const filterPeriod     = ref<LeaderboardPeriod>(initPeriod())
 
 // Keep the URL in sync so filters are shareable as permalinks.
-watch([filterMode, filterDifficulty, filterRounds], () => {
+watch([filterMode, filterDifficulty, filterRounds, filterPeriod], () => {
   if (!import.meta.client) return
   const query: Record<string, string> = {}
   if (filterMode.value !== 'any')       query.mode       = filterMode.value
   if (filterDifficulty.value !== 'any') query.difficulty = filterDifficulty.value
   if (filterRounds.value > 0)           query.rounds     = String(filterRounds.value)
+  if (filterPeriod.value !== 'week')    query.period     = filterPeriod.value
   router.replace({ query })
 })
 
@@ -90,12 +99,13 @@ const ROUND_OPTIONS = [
 // a recently-persisted 'any' key could be served from localStorage without a
 // network request.  placeholderData is purely visual and never blocks a fetch.
 const { data: leaderboardData, isFetching } = useQuery<LeaderboardResponse>({
-  queryKey: ['leaderboard', filterMode, filterDifficulty, filterRounds],
+  queryKey: ['leaderboard', filterMode, filterDifficulty, filterRounds, filterPeriod],
   queryFn: () => {
     const params = new URLSearchParams({ limit: '50' })
     if (filterMode.value !== 'any')       params.set('mode',       filterMode.value)
     if (filterDifficulty.value !== 'any') params.set('difficulty', filterDifficulty.value)
     if (filterRounds.value > 0)           params.set('total',      String(filterRounds.value))
+    if (filterPeriod.value !== 'all')     params.set('period',     filterPeriod.value)
     return $fetch<LeaderboardResponse>(`/api/leaderboard?${params}`)
   },
   placeholderData: () => ({ rows: [], hasMore: false }),
@@ -118,6 +128,10 @@ const filterLabel = computed(() => {
   const d = DIFFICULTIES.find((x) => x.id === filterDifficulty.value)
   if (d) parts.push(d.label)
   if (filterRounds.value > 0) parts.push(`${filterRounds.value} rounds`)
+  if (filterPeriod.value !== 'all') {
+    const p = LEADERBOARD_PERIODS.find((x) => x.id === filterPeriod.value)
+    if (p) parts.push(p.label)
+  }
   return parts.length ? parts.join(' · ') : 'all games'
 })
 
@@ -168,6 +182,12 @@ function trophyFor(rank: number): TrophyKind | null {
         :options="ROUND_OPTIONS.map(o => ({ id: o.val, label: o.label }))"
         :model-value="filterRounds"
         @update:model-value="filterRounds = $event as typeof filterRounds"
+      />
+      <FilterPillGroup
+        label="Period"
+        :options="LEADERBOARD_PERIODS"
+        :model-value="filterPeriod"
+        @update:model-value="filterPeriod = $event as LeaderboardPeriod"
       />
     </div>
 

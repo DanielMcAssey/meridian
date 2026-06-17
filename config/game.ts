@@ -117,6 +117,36 @@ export const VALID_MODE_IDS = MODES.map((m) => m.id) as [GameMode, ...GameMode[]
 /** Tuple form of DIFFICULTIES ids — use with z.enum() so the Zod schema stays in sync with config. */
 export const VALID_DIFFICULTY_IDS = DIFFICULTIES.map((d) => d.id) as [Difficulty, ...Difficulty[]]
 
+// ── Leaderboard time periods ──────────────────────────────────────────────────
+// All-time vs current calendar week / month. Windows are computed in UTC to match
+// the DB's unixepoch() storage of scores.createdAt.
+
+export type LeaderboardPeriod = 'all' | 'week' | 'month'
+
+export const LEADERBOARD_PERIODS: { id: LeaderboardPeriod, label: string }[] = [
+  { id: 'all',   label: 'All time' },
+  { id: 'week',  label: 'This week' },
+  { id: 'month', label: 'This month' },
+]
+
+export const VALID_PERIODS = new Set<string>(LEADERBOARD_PERIODS.map((p) => p.id))
+
+/**
+ * UTC epoch-second cutoff for a leaderboard period, or `undefined` for 'all'.
+ * Week starts Monday 00:00 UTC; month starts the 1st at 00:00 UTC.
+ */
+export function periodCutoff(period: LeaderboardPeriod, now = new Date()): number | undefined {
+  if (period === 'month') {
+    return Math.floor(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1) / 1000)
+  }
+  if (period === 'week') {
+    const day = now.getUTCDay() || 7 // Sunday (0) → 7 so the week starts Monday
+    const monday = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - (day - 1))
+    return Math.floor(monday / 1000)
+  }
+  return undefined
+}
+
 // ── Answer-selection tier weights ────────────────────────────────────────────
 // Controls how likely each tier of country is to be selected as a round answer.
 // Higher weights at higher difficulties push the pool toward obscure countries.

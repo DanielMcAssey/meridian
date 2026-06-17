@@ -42,7 +42,7 @@ Meridian is a **Nuxt 3** geography quiz game. All game pages are rendered **clie
 - `/menu` — player picks mode, difficulty, round count
 - `/play` — active game loop; guards back to `/menu` if no session
 - `/results` — score summary + leaderboard rank
-- `/leaderboard` — all-time scores with mode/difficulty/rounds filters; country flag shown next to player names
+- `/leaderboard` — scores with mode/difficulty/rounds/period filters (period = all-time / this week / this month); country flag shown next to player names
 - `/profile` — edit display name, bio, home country; view/copy recovery QR; achievements grid; danger zone
 - `/profile/[userId]` — public read-only profile; shows bio, country flag, voyage stats, recent games, achievements grid
 
@@ -127,13 +127,13 @@ When a round is locked (answer picked or timer expired), a `RoundsFeedbackOverla
 
 ### Achievements
 
-20 achievements are defined statically in `config/achievements.ts` (`ACHIEVEMENTS` array, `ACHIEVEMENT_MAP` for O(1) lookup). Categories: `milestone`, `accuracy`, `score`, `difficulty`, `mode`, `career`, `combined`.
+32 achievements are defined statically in `config/achievements.ts` (`ACHIEVEMENTS` array, `ACHIEVEMENT_MAP` for O(1) lookup). Categories: `milestone`, `accuracy`, `score`, `difficulty`, `mode`, `career`, `combined`, `mastery`, `leaderboard`, `prestige`. The `prestige` achievements are meta-unlocks gated on whole sets (`meridian_conqueror` requires all 8 `mastery` achievements; `true_meridian` requires every other achievement) — they are computed dynamically from the `ACHIEVEMENTS` array, so adding a new achievement automatically becomes a requirement for `true_meridian`.
 
-**Server flow**: after every score insert + stats upsert in `POST /api/leaderboard`, `checkAchievements()` (`server/utils/checkAchievements.ts`) is called as a pure function — it receives the submission, the updated stats, a `Set` of already-unlocked IDs, and all of the user's score rows, and returns IDs of newly earned achievements. New unlocks are inserted into `user_achievements` and the enriched definitions are returned in the POST response as `newAchievements[]`.
+**Server flow**: after every score insert + stats upsert in `POST /api/leaderboard`, `checkAchievements()` (`server/utils/checkAchievements.ts`) is called as a pure function — it receives the submission, the updated stats, a `Set` of already-unlocked IDs, all of the user's score rows, and a `LeaderboardContext` (`weeklyTop` / `monthlyTop` — whether the just-inserted score is rank #1 across all players for the current calendar week / month), and returns IDs of newly earned achievements. The period-top facts are computed in the POST handler via an aggregate query counting scores strictly higher within each `periodCutoff()` window (the `leaderboard` category: `weekly_champion`, `monthly_champion`). New unlocks are inserted into `user_achievements` and the enriched definitions are returned in the POST response as `newAchievements[]`.
 
 **Client flow**: `useLeaderboardMutation`'s `onSuccess` calls `session.setNewAchievements(data.newAchievements)`. The results page drains the queue via `<AchievementToast>` (`components/AchievementToast.vue`) — a fixed bottom-right toast that shows one achievement at a time, auto-dismissing after 4 s with a 300 ms gap between entries.
 
-**Profile display**: both `/profile` and `/profile/[userId]` show all 20 achievements in a 2-column grid. Unearned achievements are rendered at `opacity-35`; earned ones show their unlock date. The profile GET endpoint (`server/api/profile/[userId].get.ts`) joins `user_achievements` and enriches each row from `ACHIEVEMENT_MAP`.
+**Profile display**: both `/profile` and `/profile/[userId]` show all achievements (`ACHIEVEMENTS.length`) in a 2-column grid. Unearned achievements are rendered at `opacity-35`; earned ones show their unlock date. The profile GET endpoint (`server/api/profile/[userId].get.ts`) joins `user_achievements` and enriches each row from `ACHIEVEMENT_MAP`.
 
 ### Scoring
 
@@ -157,6 +157,7 @@ All scoring logic lives in **`utils/scoring.ts`** (auto-imported client-side; im
 - **Drizzle migrations**: SQL files live in `server/db/migrations/<timestamp_name>/migration.sql`. To add a migration after a schema change, run `npm run db:generate` — this calls `drizzle-kit generate` and then `scripts/gen-migration-list.mjs`, which auto-generates `server/db/migrations/list.ts` from all SQL files in that directory. `list.ts` is also regenerated automatically by `npm run build` (via a `prebuild` hook). Applied migrations are tracked in a `_meridian_migrations` SQLite table. Every migration directory should have both `migration.sql` and `snapshot.json` — a missing snapshot causes drizzle-kit to re-generate already-applied DDL on the next `db:generate` run.
 - The POST endpoint validates `total` against allowed round counts, `correct ≤ total`, and `score ≤ correct × maxPointsPerRound(difficulty)` via Zod `.refine()` guards.
 - Valid modes: `flag | pin | cart | shape | capital | region | language | province | mixed`. Mode and difficulty enums are derived from `VALID_MODE_IDS` / `VALID_DIFFICULTY_IDS` in `config/game.ts` — Zod stays in sync with config automatically.
+- The GET endpoint accepts `mode`, `difficulty`, `total`, `limit`, and `period` query params. `period` (`all` | `week` | `month`, validated against `VALID_PERIODS`) filters by `scores.createdAt >= periodCutoff(period)` — a UTC calendar window (week starts Monday 00:00 UTC, month starts the 1st at 00:00 UTC). `LEADERBOARD_PERIODS`, `VALID_PERIODS`, and `periodCutoff()` all live in `config/game.ts`.
 - The POST payload requires `userId` and `gameToken` (both UUIDs). `gameToken` is unique per game, checked for idempotency — duplicate submissions (offline retries, double-submit) skip the insert and return the existing rank. `lastSeen` is updated on every submission; `name` is **not** updated here — name changes go through `POST /api/profile/update`.
 - **Client**: TanStack Query mutation in `useLeaderboardMutation`. The mutation is registered with a default `mutationFn` in `plugins/tanstack-query.client.ts` so it can be replayed after a page reload. Paused (offline) mutations are persisted to `localStorage` under key `geo.tq-cache` and automatically retried on reconnect.
 

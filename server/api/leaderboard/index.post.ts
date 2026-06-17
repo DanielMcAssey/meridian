@@ -1,6 +1,6 @@
 import { z } from 'zod'
 import { and, count, desc, eq, sql } from 'drizzle-orm'
-import { VALID_DIFFICULTY_IDS, VALID_MODE_IDS, VALID_ROUND_COUNTS } from '~/config/game'
+import { VALID_DIFFICULTY_IDS, VALID_MODE_IDS, VALID_ROUND_COUNTS, periodCutoff } from '~/config/game'
 import { ACHIEVEMENT_MAP } from '~/config/achievements'
 import { maxPointsPerRound } from '~/utils/scoring'
 import { scores, userAchievements, userStats, users } from '~/server/db/schema'
@@ -137,17 +137,33 @@ export default defineEventHandler(async (event) => {
     .onConflictDoUpdate({ target: userStats.userId, set: statsValues })
 
   // ── Check achievements ──────────────────────────────────────────────────────
-  const [existingUnlocks, allUserScores] = await Promise.all([
+  // Period-top facts: is this just-inserted score #1 across all players for the
+  // current calendar week / month? "Ahead" counts any score in the window that is
+  // strictly higher — zero means this submission holds the top spot.
+  const weekCutoff  = periodCutoff('week')!
+  const monthCutoff = periodCutoff('month')!
+
+  const [existingUnlocks, allUserScores, periodTopRows] = await Promise.all([
     db.select({ achievementId: userAchievements.achievementId })
       .from(userAchievements)
       .where(eq(userAchievements.userId, userId)),
     db.select({ mode: scores.mode, difficulty: scores.difficulty, correct: scores.correct, total: scores.total })
       .from(scores)
       .where(eq(scores.userId, userId)),
+    db.select({
+      weeklyAhead:  sql<number>`count(case when ${scores.createdAt} >= ${weekCutoff}  and ${scores.score} > ${body.score} then 1 end)`,
+      monthlyAhead: sql<number>`count(case when ${scores.createdAt} >= ${monthCutoff} and ${scores.score} > ${body.score} then 1 end)`,
+    }).from(scores),
   ])
 
+  const periodTop = periodTopRows[0]
+  const leaderboard = {
+    weeklyTop:  (periodTop?.weeklyAhead  ?? 1) === 0,
+    monthlyTop: (periodTop?.monthlyAhead ?? 1) === 0,
+  }
+
   const alreadyUnlocked = new Set(existingUnlocks.map((r) => r.achievementId))
-  const newIds = checkAchievements(body, statsValues, alreadyUnlocked, allUserScores)
+  const newIds = checkAchievements(body, statsValues, alreadyUnlocked, allUserScores, leaderboard)
 
   if (newIds.length > 0) {
     await db.insert(userAchievements).values(
