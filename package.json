@@ -24,7 +24,7 @@
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
     "@zxing/browser": "^0.2.0",
-    "drizzle-orm": "^1.0.0-rc.4",
+    "drizzle-orm": "^1.0.0-rc.4-273829f",
     "nuxt": "^4.4.8",
     "pinia": "^3.0.4",
     "qrcode": "^1.5.4",
