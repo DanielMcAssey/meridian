@@ -206,8 +206,8 @@ export function buildRounds(
 
   if (import.meta.dev) {
     for (const round of rounds) {
-      const ok = round.type === 'language'
-        ? (round.langOptions?.includes(round.answerLang!) ?? false)
+      const ok = 'langOptions' in round
+        ? round.langOptions.includes(round.answerLang)
         : round.options.some((o) => o.code === round.answer.code)
       if (!ok) console.warn('[rounds] answer not in options:', round)
     }
