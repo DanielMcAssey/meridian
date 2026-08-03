@@ -2,7 +2,7 @@
 # The .output directory is produced by `npm run build` in the workflow
 # and passed in as build context, so no Node toolchain is needed here.
 
-FROM node:24-alpine
+FROM node:26-alpine
 
 WORKDIR /app
 
